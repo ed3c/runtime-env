@@ -68,6 +68,10 @@ identity, Chrome logical surface, and token UI route are listed in
 
 A GitHub or ChatGPT connector supplies authorization and tools, not compute. An MCP configuration in a repository is inert until a reachable MCP server and an execution host exist. Do not add a generic shell-over-MCP tool.
 
+The complete decision matrix for GitHub app context, Codex cloud containers,
+local execution, self-hosted runners, and Secure MCP Tunnel is in
+[`docs/runtime-topology.md`](docs/runtime-topology.md).
+
 ## Public repository consumption
 
 This repository is private during bootstrap. A public workflow cannot safely import it without an additional credential, and a personal access token would expand the attack surface. Before public projects consume it directly:
