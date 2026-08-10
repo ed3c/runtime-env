@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"repo-wiki-converge-local","summary":"Local repo-wiki author, verifier, convergence judge, and knowledge-graph ingest.","modules":["agy-repo-wiki"]}

@@ -16,6 +16,8 @@ grep -Fq 'docs/local-integration.md' "${ROOT}/AGENTS.md" || {
 
 for required in \
   '/Users/neon/runtime-env' \
+  '/Users/neon/runtime-env/.env' \
+  './runtime-env local-env doctor' \
   '~/.config/runtime-env/secrets/forgejo-local.env' \
   'scripts/verify-local-runtime.sh' \
   '`AGENTS.md` is loaded only when a new chat starts' \

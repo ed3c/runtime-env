@@ -1,0 +1,17 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "ios-testflight-beta",
+  "summary": "Build, sign, and upload an admitted repository revision to TestFlight.",
+  "profile": "ios-testflight-ship-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "upload": ["bash", ".agents/skills/ios-testflight-ship/scripts/ship.sh", "<target-repo>", "beta"]
+  },
+  "secret_delivery": "broker-only",
+  "agent_secret_access": "denied",
+  "mutation": "external-release",
+  "evidence": {
+    "receipt": "broker-receipts/ios-testflight-beta/<run-id>.json",
+    "control": ".agents/skills/ios-testflight-ship/tests/run-all.sh"
+  }
+}

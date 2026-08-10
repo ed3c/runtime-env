@@ -16,12 +16,16 @@ def main(root: Path) -> int:
         "variables": json.loads((root / "contracts" / "variables.schema.json").read_text()),
         "module": json.loads((root / "contracts" / "module.schema.json").read_text()),
         "profile": json.loads((root / "contracts" / "profile.schema.json").read_text()),
+        "workload": json.loads((root / "contracts" / "workload.schema.json").read_text()),
+        "policy": json.loads((root / "contracts" / "carrier-policy.schema.json").read_text()),
     }
     checks = {
         "variables": documents["variables"],
         "variable": documents["variables"]["properties"]["variables"]["items"],
         "module": documents["module"],
         "profile": documents["profile"],
+        "workload": documents["workload"],
+        "policy": documents["policy"],
     }
     for kind, schema in checks.items():
         if schema.get("additionalProperties") is not False:

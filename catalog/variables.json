@@ -2,6 +2,9 @@
   "schema": "runtime-env/variables/v1",
   "variables": [
     {"name": "ANTHROPIC_API_KEY", "secret": true, "description": "Anthropic API credential.", "account_url": "https://console.anthropic.com/settings/keys"},
+    {"name": "AGY_TIMEOUT", "secret": false, "description": "Bounded timeout passed to the Antigravity author runner."},
+    {"name": "AGY_EFFORT", "secret": false, "description": "Agy reasoning effort selector."},
+    {"name": "AGY_MODEL", "secret": false, "description": "Exact agy model id observed from the live model inventory."},
     {"name": "ANDROID_AVD_HOME", "secret": false, "description": "Optional override for the Android Virtual Device directory."},
     {"name": "ANDROID_HOME", "secret": false, "description": "Android SDK installation root."},
     {"name": "ANDROID_RECEIVER_AVD", "secret": false, "description": "AVD name assigned to the receiver role."},
@@ -9,6 +12,8 @@
     {"name": "ANDROID_SDK_ROOT", "secret": false, "description": "Android SDK root used by legacy and CI tooling."},
     {"name": "ANDROID_SENDER_AVD", "secret": false, "description": "AVD name assigned to the sender role."},
     {"name": "ANDROID_SENDER_PORT", "secret": false, "description": "ADB console port assigned to the sender role."},
+    {"name": "ANTIGRAVITY_PEER", "secret": false, "description": "Explicit local path to the Antigravity source peer used by proof controls."},
+    {"name": "ANTIGRAVITY_REPO_ROOT", "secret": false, "description": "Local parent directory where repo-wiki targets are cloned."},
     {"name": "APPLITOOLS_API_KEY", "secret": true, "description": "Applitools visual testing API credential.", "account_url": "https://auth.applitools.com/users/login"},
     {"name": "APPLE_TEAM_ID", "secret": false, "description": "Apple Developer Team identifier."},
     {"name": "ASC_ISSUER_ID", "secret": false, "description": "App Store Connect API issuer identifier."},
@@ -18,7 +23,11 @@
     {"name": "BROWSERBASE_PROJECT_ID", "secret": false, "description": "Browserbase project identifier."},
     {"name": "CLOUDFLARE_ACCOUNT_ID", "secret": false, "description": "Cloudflare account identifier."},
     {"name": "CLOUDFLARE_API_TOKEN", "secret": true, "description": "Scoped Cloudflare API token.", "account_url": "https://dash.cloudflare.com/profile/api-tokens"},
+    {"name": "CLAUDE_CONFIG_DIR", "secret": false, "description": "Dedicated Claude Code configuration root; its contents remain host-only."},
+    {"name": "CODEX_HOME", "secret": false, "description": "Dedicated Codex configuration root; its contents remain host-only."},
     {"name": "DEVELOPER_DIR", "secret": false, "description": "Selected Xcode developer directory."},
+    {"name": "DR_CDP_URL", "secret": false, "description": "Loopback CDP endpoint for an already-running dedicated research browser."},
+    {"name": "DR_HEADED", "secret": false, "description": "Whether broker-owned deep-research browser operations use a visible window."},
     {"name": "DOCKER_HOST", "secret": false, "description": "Optional Docker daemon endpoint override."},
     {"name": "E2B_API_KEY", "secret": true, "description": "E2B cloud sandbox API credential.", "account_url": "https://e2b.dev/dashboard"},
     {"name": "FORGEJO_PASSWORD", "secret": true, "description": "Password for a local Forgejo account; prefer a credential helper over dotenv storage."},
@@ -43,6 +52,11 @@
     {"name": "OPENAI_PROJECT_ID", "secret": false, "description": "Optional OpenAI project identifier."},
     {"name": "SENTRY_AUTH_TOKEN", "secret": true, "description": "Sentry release and source-map upload token.", "account_url": "https://sentry.io/settings/auth-tokens/"},
     {"name": "SENTRY_ORG", "secret": false, "description": "Sentry organization slug."},
-    {"name": "SENTRY_PROJECT", "secret": false, "description": "Sentry project slug."}
+    {"name": "SENTRY_PROJECT", "secret": false, "description": "Sentry project slug."},
+    {"name": "SKILL_BETTOR_PEER", "secret": false, "description": "Explicit local path to the skill-bettor target peer used by proof controls."},
+    {"name": "STEALTH_BROWSER_EXTRA_ALLOW", "secret": false, "description": "Additional broker-approved output roots for stealth-browser file sinks."},
+    {"name": "STEALTH_DEBUG_LOG", "secret": false, "description": "Broker-owned path for sanitized stealth-browser diagnostics."},
+    {"name": "STEALTH_LANGUAGES", "secret": false, "description": "Stable browser language list used by the stealth fingerprint layer."},
+    {"name": "STEALTH_USER_AGENT", "secret": false, "description": "Explicit browser user-agent override for deterministic probes."}
   ]
 }

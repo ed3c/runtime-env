@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"agy-gemini36-flash-high-local","summary":"Host agy Gemini 3.6 Flash High independent replay carrier.","modules":["agy-cli-session"]}

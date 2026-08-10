@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"bettor-arena-runtime-local","summary":"Bettor-arena proof, logged-in browser research, agy, Claude Code, and Codex carriers.","modules":["bettor-arena-proof","logged-in-research-browser","stealth-browser","claude-in-chrome-carrier","codex-chrome-carrier","claude-code-session","codex-cli-session","agy-cli-session"]}

@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"bettor-arena-proof","summary":"Peer paths consumed by bettor-arena proof control groups.","requires":[],"optional":["ANTIGRAVITY_PEER","SKILL_BETTOR_PEER"],"defaults":{}}

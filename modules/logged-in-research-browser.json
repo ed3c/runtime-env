@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"logged-in-research-browser","summary":"Dedicated already-running Chrome research profile reached through loopback CDP.","requires":[],"optional":["DR_CDP_URL","DR_HEADED"],"defaults":{"DR_CDP_URL":"http://127.0.0.1:9333","DR_HEADED":"0"}}
