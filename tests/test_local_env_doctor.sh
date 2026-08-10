@@ -9,9 +9,17 @@ initialized="${scratch}/initialized.env"
 symlinked="${scratch}/symlinked.env"
 sentinel='fixture-secret-must-never-appear'
 
+file_mode() {
+  if stat -f '%Lp' "$1" >/dev/null 2>&1; then
+    stat -f '%Lp' "$1"
+  else
+    stat -c '%a' "$1"
+  fi
+}
+
 init_output="$(${ROOT}/runtime-env local-env init --env-file "${initialized}")"
 [[ "${init_output}" == *'CREATED local env template'* ]]
-[[ "$(stat -f '%Lp' "${initialized}")" == '600' ]]
+[[ "$(file_mode "${initialized}")" == '600' ]]
 grep -Fq 'E2B_API_KEY=' "${initialized}"
 grep -Fq 'GEMINI_API_KEY=' "${initialized}"
 if grep -Eq '^[A-Z][A-Z0-9_]*=.+$' "${initialized}"; then
