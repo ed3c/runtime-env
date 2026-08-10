@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"secure-mcp-tunnel","summary":"OpenAI Secure MCP Tunnel control plane.","requires":["OPENAI_API_KEY"],"optional":["OPENAI_ORG_ID","OPENAI_PROJECT_ID","MCP_TUNNEL_ENDPOINT"],"defaults":{}}

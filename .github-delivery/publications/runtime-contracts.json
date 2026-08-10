@@ -1,0 +1,21 @@
+{
+  "schema": "github-publication-attestation/v1",
+  "line": "runtime-contracts",
+  "github_repo": "ed3c/runtime-env",
+  "github_repository_id": "R_kgDOT0Gv5A",
+  "remote_url": "https://github.com/ed3c/runtime-env",
+  "visibility": "PRIVATE",
+  "commit": "95e702430e5823c4ba6469ed6dce0a04ef5154ee",
+  "export_source_commit": "2ab2b8757a39e4f084ae713330d7e3512a004702",
+  "export_tree_sha": "63dbda4d987eb2b3987ab23e18b42ee94a603fae",
+  "file_count": 73,
+  "history_root": true,
+  "license_spdx": "MIT",
+  "public_ready": false,
+  "blockers": [
+    "feature-pr-not-landed",
+    "private-visibility",
+    "export-tree-not-on-default-branch"
+  ],
+  "verified_at": "2026-08-10T11:08:02Z"
+}

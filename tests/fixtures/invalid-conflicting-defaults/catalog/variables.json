@@ -1,0 +1,1 @@
+{"schema":"runtime-env/variables/v1","variables":[{"name":"RUNTIME_MODE","secret":false,"description":"Fixture mode."}]}

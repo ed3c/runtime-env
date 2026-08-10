@@ -1,0 +1,14 @@
+{
+  "schema": "github-delivery-registry/v1",
+  "repo_root": "..",
+  "lines": [
+    {
+      "id": "runtime-contracts",
+      "github_repo": "ed3c/runtime-env",
+      "github_repository_id": "R_kgDOT0Gv5A",
+      "artifact_path": ".",
+      "receipt_path": ".github-delivery/receipts/runtime-contracts.json",
+      "publication_path": ".github-delivery/publications/runtime-contracts.json"
+    }
+  ]
+}

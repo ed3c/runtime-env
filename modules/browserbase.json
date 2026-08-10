@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"browserbase","summary":"Browserbase managed browser sessions.","requires":["BROWSERBASE_API_KEY","BROWSERBASE_PROJECT_ID"],"optional":[],"defaults":{}}

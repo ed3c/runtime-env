@@ -1,0 +1,2 @@
+# Test-only sentinel; the checker must never print its value.
+E2B_API_KEY=present-for-test

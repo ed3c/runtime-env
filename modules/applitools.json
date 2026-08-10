@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"applitools","summary":"Applitools visual validation.","requires":["APPLITOOLS_API_KEY"],"optional":[],"defaults":{}}

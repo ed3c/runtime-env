@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"e2b","summary":"E2B isolated cloud sandbox.","requires":["E2B_API_KEY"],"optional":[],"defaults":{}}

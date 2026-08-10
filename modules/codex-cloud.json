@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"codex-cloud","summary":"Portable Codex cloud workload; platform execution does not itself require repository credentials.","requires":[],"optional":["OPENAI_API_KEY","OPENAI_ORG_ID","OPENAI_PROJECT_ID","GH_TOKEN"],"defaults":{}}

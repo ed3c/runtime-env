@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"gpu-research","summary":"Authenticated NVIDIA and Hugging Face research host.","modules":["nvidia-ngc","huggingface"]}

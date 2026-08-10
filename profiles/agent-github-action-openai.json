@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"agent-github-action-openai","summary":"Run an OpenAI-backed agent in GitHub Actions.","modules":["github-actions","openai"]}

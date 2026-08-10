@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"github-actions","summary":"GitHub Actions job authentication.","requires":["GITHUB_TOKEN"],"optional":[],"defaults":{}}

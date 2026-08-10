@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"ollama","summary":"Local Ollama OpenAI-compatible inference.","requires":[],"optional":["OLLAMA_BASE_URL","NL_PROVIDER","NL_MODEL"],"defaults":{"OLLAMA_BASE_URL":"http://127.0.0.1:11434/v1","NL_PROVIDER":"ollama","NL_MODEL":"openai/qwen3:4b"}}

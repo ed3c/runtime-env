@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"skill-bettor-gemini","summary":"Skill-bettor Stagehand local browser with Gemini natural-language actions.","modules":["gemini","stagehand-gemini"]}

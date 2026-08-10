@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"gemini","summary":"Google Gemini API workloads.","requires":["GEMINI_API_KEY"],"optional":[],"defaults":{}}

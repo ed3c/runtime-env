@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"skill-bettor-local","summary":"Skill-bettor local Ollama path with zero cloud credentials.","modules":["ollama"]}

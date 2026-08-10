@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"mac-device-runner","summary":"Dedicated Mac runner for Apple signing and dual Android AVDs.","modules":["apple-signing","android-dual-avd","docker","github-cli"]}
