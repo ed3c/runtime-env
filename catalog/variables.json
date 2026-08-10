@@ -66,6 +66,7 @@
     {"name": "SKILL_BETTOR_PEER", "secret": false, "runtime_scope": "local-only", "description": "Explicit local path to the skill-bettor target peer used by proof controls."},
     {"name": "STEALTH_BROWSER_EXTRA_ALLOW", "secret": false, "runtime_scope": "local-only", "description": "Additional broker-approved output roots for stealth-browser file sinks."},
     {"name": "STEALTH_BROWSER_ROOT", "secret": false, "runtime_scope": "local-only", "description": "Absolute path to the separately versioned stealth-browser checkout."},
+    {"name": "STEALTH_PROFILE_ROOT", "secret": false, "runtime_scope": "local-only", "description": "Absolute broker-owned directory for untracked browser cookies, storage state, and locked fingerprints; directories are 0700 and files 0600."},
     {"name": "STEALTH_DEBUG_LOG", "secret": false, "runtime_scope": "local-only", "description": "Broker-owned path for sanitized stealth-browser diagnostics."},
     {"name": "STEALTH_LANGUAGES", "secret": false, "runtime_scope": "local-only", "description": "Stable browser language list used by the stealth fingerprint layer."},
     {"name": "STEALTH_USER_AGENT", "secret": false, "runtime_scope": "local-only", "description": "Explicit browser user-agent override for deterministic probes."}

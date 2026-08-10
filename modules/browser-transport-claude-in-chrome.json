@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"browser-transport-claude-in-chrome","summary":"Claude-in-Chrome extension transport paired to Claude Code and the user's already signed-in Chrome profile.","requires":[],"optional":[],"defaults":{}}

@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"browser-transport-chatgpt-chrome-extension","summary":"ChatGPT desktop-app Chrome extension for signed-in Chrome; explicitly unavailable as a native Codex CLI Browser.","requires":[],"optional":[],"defaults":{}}

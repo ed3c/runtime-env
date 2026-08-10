@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"agent-actor-codex-cli","summary":"Codex CLI agent actor with no native browser; browser work requires a fixed local runner or MCP transport.","requires":["CODEX_HOME"],"optional":[],"defaults":{}}
