@@ -9,7 +9,7 @@
     "control-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "test", "--force-receipt"],
     "claude-auth-status": ["python3", "scripts/runtime-env/check-carrier-status.py", "claude"],
     "codex-login-status": ["python3", "scripts/runtime-env/check-carrier-status.py", "codex"],
-    "forgejo-credential-canary": ["bash", "@runtime-env/scripts/verify-local-runtime.sh"],
+    "forgejo-credential-canary": ["/bin/bash", "@runtime-env/scripts/verify-local-runtime.sh", "--credential-helper-only"],
     "agy-model-inventory": ["python3", "scripts/runtime-env/check-carrier-status.py", "agy"],
     "research-browser-health": ["python3", "scripts/runtime-env/check-research-cdp.py"],
     "stealth-browser-control": ["sh", "scripts/runtime-env/check-stealth-browser.sh"],

@@ -106,16 +106,21 @@ cd /Users/neon/runtime-env
   --receipt ~/.local/state/runtime-env/receipts/forgejo-delivery/status.json
 ```
 
-`broker-selftest` is offline. `credential-canary` checks loopback reachability,
-Git helper resolution, and authenticated `/api/v1/user` access. The workload
-declares `secret_delivery=none`, passes no `FORGEJO_*` environment variables,
-and returns only child stream hashes in its mode-`0600` receipt. Git can still
-reach Keychain because the fixed runner's safe host allowlist includes `HOME`;
-the secret remains inside the Git helper and runtime-owned verifier. The
+`broker-selftest` is offline. `credential-canary` uses
+`--credential-helper-only` to check loopback reachability, Git helper resolution,
+and authenticated `/api/v1/user` access; an empty helper fails instead of reading
+a dotenv fallback. The workload declares `secret_delivery=none`, passes no
+`FORGEJO_*` environment variables, replaces child `PATH` with
+`/usr/bin:/bin:/usr/sbin:/sbin`, and returns only child stream hashes in its
+mode-`0600` receipt. Git can still reach Keychain because the fixed runner's
+safe host allowlist includes `HOME`; the secret remains inside the Git helper
+and runtime-owned verifier. The
 `@runtime-env/` command prefix is resolved only to a regular file within the
 selected catalog root, preventing a consumer path from replacing the broker.
 The credential entrypoint also refuses a dirty or unversioned catalog root;
 its receipt records the runtime-env HEAD, tree, and dirty state.
+The runner also compares target HEAD and porcelain state before and after every
+`mutation=read-only` workload; any change makes the receipt and process fail.
 Forgejo line status and every mutation remain owned by
 `forgejo-delivery-loop`; this workload only proves its credential precondition.
 

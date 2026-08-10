@@ -1300,6 +1300,8 @@ def run_workload(
     }
     child_environment = {**safe_inherited, **configured}
     child_environment.setdefault("PATH", os.defpath)
+    if entrypoint_id in workload.get("clean_catalog_entrypoints", []):
+        child_environment["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin"
 
     before_head = _git(target, "rev-parse", "HEAD")
     before_status = _git(target, "status", "--porcelain=v1")
@@ -1319,13 +1321,16 @@ def run_workload(
     finished_at = datetime.now(timezone.utc)
     after_head = _git(target, "rev-parse", "HEAD")
     after_status = _git(target, "status", "--porcelain=v1")
+    read_only_unchanged = before_head == after_head and before_status == after_status
+    policy_passed = workload["mutation"] != "read-only" or read_only_unchanged
+    execution_exit = result.returncode if result.returncode != 0 else (0 if policy_passed else 2)
 
     def stream_metadata(value: bytes) -> dict[str, Any]:
         return {"bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()}
 
     receipt: dict[str, Any] = {
         "schema": "runtime-env/execution-receipt/v1",
-        "status": "passed" if result.returncode == 0 else "failed",
+        "status": "passed" if execution_exit == 0 else "failed",
         "workload": workload_id,
         "entrypoint": entrypoint_id,
         "child_exit": result.returncode,
@@ -1351,6 +1356,7 @@ def run_workload(
             "dirty_after": bool(after_status),
         },
         "declared_evidence": workload["evidence"],
+        "policy": {"read_only_unchanged": read_only_unchanged},
         "runtime_source": runtime_source,
     }
     _execution_receipt_path(receipt, receipt_path)
@@ -1359,10 +1365,10 @@ def run_workload(
     else:
         print(
             f"{receipt['status'].upper()} workload={workload_id} "
-            f"entrypoint={entrypoint_id} exit={result.returncode} "
+            f"entrypoint={entrypoint_id} exit={execution_exit} "
             f"receipt={receipt['receipt_path']}"
         )
-    return result.returncode
+    return execution_exit
 
 
 def initialize_local_env(*, catalog: Catalog, env_file: Path) -> int:

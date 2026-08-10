@@ -31,7 +31,11 @@ assert workload["agent_secret_access"] == "denied"
 assert workload["mutation"] == "read-only"
 assert workload["entrypoints"] == {
     "broker-selftest": ["@runtime-env/runtime-env", "validate"],
-    "credential-canary": ["bash", "@runtime-env/scripts/verify-local-runtime.sh"],
+    "credential-canary": [
+        "/bin/bash",
+        "@runtime-env/scripts/verify-local-runtime.sh",
+        "--credential-helper-only",
+    ],
 }
 assert workload["entrypoint_environment"] == {
     "broker-selftest": [],
@@ -43,7 +47,9 @@ bettor_profile = json.loads((root / "profiles/bettor-arena-runtime-local.json").
 assert "forgejo-local-keychain-helper" in bettor_profile["modules"]
 bettor_workload = json.loads((root / "workloads/bettor-arena-proof.json").read_text())
 assert bettor_workload["entrypoints"]["forgejo-credential-canary"] == [
-    "bash", "@runtime-env/scripts/verify-local-runtime.sh"
+    "/bin/bash",
+    "@runtime-env/scripts/verify-local-runtime.sh",
+    "--credential-helper-only",
 ]
 assert bettor_workload["entrypoint_environment"]["forgejo-credential-canary"] == []
 assert "forgejo-credential-canary" in bettor_workload["clean_catalog_entrypoints"]

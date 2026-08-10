@@ -103,10 +103,13 @@ profile and fixed `forgejo-delivery-loop` workload. That profile has no
 variables: the child receives neither `FORGEJO_PASSWORD` nor `FORGEJO_TOKEN`.
 The live canary inherits only the runner's safe host surface (including `HOME`)
 and executes runtime-env's own versioned verifier, not consumer-repo code. The
-verifier invokes `git credential fill`; runtime-env records its output as hashes
+verifier runs in `--credential-helper-only` mode, invokes `git credential fill`,
+and refuses the dotenv fallback. Its child `PATH` is replaced with the fixed
+system path `/usr/bin:/bin:/usr/sbin:/sbin`; runtime-env records output as hashes
 rather than returning the stream to the Agent. The credential entrypoint refuses
 a dirty or unversioned catalog root, and the receipt binds the runtime-env HEAD,
-tree, and dirty state. Consumer repositories must not add a second `.env`.
+tree, dirty state, and read-only target policy result. Consumer repositories
+must not add a second `.env`.
 
 The sections come from catalog metadata, not hand-written comments.
 `local-only` identifies host paths, loopback services, and local carrier

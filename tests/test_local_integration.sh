@@ -112,6 +112,13 @@ if grep -Fq "${sentinel}" "${scratch}/helper.out" "${scratch}/helper.err"; then
   exit 1
 fi
 
+HOME="${scratch}/home" PATH="${fake_bin}:${PATH}" FAKE_SECRET="${sentinel}" \
+  bash "${ROOT}/scripts/verify-local-runtime.sh" \
+  --canonical-path "${scratch}/canonical" --credential-helper-only \
+  >"${scratch}/helper-only.out" 2>"${scratch}/helper-only.err"
+grep -q "AUTHENTICATED Forgejo credential via git credential helper" \
+  "${scratch}/helper-only.out"
+
 set +e
 HOME="${scratch}/home" PATH="${fake_bin}:${PATH}" FAKE_SECRET="${sentinel}" \
   FAKE_GIT_MODE=missing bash "${ROOT}/scripts/verify-local-runtime.sh" \
@@ -139,6 +146,23 @@ printf '%s\n' \
   'FORGEJO_USERNAME=fixture-user' \
   "FORGEJO_PASSWORD=${sentinel}" > "${fallback}"
 chmod 600 "${fallback}"
+set +e
+HOME="${scratch}/home" PATH="${fake_bin}:${PATH}" FAKE_SECRET="${sentinel}" \
+  FAKE_GIT_MODE=missing bash "${ROOT}/scripts/verify-local-runtime.sh" \
+  --canonical-path "${scratch}/canonical" --env-file "${fallback}" \
+  --credential-helper-only \
+  >"${scratch}/helper-only-missing.out" 2>"${scratch}/helper-only-missing.err"
+helper_only_missing_status=$?
+set -e
+[[ ${helper_only_missing_status} -eq 3 ]]
+grep -q "MISSING Forgejo credential: helper empty" \
+  "${scratch}/helper-only-missing.err"
+if grep -q "dotenv fallback" \
+  "${scratch}/helper-only-missing.out" "${scratch}/helper-only-missing.err"; then
+  echo "FAIL: helper-only canary used the dotenv fallback" >&2
+  exit 1
+fi
+
 HOME="${scratch}/home" PATH="${fake_bin}:${PATH}" FAKE_SECRET="${sentinel}" \
   FAKE_GIT_MODE=missing bash "${ROOT}/scripts/verify-local-runtime.sh" \
   --canonical-path "${scratch}/canonical" --env-file "${fallback}" \

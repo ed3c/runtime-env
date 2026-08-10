@@ -6,7 +6,7 @@
   "host": "local-macos",
   "entrypoints": {
     "broker-selftest": ["@runtime-env/runtime-env", "validate"],
-    "credential-canary": ["bash", "@runtime-env/scripts/verify-local-runtime.sh"]
+    "credential-canary": ["/bin/bash", "@runtime-env/scripts/verify-local-runtime.sh", "--credential-helper-only"]
   },
   "entrypoint_environment": {
     "broker-selftest": [],

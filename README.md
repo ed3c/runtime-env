@@ -193,7 +193,8 @@ The fixed `forgejo-delivery-loop` workload runs the catalog's offline
 `broker-selftest` or live `credential-canary` from versioned runtime-env code
 and emits a metadata-only receipt bound to the catalog HEAD/tree. The credential
 canary refuses a dirty catalog, does not execute consumer-repo code, and exposes
-no Forgejo mutation entrypoint.
+no Forgejo mutation entrypoint. It is helper-only, runs with a fixed system
+`PATH`, and fails if a read-only workload changes the target Git state.
 
 ## Local and cloud JDK 21
 

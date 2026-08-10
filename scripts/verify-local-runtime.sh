@@ -8,6 +8,7 @@ set +x
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 env_file="${HOME}/.config/runtime-env/secrets/forgejo-local.env"
 canonical_path=""
+credential_helper_only=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -27,8 +28,12 @@ while [[ $# -gt 0 ]]; do
       canonical_path="$2"
       shift 2
       ;;
+    --credential-helper-only)
+      credential_helper_only=true
+      shift
+      ;;
     *)
-      echo "usage: verify-local-runtime.sh [--env-file PATH] [--canonical-path PATH]" >&2
+      echo "usage: verify-local-runtime.sh [--env-file PATH] [--canonical-path PATH] [--credential-helper-only]" >&2
       exit 2
       ;;
   esac
@@ -94,6 +99,9 @@ unset credential_payload
 
 if [[ -n "${credential_user}" && "${credential_secret_present}" == true ]]; then
   credential_source="git credential helper"
+elif [[ "${credential_helper_only}" == true ]]; then
+  echo "MISSING Forgejo credential: helper empty in helper-only mode" >&2
+  exit 3
 elif [[ -f "${env_file}" ]]; then
   set +e
   python3 - "${env_file}" <<'PY'
