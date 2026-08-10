@@ -17,16 +17,16 @@
       "Edit(<codex-home>/**)",
       "Read(<agy-home>/**)",
       "Edit(<agy-home>/**)",
-      "Read(<stealth-browser-root>/profiles/**)",
-      "Edit(<stealth-browser-root>/profiles/**)",
+      "Read(<stealth-profile-root>/**)",
+      "Edit(<stealth-profile-root>/**)",
       "Read(<appstoreconnect-private-keys>/**)",
       "Edit(<appstoreconnect-private-keys>/**)"
     ],
     "sandbox.enabled": true,
     "sandbox.failIfUnavailable": true,
     "sandbox.allowUnsandboxedCommands": false,
-    "sandbox.filesystem.denyRead": ["<runtime-env-root>/.env", "<claude-config-dir>", "<codex-home>", "<agy-home>", "<stealth-browser-root>/profiles", "<appstoreconnect-private-keys>"],
-    "sandbox.filesystem.denyWrite": ["<runtime-env-root>/.env", "<claude-config-dir>", "<codex-home>", "<agy-home>", "<stealth-browser-root>/profiles", "<appstoreconnect-private-keys>"]
+    "sandbox.filesystem.denyRead": ["<runtime-env-root>/.env", "<claude-config-dir>", "<codex-home>", "<agy-home>", "<stealth-profile-root>", "<appstoreconnect-private-keys>"],
+    "sandbox.filesystem.denyWrite": ["<runtime-env-root>/.env", "<claude-config-dir>", "<codex-home>", "<agy-home>", "<stealth-profile-root>", "<appstoreconnect-private-keys>"]
   },
   "forbidden_environment": ["CODEX_ACCESS_TOKEN", "CODEX_API_KEY", "CODEX_HOME", "OPENAI_API_KEY"],
   "external_requirements": ["Render placeholders to absolute host paths and install the resulting deny rules in a host or managed settings layer that the repository cannot widen."],
