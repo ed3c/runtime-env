@@ -35,6 +35,7 @@ assert "CLAUDE_CONFIG_DIR" not in value["entrypoint_environment"]["codex-login-s
 assert value["entrypoints"]["claude-auth-status"][-1] == "claude"
 assert value["entrypoints"]["codex-login-status"][-1] == "codex"
 assert value["entrypoints"]["agy-model-inventory"][-1] == "agy"
+assert value["entrypoint_environment"]["research-browser-health"] == ["DR_CDP_URL"]
 assert value["evidence"]["receipt"]
 assert value["evidence"]["control"]
 ' <<< "${proof}"

@@ -133,7 +133,10 @@ The caller receives only the bounded receipt required by
 `gemini-conversation-research/modules/browser-content-isolation.md`. The
 dedicated `:9333` research profile and an interactive extension profile are
 different carriers and must not be driven concurrently as if they were one
-browser.
+browser. The bettor binding includes a metadata-only `research-browser-health`
+entrypoint. It accepts only loopback HTTP, reads `/json/version`, verifies the
+debugger WebSocket is also loopback, and emits only a browser-version hash. It
+does not enumerate tabs, inspect DOM, or transmit a prompt.
 
 ### Agy Gemini 3.6 Flash High
 

@@ -10,6 +10,7 @@
     "claude-auth-status": ["python3", "scripts/runtime-env/check-carrier-status.py", "claude"],
     "codex-login-status": ["python3", "scripts/runtime-env/check-carrier-status.py", "codex"],
     "agy-model-inventory": ["python3", "scripts/runtime-env/check-carrier-status.py", "agy"],
+    "research-browser-health": ["python3", "scripts/runtime-env/check-research-cdp.py"],
     "stealth-browser-control": ["sh", "scripts/runtime-env/check-stealth-browser.sh"],
     "equivalence-live": ["python3", "scripts/runtime-env/run-equivalence-live.py"]
   },
@@ -19,6 +20,7 @@
     "claude-auth-status": [],
     "codex-login-status": ["CODEX_HOME"],
     "agy-model-inventory": ["AGY_MODEL", "AGY_EFFORT"],
+    "research-browser-health": ["DR_CDP_URL"],
     "stealth-browser-control": ["STEALTH_BROWSER_ROOT"],
     "equivalence-live": ["ANTIGRAVITY_PEER", "DR_CDP_URL", "EQUIVALENCE_APPROVAL_RECEIPT_PATH", "EQUIVALENCE_REQUEST_PATH", "EQUIVALENCE_RUN_ROOT", "SKILL_BETTOR_PEER"]
   },
