@@ -1,1 +1,1 @@
-{"schema":"runtime-env/module/v1","id":"claude-code-session","summary":"Existing host Claude Code login; session credentials remain outside the agent sandbox.","requires":[],"optional":["CLAUDE_CONFIG_DIR"],"defaults":{}}
+{"schema":"runtime-env/module/v1","id":"claude-code-session","summary":"Existing host Claude Code login; session credentials remain outside the agent sandbox.","requires":["CLAUDE_CONFIG_DIR"],"optional":[],"defaults":{}}

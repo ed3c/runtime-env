@@ -27,7 +27,11 @@ proof="$(${ROOT}/runtime-env workload show --id bettor-arena-proof)"
 python3 -c '
 import json, sys
 value = json.load(sys.stdin)
-assert value["secret_delivery"] == "none"
+assert value["secret_delivery"] == "broker-only"
+assert value["entrypoint_environment"]["claude-auth-status"] == ["CLAUDE_CONFIG_DIR"]
+assert value["entrypoint_environment"]["codex-login-status"] == ["CODEX_HOME"]
+assert "CODEX_HOME" not in value["entrypoint_environment"]["claude-auth-status"]
+assert "CLAUDE_CONFIG_DIR" not in value["entrypoint_environment"]["codex-login-status"]
 assert value["evidence"]["receipt"]
 assert value["evidence"]["control"]
 ' <<< "${proof}"

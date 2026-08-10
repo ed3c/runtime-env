@@ -1,0 +1,12 @@
+{
+  "schema": "runtime-env/module/v1",
+  "id": "technical-equivalence-live",
+  "summary": "Digest-bound Gemini transmission approval and private run sink for bettor-arena technical-equivalence research.",
+  "requires": [
+    "EQUIVALENCE_APPROVAL_RECEIPT_PATH",
+    "EQUIVALENCE_REQUEST_PATH",
+    "EQUIVALENCE_RUN_ROOT"
+  ],
+  "optional": [],
+  "defaults": {}
+}

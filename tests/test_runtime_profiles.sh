@@ -25,4 +25,10 @@ agy="$(${ROOT}/runtime-env list --profile agy-gemini36-flash-high-local)"
 browser="$(${ROOT}/runtime-env list --profile gemini-conversation-research-local)"
 [[ "${browser}" == *$'DR_CDP_URL\thttp://127.0.0.1:9333'* ]]
 
+bettor="$(${ROOT}/runtime-env list --profile bettor-arena-runtime-local)"
+for name in CLAUDE_CONFIG_DIR CODEX_HOME EQUIVALENCE_APPROVAL_RECEIPT_PATH \
+  EQUIVALENCE_REQUEST_PATH EQUIVALENCE_RUN_ROOT STEALTH_BROWSER_ROOT; do
+  [[ "${bettor}" == *"${name}"* ]]
+done
+
 echo 'PASS: physical runtime profiles expose required names'

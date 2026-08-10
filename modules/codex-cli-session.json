@@ -1,1 +1,1 @@
-{"schema":"runtime-env/module/v1","id":"codex-cli-session","summary":"Existing host Codex CLI ChatGPT login; auth cache remains outside the agent sandbox.","requires":[],"optional":["CODEX_HOME"],"defaults":{}}
+{"schema":"runtime-env/module/v1","id":"codex-cli-session","summary":"Existing host Codex CLI ChatGPT login; auth cache remains outside the agent sandbox.","requires":["CODEX_HOME"],"optional":[],"defaults":{}}

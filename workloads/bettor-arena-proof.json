@@ -6,13 +6,23 @@
   "host": "local-macos",
   "entrypoints": {
     "prove-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "prove", "--force-receipt"],
-    "control-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "test", "--force-receipt"]
+    "control-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "test", "--force-receipt"],
+    "claude-auth-status": ["claude", "auth", "status"],
+    "codex-login-status": ["codex", "login", "status"],
+    "agy-model-inventory": ["agy", "models"],
+    "stealth-browser-control": ["sh", "scripts/runtime-env/check-stealth-browser.sh"],
+    "equivalence-live": ["python3", "scripts/runtime-env/run-equivalence-live.py"]
   },
   "entrypoint_environment": {
     "prove-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"],
-    "control-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"]
+    "control-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"],
+    "claude-auth-status": ["CLAUDE_CONFIG_DIR"],
+    "codex-login-status": ["CODEX_HOME"],
+    "agy-model-inventory": ["AGY_MODEL", "AGY_EFFORT"],
+    "stealth-browser-control": ["STEALTH_BROWSER_ROOT"],
+    "equivalence-live": ["ANTIGRAVITY_PEER", "DR_CDP_URL", "EQUIVALENCE_APPROVAL_RECEIPT_PATH", "EQUIVALENCE_REQUEST_PATH", "EQUIVALENCE_RUN_ROOT", "SKILL_BETTOR_PEER"]
   },
-  "secret_delivery": "none",
+  "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",
   "evidence": {
