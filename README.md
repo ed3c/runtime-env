@@ -21,6 +21,8 @@ This prevents an optional cloud backend from making a local workflow demand unre
 ./runtime-env check --profile skill-bettor-e2b --env-file .env
 ./runtime-env local-env init      # first use: blank, untracked, mode 0600
 ./runtime-env local-env doctor    # names and presence only; never values
+./runtime-env local-env reconcile # append newly cataloged names with empty values
+./runtime-env local-env set-path --name CODEX_HOME --path /absolute/existing/path
 ./runtime-env workload list
 ./runtime-env workload show --id ios-testflight-beta
 ./runtime-env workload run --id bettor-arena-proof --entrypoint prove-harness \

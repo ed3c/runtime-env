@@ -60,4 +60,27 @@ safe_output="$(${ROOT}/runtime-env local-env doctor --env-file "${fixture}")"
 [[ "${safe_output}" == *'OK local env metadata'* ]]
 [[ "${safe_output}" != *"${sentinel}"* ]]
 
+reconcile_output="$(${ROOT}/runtime-env local-env reconcile --env-file "${fixture}")"
+[[ "${reconcile_output}" == *'RECONCILED local env'* ]]
+[[ "${reconcile_output}" != *"${sentinel}"* ]]
+[[ "$(file_mode "${fixture}")" == '600' ]]
+grep -Fq "E2B_API_KEY=${sentinel}" "${fixture}"
+grep -Fq 'EQUIVALENCE_REQUEST_PATH=' "${fixture}"
+
+config_root="${scratch}/codex-home"
+mkdir -p "${config_root}"
+set_path_output="$(${ROOT}/runtime-env local-env set-path --env-file "${fixture}" \
+  --name CODEX_HOME --path "${config_root}")"
+[[ "${set_path_output}" == 'UPDATED local env path: CODEX_HOME' ]]
+[[ "${set_path_output}" != *"${config_root}"* ]]
+grep -Fq "CODEX_HOME=${config_root}" "${fixture}"
+
+set +e
+secret_path_output="$(${ROOT}/runtime-env local-env set-path --env-file "${fixture}" \
+  --name E2B_API_KEY --path "${config_root}" 2>&1)"
+secret_path_status=$?
+set -e
+[[ ${secret_path_status} -eq 2 && "${secret_path_output}" == *'non-secret path variables'* ]]
+[[ "${secret_path_output}" != *"${sentinel}"* ]]
+
 echo 'PASS: local env doctor reports metadata without values'

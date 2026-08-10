@@ -16,7 +16,7 @@ printf '%s\n' \
   '{"name":"BROKER_SECRET","secret":true,"description":"Secret that none-delivery must refuse."}' \
   ']}' > "${CATALOG}/catalog/variables.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/module/v1","id":"runner","summary":"Runner fixture.","requires":[],"optional":["RUNTIME_SENTINEL","UNRELATED_CONFIG"],"defaults":{}}' \
+  '{"schema":"runtime-env/module/v1","id":"runner","summary":"Runner fixture.","requires":[],"optional":["RUNTIME_SENTINEL","UNRELATED_CONFIG"],"defaults":{"RUNTIME_SENTINEL":"catalog-default"}}' \
   > "${CATALOG}/modules/runner.json"
 printf '%s\n' \
   '{"schema":"runtime-env/module/v1","id":"secret","summary":"Secret fixture.","requires":["BROKER_SECRET"],"optional":[],"defaults":{}}' \
@@ -64,6 +64,12 @@ assert d["stderr"]["bytes"] == 0 and len(d["stderr"]["sha256"]) == 64
 assert os.stat(d["receipt_path"]).st_mode & 0o777 == 0o600
 ' <<< "${output}"
 [[ "$(cat "${TARGET}/artifact.txt")" == 'broker-value' ]]
+
+printf '%s\n' 'RUNTIME_SENTINEL=' 'UNRELATED_CONFIG=must-not-cross-carriers' > "${ENV_FILE}"
+${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
+  --id runner --entrypoint fixed --target-root "${TARGET}" --env-file "${ENV_FILE}" --json >/dev/null
+[[ "$(cat "${TARGET}/artifact.txt")" == 'catalog-default' ]]
+printf '%s\n' 'RUNTIME_SENTINEL=broker-value' 'UNRELATED_CONFIG=must-not-cross-carriers' > "${ENV_FILE}"
 
 set +e
 placeholder_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \

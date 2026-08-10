@@ -733,6 +733,53 @@ def _load_private_dotenv(*, catalog: Catalog, env_file: Path) -> dict[str, str]:
     return values
 
 
+def reconcile_local_env(*, catalog: Catalog, env_file: Path) -> int:
+    path = env_file.expanduser().absolute()
+    values = _load_private_dotenv(catalog=catalog, env_file=path)
+    missing = sorted(set(catalog.variables) - set(values))
+    if not missing:
+        print("UNCHANGED local env: every catalog name is declared, values redacted")
+        return 0
+    content = path.read_text(encoding="utf-8")
+    if content and not content.endswith("\n"):
+        content += "\n"
+    content += "\n# Added by runtime-env local-env reconcile; values remain empty.\n"
+    content += "".join(f"{name}=\n" for name in missing)
+    _atomic_write(path, content)
+    path.chmod(0o600)
+    print(f"RECONCILED local env: added {len(missing)} empty names, values redacted")
+    return 0
+
+
+def set_local_env_path(
+    *, catalog: Catalog, env_file: Path, name: str, value: Path
+) -> int:
+    path = env_file.expanduser().absolute()
+    _load_private_dotenv(catalog=catalog, env_file=path)
+    metadata = catalog.variables.get(name)
+    if metadata is None:
+        raise ContractError(f"unknown variable: {name}")
+    if metadata["secret"]:
+        raise ContractError("set-path accepts only declared non-secret path variables")
+    resolved = value.expanduser().absolute()
+    if not resolved.exists():
+        raise ContractError(f"set-path target does not exist for {name}")
+    raw_lines = path.read_text(encoding="utf-8").splitlines()
+    assignment = re.compile(rf"^\s*(?:export\s+)?{re.escape(name)}\s*=")
+    indexes = [index for index, line in enumerate(raw_lines) if assignment.match(line)]
+    if len(indexes) > 1:
+        raise ContractError(f"local env contains duplicate assignments for {name}")
+    replacement = f"{name}={resolved}"
+    if indexes:
+        raw_lines[indexes[0]] = replacement
+    else:
+        raw_lines.append(replacement)
+    _atomic_write(path, "\n".join(raw_lines) + "\n")
+    path.chmod(0o600)
+    print(f"UPDATED local env path: {name}")
+    return 0
+
+
 def _execution_receipt_path(receipt: dict[str, Any]) -> Path:
     directory = Path(tempfile.gettempdir()) / f"runtime-env-receipts-{os.getuid()}"
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -792,9 +839,9 @@ def run_workload(
     configured: dict[str, str] = {}
     for variable in selected:
         value = os.environ.get(variable.name)
-        if value is None:
+        if not value:
             value = dotenv.get(variable.name)
-        if value is None:
+        if not value:
             value = variable.default
         if value:
             configured[variable.name] = value
@@ -1128,6 +1175,16 @@ def build_parser() -> argparse.ArgumentParser:
     local_env_init.add_argument("--env-file", type=Path)
     local_env_doctor = local_env_subparsers.add_parser("doctor")
     local_env_doctor.add_argument("--env-file", type=Path)
+    local_env_reconcile = local_env_subparsers.add_parser(
+        "reconcile", help="append missing catalog names with empty values"
+    )
+    local_env_reconcile.add_argument("--env-file", type=Path)
+    local_env_set_path = local_env_subparsers.add_parser(
+        "set-path", help="set one declared non-secret path without printing it"
+    )
+    local_env_set_path.add_argument("--env-file", type=Path)
+    local_env_set_path.add_argument("--name", required=True)
+    local_env_set_path.add_argument("--path", type=Path, required=True)
     workload_parser = subparsers.add_parser("workload", help="inspect typed local workloads")
     workload_subparsers = workload_parser.add_subparsers(dest="workload_command", required=True)
     workload_subparsers.add_parser("list")
@@ -1267,6 +1324,18 @@ def main(argv: list[str] | None = None) -> int:
                 return initialize_local_env(
                     catalog=catalog,
                     env_file=args.env_file or (args.catalog_root / ".env"),
+                )
+            if args.local_env_command == "reconcile":
+                return reconcile_local_env(
+                    catalog=catalog,
+                    env_file=args.env_file or (args.catalog_root / ".env"),
+                )
+            if args.local_env_command == "set-path":
+                return set_local_env_path(
+                    catalog=catalog,
+                    env_file=args.env_file or (args.catalog_root / ".env"),
+                    name=args.name,
+                    value=args.path,
                 )
             return doctor_local_env(
                 catalog=catalog,
