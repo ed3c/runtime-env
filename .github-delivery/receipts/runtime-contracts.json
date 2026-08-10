@@ -1,0 +1,14 @@
+{
+  "schema": "github-delivery-receipt/v1",
+  "line": "runtime-contracts",
+  "github_repo": "ed3c/runtime-env",
+  "github_repository_id": "R_kgDOT0Gv5A",
+  "prd_issue_url": "https://github.com/ed3c/runtime-env/issues/1",
+  "issue_urls": [
+    "https://github.com/ed3c/runtime-env/issues/2"
+  ],
+  "pr_urls": [],
+  "project_url": "https://github.com/users/ed3c/projects/3",
+  "source_commit": "2ab2b8757a39e4f084ae713330d7e3512a004702",
+  "synced_at": "2026-08-10T11:08:02Z"
+}
