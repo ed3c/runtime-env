@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ed3c/runtime-env/blob/main/contracts/module.schema.json",
+  "title": "runtime-env module v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "summary", "requires", "optional", "defaults"],
+  "properties": {
+    "schema": {"const": "runtime-env/module/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "requires": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "optional": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "defaults": {"type": "object", "additionalProperties": {"type": "string"}}
+  }
+}
