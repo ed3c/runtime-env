@@ -12,6 +12,10 @@ profiles="$(${ROOT}/runtime-env list --kind profiles)"
   echo "FAIL: profile listing omitted mac-device-runner" >&2
   exit 1
 }
+[[ "${profiles}" == *"codex-cloud-portable"* ]] || {
+  echo "FAIL: profile listing omitted codex-cloud-portable" >&2
+  exit 1
+}
 
 e2b="$(${ROOT}/runtime-env list --profile skill-bettor-e2b)"
 [[ "${e2b}" == *$'required\tsecret\tE2B_API_KEY'* ]] || {

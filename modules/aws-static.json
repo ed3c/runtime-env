@@ -1,1 +1,0 @@
-{"schema":"runtime-env/module/v1","id":"aws-static","summary":"Legacy AWS static credentials; do not use in public CI.","requires":["AWS_ACCESS_KEY_ID","AWS_SECRET_ACCESS_KEY","AWS_REGION"],"optional":["AWS_SESSION_TOKEN"],"defaults":{}}

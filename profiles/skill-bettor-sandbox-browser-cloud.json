@@ -1,1 +1,1 @@
-{"schema":"runtime-env/profile/v1","id":"skill-bettor-sandbox-browser-cloud","summary":"Skill-bettor experimental cloud sandbox and browser providers.","modules":["e2b","gemini","browserbase"]}
+{"schema":"runtime-env/profile/v1","id":"skill-bettor-sandbox-browser-cloud","summary":"Skill-bettor experimental cloud sandbox and browser providers.","modules":["e2b","gemini","stagehand-gemini","browserbase"]}

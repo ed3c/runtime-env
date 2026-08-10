@@ -18,6 +18,16 @@ local_dotenv="$(${ROOT}/runtime-env render --profile skill-bettor-local --format
   echo "FAIL: local profile lost its Ollama default" >&2
   exit 1
 }
+
+gemini_dotenv="$(${ROOT}/runtime-env render --profile skill-bettor-gemini --format dotenv)"
+[[ "${gemini_dotenv}" == *$'NL_PROVIDER=gemini'* ]] || {
+  echo "FAIL: Gemini profile does not select the Gemini provider" >&2
+  exit 1
+}
+[[ "${gemini_dotenv}" == *$'NL_MODEL=google/gemini-2.0-flash'* ]] || {
+  echo "FAIL: Gemini profile does not select its verified model default" >&2
+  exit 1
+}
 [[ "${local_dotenv}" != *"API_KEY"* ]] || {
   echo "FAIL: local-zero-key profile unexpectedly requires a cloud key" >&2
   exit 1

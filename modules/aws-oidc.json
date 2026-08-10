@@ -1,1 +1,0 @@
-{"schema":"runtime-env/module/v1","id":"aws-oidc","summary":"AWS access through short-lived OIDC credentials.","requires":["AWS_ROLE_ARN","AWS_REGION"],"optional":[],"defaults":{}}

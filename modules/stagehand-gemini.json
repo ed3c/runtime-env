@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"stagehand-gemini","summary":"Stagehand natural-language actions explicitly routed to Gemini.","requires":[],"optional":["NL_PROVIDER","NL_MODEL"],"defaults":{"NL_PROVIDER":"gemini","NL_MODEL":"google/gemini-2.0-flash"}}

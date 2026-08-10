@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"codex-cloud-portable","summary":"Portable repository tasks in a managed Codex cloud environment.","modules":["codex-cloud"]}
