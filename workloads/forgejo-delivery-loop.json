@@ -1,0 +1,23 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "forgejo-delivery-loop",
+  "summary": "Verify forgejo-delivery-loop's runtime-owned broker and live Keychain-backed Git helper without executing consumer-repo code.",
+  "profile": "forgejo-delivery-keychain-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "broker-selftest": ["@runtime-env/runtime-env", "validate"],
+    "credential-canary": ["bash", "@runtime-env/scripts/verify-local-runtime.sh"]
+  },
+  "entrypoint_environment": {
+    "broker-selftest": [],
+    "credential-canary": []
+  },
+  "clean_catalog_entrypoints": ["credential-canary"],
+  "secret_delivery": "none",
+  "agent_secret_access": "denied",
+  "mutation": "read-only",
+  "evidence": {
+    "receipt": "host-only runtime-env execution receipt",
+    "control": "runtime-env validate"
+  }
+}

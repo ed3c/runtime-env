@@ -50,6 +50,7 @@ ALLOWED_FIELDS = {
         "host",
         "entrypoints",
         "entrypoint_environment",
+        "clean_catalog_entrypoints",
         "secret_delivery",
         "agent_secret_access",
         "mutation",
@@ -116,6 +117,7 @@ class Catalog:
     profiles: dict[str, dict[str, Any]]
     workloads: dict[str, dict[str, Any]]
     policies: dict[str, dict[str, Any]]
+    root: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -361,6 +363,25 @@ def load_catalog(root: Path) -> Catalog:
                     f"workload {workload_id}: entrypoint_environment.{entrypoint_id} "
                     f"references variables outside profile: {', '.join(unknown)}"
                 )
+        clean_catalog_entrypoints = workload.get("clean_catalog_entrypoints", [])
+        if (
+            not isinstance(clean_catalog_entrypoints, list)
+            or any(
+                not isinstance(entrypoint_id, str) or not entrypoint_id
+                for entrypoint_id in clean_catalog_entrypoints
+            )
+            or len(clean_catalog_entrypoints) != len(set(clean_catalog_entrypoints))
+        ):
+            raise ContractError(
+                f"workload {workload_id}: clean_catalog_entrypoints must be a "
+                "unique string array"
+            )
+        unknown_clean = sorted(set(clean_catalog_entrypoints) - set(entrypoints))
+        if unknown_clean:
+            raise ContractError(
+                f"workload {workload_id}: clean_catalog_entrypoints references "
+                f"unknown entrypoints: {', '.join(unknown_clean)}"
+            )
         evidence = workload.get("evidence")
         if not isinstance(evidence, dict) or set(evidence) != {"receipt", "control"}:
             raise ContractError(
@@ -419,6 +440,7 @@ def load_catalog(root: Path) -> Catalog:
         profiles=profiles,
         workloads=workloads,
         policies=policies,
+        root=root.resolve(),
     )
     for profile_id in profiles:
         select_variables(catalog, profile_id=profile_id, include_all=False)
@@ -1112,6 +1134,69 @@ def _execution_receipt_path(
     return path
 
 
+def _resolve_workload_command(catalog: Catalog, command: list[str]) -> list[str]:
+    """Resolve versioned broker executables without using consumer-repo code."""
+    resolved: list[str] = []
+    for part in command:
+        if not part.startswith("@runtime-env/"):
+            resolved.append(part)
+            continue
+        if catalog.root is None:
+            raise ContractError("runtime-env-owned entrypoint requires a catalog root")
+        relative = Path(part.removeprefix("@runtime-env/"))
+        if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+            raise ContractError("runtime-env-owned entrypoint has an unsafe path")
+        root = catalog.root.resolve()
+        candidate = root.joinpath(relative)
+        try:
+            candidate.resolve().relative_to(root)
+        except ValueError as exc:
+            raise ContractError(
+                "runtime-env-owned entrypoint escapes the catalog root"
+            ) from exc
+        if candidate.is_symlink() or not candidate.is_file():
+            raise ContractError(
+                f"runtime-env-owned entrypoint is not a regular file: {relative}"
+            )
+        resolved.append(str(candidate.resolve()))
+    return resolved
+
+
+def _catalog_source_metadata(catalog: Catalog) -> dict[str, Any]:
+    if catalog.root is None:
+        return {"root": None, "versioned": False, "head": None, "tree": None, "dirty": None}
+    root = catalog.root.resolve()
+    try:
+        top_level = Path(_git(root, "rev-parse", "--show-toplevel")).resolve()
+        head = _git(root, "rev-parse", "HEAD")
+        tree = _git(root, "rev-parse", "HEAD^{tree}")
+        dirty = bool(_git(root, "status", "--porcelain=v1"))
+    except ContractError:
+        return {
+            "root": str(root),
+            "versioned": False,
+            "head": None,
+            "tree": None,
+            "dirty": None,
+        }
+    return {
+        "root": str(root),
+        "versioned": top_level == root,
+        "head": head,
+        "tree": tree,
+        "dirty": dirty,
+    }
+
+
+def _require_clean_catalog(catalog: Catalog) -> dict[str, Any]:
+    metadata = _catalog_source_metadata(catalog)
+    if not metadata["versioned"] or metadata["dirty"] is not False:
+        raise ContractError(
+            "credential-bearing entrypoint requires a clean runtime-env catalog root"
+        )
+    return metadata
+
+
 def run_workload(
     *,
     catalog: Catalog,
@@ -1138,6 +1223,12 @@ def run_workload(
         raise ContractError(
             f"workload {workload_id}: entrypoint {entrypoint_id} has an unresolved placeholder"
         )
+    resolved_command = _resolve_workload_command(catalog, command)
+    runtime_source = (
+        _require_clean_catalog(catalog)
+        if entrypoint_id in workload.get("clean_catalog_entrypoints", [])
+        else _catalog_source_metadata(catalog)
+    )
 
     target = target_root.expanduser().resolve()
     top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
@@ -1215,7 +1306,7 @@ def run_workload(
     started_at = datetime.now(timezone.utc)
     try:
         result = subprocess.run(
-            command,
+            resolved_command,
             cwd=target,
             env=child_environment,
             check=False,
@@ -1260,6 +1351,7 @@ def run_workload(
             "dirty_after": bool(after_status),
         },
         "declared_evidence": workload["evidence"],
+        "runtime_source": runtime_source,
     }
     _execution_receipt_path(receipt, receipt_path)
     if json_output:

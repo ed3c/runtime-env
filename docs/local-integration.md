@@ -98,6 +98,16 @@ only after Keychain store/get, URL-scoped helper configuration, plaintext-store
 erase/get, and `git credential fill` all agree. A failed intermediate step
 leaves the dotenv password available for recovery.
 
+Normal post-migration delivery uses the `forgejo-delivery-keychain-local`
+profile and fixed `forgejo-delivery-loop` workload. That profile has no
+variables: the child receives neither `FORGEJO_PASSWORD` nor `FORGEJO_TOKEN`.
+The live canary inherits only the runner's safe host surface (including `HOME`)
+and executes runtime-env's own versioned verifier, not consumer-repo code. The
+verifier invokes `git credential fill`; runtime-env records its output as hashes
+rather than returning the stream to the Agent. The credential entrypoint refuses
+a dirty or unversioned catalog root, and the receipt binds the runtime-env HEAD,
+tree, and dirty state. Consumer repositories must not add a second `.env`.
+
 The sections come from catalog metadata, not hand-written comments.
 `local-only` identifies host paths, loopback services, and local carrier
 selectors. `cloud-runtime` identifies remote-service inputs even though their

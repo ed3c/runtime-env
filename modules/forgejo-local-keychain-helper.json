@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"forgejo-local-keychain-helper","summary":"Post-migration localhost Forgejo access through Git's macOS Keychain-backed credential helper; no dotenv value enters the workload.","requires":[],"optional":[],"defaults":{}}
