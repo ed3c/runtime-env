@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"forgejo-delivery-local-api","summary":"Opt-in contract for a typed localhost Forgejo API client, not the current Chrome/helper loop.","modules":["forgejo-local-api"]}

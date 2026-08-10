@@ -47,4 +47,19 @@ for expected in E2B_API_KEY GEMINI_API_KEY OPENAI_API_KEY APPLITOOLS_API_KEY NGC
   }
 done
 
+forgejo_dotenv="$(${ROOT}/runtime-env render --profile forgejo-delivery-local-password --format dotenv)"
+for expected in \
+  'FORGEJO_URL=http://localhost:3000' \
+  'FORGEJO_USERNAME=' \
+  'FORGEJO_PASSWORD='; do
+  [[ "${forgejo_dotenv}" == *"${expected}"* ]] || {
+    echo "FAIL: Forgejo dotenv omitted ${expected}" >&2
+    exit 1
+  }
+done
+[[ "${forgejo_dotenv}" != *'neon'* ]] || {
+  echo "FAIL: reusable Forgejo template hard-coded a local account" >&2
+  exit 1
+}
+
 echo "PASS: deterministic secret-free rendering seam"

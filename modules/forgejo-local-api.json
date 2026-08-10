@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"forgejo-local-api","summary":"Opt-in credentials for a typed local Forgejo API client.","requires":["FORGEJO_TOKEN"],"optional":["FORGEJO_URL","FORGEJO_USERNAME"],"defaults":{"FORGEJO_URL":"http://localhost:3000"}}

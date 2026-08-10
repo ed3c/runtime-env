@@ -29,4 +29,21 @@ local="$(${ROOT}/runtime-env list --profile skill-bettor-local)"
   exit 1
 }
 
+forgejo="$(${ROOT}/runtime-env list --profile forgejo-delivery-local-password)"
+for expected in \
+  $'optional\tnon-secret\tFORGEJO_URL\thttp://localhost:3000' \
+  $'required\tnon-secret\tFORGEJO_USERNAME' \
+  $'required\tsecret\tFORGEJO_PASSWORD'; do
+  [[ "${forgejo}" == *"${expected}"* ]] || {
+    echo "FAIL: Forgejo password profile omitted ${expected}" >&2
+    exit 1
+  }
+done
+
+forgejo_token="$(${ROOT}/runtime-env list --profile forgejo-delivery-local-api)"
+[[ "${forgejo_token}" == *$'required\tsecret\tFORGEJO_TOKEN'* ]] || {
+  echo "FAIL: Forgejo token profile omitted FORGEJO_TOKEN" >&2
+  exit 1
+}
+
 echo "PASS: catalog discovery seam"

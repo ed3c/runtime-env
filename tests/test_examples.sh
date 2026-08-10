@@ -12,5 +12,7 @@ compare_example() {
 compare_example skill-bettor-e2b
 compare_example skill-bettor-local
 compare_example skill-bettor-sandbox-browser-cloud
+compare_example forgejo-delivery-local-password
+compare_example forgejo-delivery-local-api
 
 echo "PASS: committed examples match catalog projections"

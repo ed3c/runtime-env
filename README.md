@@ -44,6 +44,18 @@ The split follows the observed `skill-bettor` behavior: local Ollama is the defa
 
 Generated examples live in [`examples/`](examples/). CI proves they equal current CLI output; edit the catalog, module, or profile instead of editing generated examples directly.
 
+## Local Forgejo profiles
+
+| Profile | Requirement |
+|---|---|
+| `forgejo-delivery-local-password` | Optional bootstrap input: `FORGEJO_USERNAME` and `FORGEJO_PASSWORD` when no helper/session is usable |
+| `forgejo-delivery-local-api` | Opt-in typed API client: `FORGEJO_TOKEN`; not consumed by the current Chrome/helper loop |
+
+Both default `FORGEJO_URL` to `http://localhost:3000`. Exact template, local
+secret-store, Git credential helper, Keychain, legacy plaintext store, repo
+identity, Chrome logical surface, and token UI route are listed in
+[`docs/runtimes/forgejo-localhost.md`](docs/runtimes/forgejo-localhost.md).
+
 ## Where values belong
 
 | Execution plane | Correct value store |
