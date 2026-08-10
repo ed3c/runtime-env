@@ -22,11 +22,13 @@ transport = json.loads(
 for name in (
     "OPENSHELL_CLAUDE_PROVIDER",
     "OPENSHELL_CODEX_PROVIDER",
+    "CODEX_SANDBOX_MODEL",
     "OPENSHELL_GATEWAY",
     "OPENSHELL_GATEWAY_ENDPOINT",
 ):
     assert name in variables and variables[name]["secret"] is False
     assert name in module["optional"]
+assert module["defaults"]["CODEX_SANDBOX_MODEL"] == "gpt-5.6-sol"
 for profile_name in (
     "bettor-arena-runtime-local",
     "dr-research-loop-local",
