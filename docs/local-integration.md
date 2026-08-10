@@ -106,6 +106,9 @@ sections without emitting them.
 | App Store Connect private key | `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8` or another broker-owned `0600` path | `verify_asc`/upload receipt only |
 
 Do not copy, bind-mount, upload, render, or synchronize any of these stores.
+Render the dedicated `<stealth-profile-root>` placeholder into host sandbox deny
+rules; denying the historical `<stealth-browser-root>/profiles` path does not
+protect the new broker-owned credential store.
 `ASC_KEY_PATH` may identify the host file to the broker, but the `.p8` bytes are
 never dotenv content. A logged-in browser is also a credential store: cookies
 and localStorage are credential material even when no API key is visible.

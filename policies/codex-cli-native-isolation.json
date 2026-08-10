@@ -12,6 +12,6 @@
     "shell_environment_policy.ignore_default_excludes": false
   },
   "forbidden_environment": ["ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CONFIG_DIR"],
-  "external_requirements": ["Use OpenShell, a managed Codex App worktree sandbox, or another OS policy to deny read access to runtime-env dotenv and other carrier homes; Codex native workspace-write is not an arbitrary deny-read policy."],
+  "external_requirements": ["Use OpenShell, a managed Codex App worktree sandbox, or another OS policy to deny read access to runtime-env dotenv, <stealth-profile-root>, and other carrier homes; Codex native workspace-write is not an arbitrary deny-read policy."],
   "receipt_commands": ["codex login status", "codex -C <existing-worktree> doctor --json"]
 }
