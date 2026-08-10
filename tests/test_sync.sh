@@ -9,6 +9,16 @@ target_repo="${scratch}/target"
 mkdir -p "${source_repo}/catalog" "${source_repo}/modules" \
   "${source_repo}/profiles" "${source_repo}/workloads" "${source_repo}/policies" "${target_repo}"
 
+file_sha256() {
+  python3 - "$1" <<'PY'
+import hashlib
+from pathlib import Path
+import sys
+
+print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+}
+
 printf '%s\n' \
   '{"schema":"runtime-env/variables/v1","variables":[{"name":"FIXTURE_HOME","secret":false,"description":"Fixture config root."},{"name":"OLLAMA_URL","secret":false,"description":"Ollama service root."}]}' \
   > "${source_repo}/catalog/variables.json"
@@ -120,7 +130,17 @@ ${ROOT}/runtime-env --catalog-root "${source_repo}" sync \
   --workload local-proof --policy fixture-native --target-root "${target_repo}" --apply >/dev/null
 git -C "${target_repo}" add .runtime-env
 
-sed -i '' 's/"secret_delivery": "none"/"secret_delivery": "broker-only"/' "${workload}"
+python3 - "${workload}" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+content = path.read_text(encoding="utf-8")
+old = '"secret_delivery": "none"'
+new = '"secret_delivery": "broker-only"'
+assert content.count(old) == 1
+path.write_text(content.replace(old, new), encoding="utf-8")
+PY
 git -C "${target_repo}" add "${workload}"
 set +e
 staged_output="$(${ROOT}/runtime-env --catalog-root "${scratch}/absent-catalog" verify-consumer \
@@ -146,7 +166,7 @@ ${ROOT}/runtime-env --catalog-root "${source_repo}" sync \
   --workload local-proof --policy fixture-native --target-root "${target_repo}" --check >/dev/null
 
 printf '\n# local drift\n' >> "${example}"
-before_check="$(shasum -a 256 "${example}" | awk '{print $1}')"
+before_check="$(file_sha256 "${example}")"
 set +e
 check_output="$(${ROOT}/runtime-env --catalog-root "${source_repo}" sync \
   --profile bettor-arena-local --binding bettor-arena-local \
@@ -155,7 +175,7 @@ check_status=$?
 set -e
 [[ ${check_status} -eq 2 ]]
 [[ "${check_output}" == *'DRIFT .runtime-env/examples/bettor-arena-local.env.example'* ]]
-[[ "$(shasum -a 256 "${example}" | awk '{print $1}')" == "${before_check}" ]] || {
+[[ "$(file_sha256 "${example}")" == "${before_check}" ]] || {
   echo "FAIL: sync --check mutated a drifted artifact" >&2
   exit 1
 }
