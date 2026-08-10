@@ -250,6 +250,10 @@ def build_parser() -> argparse.ArgumentParser:
     check_parser = subparsers.add_parser("check", help="check required names without printing values")
     check_parser.add_argument("--profile", required=True)
     check_parser.add_argument("--env-file", type=Path)
+    list_parser = subparsers.add_parser("list", help="discover catalog entries or profile requirements")
+    list_selection = list_parser.add_mutually_exclusive_group(required=True)
+    list_selection.add_argument("--kind", choices=("variables", "modules", "profiles"))
+    list_selection.add_argument("--profile")
     return parser
 
 
@@ -297,5 +301,31 @@ def main(argv: list[str] | None = None) -> int:
         if missing_required:
             return 3
         print(f"OK profile {args.profile}: all required variables are present")
+        return 0
+    if args.command == "list":
+        if args.kind == "variables":
+            for name, metadata in sorted(catalog.variables.items()):
+                sensitivity = "secret" if metadata["secret"] else "non-secret"
+                print(f"{name}\t{sensitivity}\t{metadata['description']}")
+            return 0
+        if args.kind in {"modules", "profiles"}:
+            documents = catalog.modules if args.kind == "modules" else catalog.profiles
+            for identifier, document in sorted(documents.items()):
+                print(f"{identifier}\t{document['summary']}")
+            return 0
+        try:
+            selected = select_variables(
+                catalog,
+                profile_id=args.profile,
+                include_all=False,
+            )
+        except ContractError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        for variable in selected:
+            sensitivity = "secret" if catalog.variables[variable.name]["secret"] else "non-secret"
+            requirement = "required" if variable.required else "optional"
+            default = variable.default if variable.default is not None else "-"
+            print(f"{requirement}\t{sensitivity}\t{variable.name}\t{default}")
         return 0
     raise AssertionError(f"unhandled command: {args.command}")
