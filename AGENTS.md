@@ -2,6 +2,14 @@
 
 This repository is a secret-free contract catalog. These rules apply to the entire tree.
 
+## Local integration routing
+
+When a task concerns the canonical checkout at `/Users/neon/runtime-env`, local
+Forgejo, credential placement, or host capability verification, read
+[`docs/local-integration.md`](docs/local-integration.md) before acting. This
+pointer is short by design: `AGENTS.md` is the automatically loaded surface;
+the detailed and versioned integration contract lives in one linked document.
+
 ## Invariants
 
 - A variable name and its security metadata are declared exactly once in `catalog/variables.json`.
