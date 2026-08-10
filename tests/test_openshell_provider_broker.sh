@@ -104,7 +104,8 @@ PY
 chmod 0644 "${AUTH}"
 set +e
 unsafe_output="$(python3 "${ROOT}/scripts/bootstrap-openshell-provider.py" codex-chatgpt \
-  --name refused --auth-file "${AUTH}" --receipt "${SCRATCH}/unsafe.json" 2>&1)"
+  --name refused --auth-file "${AUTH}" --openshell-bin "${FAKE_BIN}/openshell" \
+  --receipt "${SCRATCH}/unsafe.json" 2>&1)"
 unsafe_status=$?
 set -e
 [[ ${unsafe_status} -eq 2 && "${unsafe_output}" == *'mode 0600'* ]]
@@ -113,7 +114,8 @@ chmod 0600 "${AUTH}"
 ln -s "${AUTH}" "${SCRATCH}/auth-link.json"
 set +e
 link_output="$(python3 "${ROOT}/scripts/bootstrap-openshell-provider.py" codex-chatgpt \
-  --name refused --auth-file "${SCRATCH}/auth-link.json" --receipt "${SCRATCH}/link.json" 2>&1)"
+  --name refused --auth-file "${SCRATCH}/auth-link.json" \
+  --openshell-bin "${FAKE_BIN}/openshell" --receipt "${SCRATCH}/link.json" 2>&1)"
 link_status=$?
 set -e
 [[ ${link_status} -eq 2 && "${link_output}" == *'symlink'* ]]
