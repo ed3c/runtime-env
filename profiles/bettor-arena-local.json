@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"bettor-arena-local","summary":"Bettor-arena bootstrap doctor against a local Ollama service root.","modules":["ollama-service-root"]}

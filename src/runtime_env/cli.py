@@ -3,16 +3,21 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
+import tempfile
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 
 VARIABLE_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
+BINDING_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SCHEMAS = {
     "variables": "runtime-env/variables/v1",
     "module": "runtime-env/module/v1",
@@ -279,6 +284,161 @@ def check_environment(
     return lines, missing_required
 
 
+def _git(root: Path, *arguments: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), *arguments],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        raise ContractError(f"cannot run git: {exc}") from exc
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "git command failed"
+        raise ContractError(detail)
+    return result.stdout.strip()
+
+
+def _repository_url(remote: str) -> str:
+    if remote.startswith("git@") and ":" in remote:
+        host, path = remote[4:].split(":", 1)
+        remote = f"https://{host}/{path}"
+    elif remote.startswith("ssh://git@"):
+        parsed = urlsplit(remote)
+        remote = urlunsplit(("https", parsed.hostname or "", parsed.path, "", ""))
+
+    parsed = urlsplit(remote)
+    if parsed.scheme != "https" or not parsed.hostname:
+        raise ContractError("origin must be a credential-free HTTPS or git@ SSH URL")
+    if parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ContractError("origin URL must not contain credentials, query, or fragment")
+    path = parsed.path.removesuffix(".git").rstrip("/")
+    if not path or path == "/":
+        raise ContractError("origin URL must identify a repository")
+    return urlunsplit(("https", parsed.hostname, path, "", ""))
+
+
+def _sha256(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def _canonical_json(document: dict[str, Any]) -> str:
+    return json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _binding_artifacts(
+    *,
+    root: Path,
+    catalog: Catalog,
+    profile_id: str,
+    binding_id: str,
+) -> dict[Path, str]:
+    if not BINDING_ID.fullmatch(binding_id):
+        raise ContractError(
+            "binding must use lowercase letters, digits, and single hyphen separators"
+        )
+    top_level = Path(_git(root, "rev-parse", "--show-toplevel")).resolve()
+    if top_level != root.resolve():
+        raise ContractError("catalog root must be the root of its git repository")
+    if _git(root, "status", "--porcelain", "--untracked-files=all"):
+        raise ContractError("catalog repository must be clean before synchronization")
+
+    selected = select_variables(catalog, profile_id=profile_id, include_all=False)
+    example = render_dotenv(catalog, selected)
+    variables: list[dict[str, Any]] = []
+    for item in selected:
+        metadata = catalog.variables[item.name]
+        variable: dict[str, Any] = {
+            "description": metadata["description"],
+            "name": item.name,
+            "required": item.required,
+            "secret": metadata["secret"],
+        }
+        if metadata.get("account_url") is not None:
+            variable["account_url"] = metadata["account_url"]
+        if item.default is not None:
+            variable["default"] = item.default
+        variables.append(variable)
+
+    binding_path = Path(".runtime-env") / "bindings" / f"{binding_id}.json"
+    example_path = Path(".runtime-env") / "examples" / f"{binding_id}.env.example"
+    document: dict[str, Any] = {
+        "binding": binding_id,
+        "profile": profile_id,
+        "render": {
+            "format": "dotenv",
+            "path": example_path.as_posix(),
+            "sha256": _sha256(example),
+        },
+        "schema": "runtime-env/consumer-binding/v1",
+        "source": {
+            "commit": _git(root, "rev-parse", "HEAD"),
+            "repository": _repository_url(_git(root, "remote", "get-url", "origin")),
+            "tree": _git(root, "rev-parse", "HEAD^{tree}"),
+        },
+        "variables": variables,
+    }
+    document["content_sha256"] = _sha256(_canonical_json(document))
+    binding = json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    return {binding_path: binding, example_path: example}
+
+
+def _atomic_write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.replace(temporary_name, path)
+    finally:
+        try:
+            os.unlink(temporary_name)
+        except FileNotFoundError:
+            pass
+
+
+def sync_consumer(
+    *,
+    root: Path,
+    catalog: Catalog,
+    profile_id: str,
+    binding_id: str,
+    target_root: Path,
+    apply: bool,
+    check: bool,
+) -> int:
+    target = target_root.resolve()
+    target_top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
+    if target_top_level != target:
+        raise ContractError("target root must be the root of its git repository")
+    artifacts = _binding_artifacts(
+        root=root,
+        catalog=catalog,
+        profile_id=profile_id,
+        binding_id=binding_id,
+    )
+    drift = False
+    for relative_path, expected in artifacts.items():
+        destination = target / relative_path
+        current = destination.read_text(encoding="utf-8") if destination.is_file() else None
+        if current == expected:
+            state = "UNCHANGED"
+        elif current is None:
+            state = "MISSING" if check else "WOULD-CREATE"
+            drift = True
+        else:
+            state = "DRIFT" if check else "WOULD-UPDATE"
+            drift = True
+        if apply and current != expected:
+            _atomic_write(destination, expected)
+            state = "CREATED" if current is None else "UPDATED"
+        print(f"{state} {relative_path.as_posix()}")
+    if check and drift:
+        return 2
+    return 0
+
+
 def _default_catalog_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -300,6 +460,15 @@ def build_parser() -> argparse.ArgumentParser:
     list_selection = list_parser.add_mutually_exclusive_group(required=True)
     list_selection.add_argument("--kind", choices=("variables", "modules", "profiles"))
     list_selection.add_argument("--profile")
+    sync_parser = subparsers.add_parser(
+        "sync", help="explicitly synchronize a pinned, secret-free consumer binding"
+    )
+    sync_parser.add_argument("--profile", required=True)
+    sync_parser.add_argument("--binding", required=True)
+    sync_parser.add_argument("--target-root", type=Path, required=True)
+    sync_mode = sync_parser.add_mutually_exclusive_group()
+    sync_mode.add_argument("--apply", action="store_true")
+    sync_mode.add_argument("--check", action="store_true")
     return parser
 
 
@@ -374,4 +543,18 @@ def main(argv: list[str] | None = None) -> int:
             default = variable.default if variable.default is not None else "-"
             print(f"{requirement}\t{sensitivity}\t{variable.name}\t{default}")
         return 0
+    if args.command == "sync":
+        try:
+            return sync_consumer(
+                root=args.catalog_root.resolve(),
+                catalog=catalog,
+                profile_id=args.profile,
+                binding_id=args.binding,
+                target_root=args.target_root,
+                apply=args.apply,
+                check=args.check,
+            )
+        except ContractError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
     raise AssertionError(f"unhandled command: {args.command}")
