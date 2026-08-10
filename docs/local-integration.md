@@ -101,3 +101,8 @@ Do not copy, bind-mount, upload, render, or synchronize any of these stores.
 `ASC_KEY_PATH` may identify the host file to the broker, but the `.p8` bytes are
 never dotenv content. A logged-in browser is also a credential store: cookies
 and localStorage are credential material even when no API key is visible.
+
+OpenShell provider bootstrap receipts live at
+`~/.local/state/runtime-env/receipts/openshell/<provider>.json`, mode `0600`.
+They contain carrier/provider/status metadata only. They do not replace the
+carrier-owned session source and are never synchronized into a repository.

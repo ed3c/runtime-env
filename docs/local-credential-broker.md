@@ -113,6 +113,49 @@ Use `runtime-env policy show --id <policy>` to inspect a policy. Pass both
 repeatable `--policy` options to `runtime-env sync`; consumer `sync --check` or
 its staged pre-commit validator then detects either native policy drifting.
 
+### OpenShell provider bootstrap is a third, separate plane
+
+Carrier-native settings, credential transport, and sandbox policy are three
+different controls. Creating an OpenShell provider must not write either
+carrier's native settings file, and changing a native permission projection
+must not recreate or widen a provider.
+
+For a Codex ChatGPT login, OpenShell 0.0.59 exposes a typed `codex` profile but
+does not discover `~/.codex/auth.json` through `--from-existing`. Run the
+repository bootstrap only from a trusted host terminal:
+
+```bash
+python3 scripts/bootstrap-openshell-provider.py codex-chatgpt \
+  --name codex-runtime-env \
+  --receipt ~/.local/state/runtime-env/receipts/openshell/codex-runtime-env.json
+```
+
+The broker requires an owned, regular, non-symlink `0600` auth file. It passes
+`CODEX_AUTH_ACCESS_TOKEN`, `CODEX_AUTH_REFRESH_TOKEN`,
+`CODEX_AUTH_ACCOUNT_ID`, and optional `CODEX_AUTH_ID_TOKEN` to the OpenShell
+client by environment-name lookup. Values never enter argv or receipts; child
+stdout/stderr is suppressed. Its child environment is rebuilt from a small
+host allowlist and therefore excludes `CLAUDE_CONFIG_DIR`, Anthropic keys, and
+Claude OAuth state. The provider name, not `auth.json`, is the sandbox input.
+
+Claude subscription auth is deliberately not folded into that route. The
+macOS Keychain-backed login is not equivalent to an Anthropic API key, while
+OpenShell's built-in `claude-code` profile currently describes API-key auth.
+For subscription use, a trusted operator runs `claude setup-token` and creates
+or updates a dedicated generic `claude-code` provider; the sandbox must observe
+only an `openshell:resolve:env:...` placeholder and prove a bounded real turn.
+Do not copy Claude's Keychain/session files and do not place the setup token in
+the shared dotenv.
+
+This bootstrap is not an absolute same-UID secrecy boundary. A process that can
+read `~/.codex/auth.json`, replace the broker, replace the `openshell` binary,
+or inspect another same-user process can steal the session regardless of this
+repository's redaction rules. Therefore an LLM shell with ordinary host read
+access must not run the bootstrap. Absolute non-disclosure requires an OS
+sandbox that denies the agent the carrier home plus a trusted host broker (or a
+Keychain/secret-store service) outside that sandbox. Runtime-env supplies the
+contract and content-free receipt; OpenShell/OS policy supplies enforcement.
+
 ## Workload-specific boundaries
 
 ### iOS TestFlight
