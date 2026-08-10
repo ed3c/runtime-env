@@ -16,6 +16,9 @@ variables = {
     for item in json.loads((root / "catalog/variables.json").read_text())["variables"]
 }
 module = json.loads((root / "modules/openshell-agent-providers.json").read_text())
+transport = json.loads(
+    (root / "policies/codex-openshell-chatgpt-placeholder.json").read_text()
+)
 for name in (
     "OPENSHELL_CLAUDE_PROVIDER",
     "OPENSHELL_CODEX_PROVIDER",
@@ -31,6 +34,20 @@ for profile_name in (
 ):
     profile = json.loads((root / f"profiles/{profile_name}.json").read_text())
     assert "openshell-agent-providers" in profile["modules"]
+
+settings = transport["required_settings"]
+assert transport["carrier"] == "codex-cli"
+assert settings == {
+    "model_provider": "openshell_chatgpt",
+    "model_providers.openshell_chatgpt.base_url": "https://chatgpt.com/backend-api/codex",
+    "model_providers.openshell_chatgpt.env_http_headers.ChatGPT-Account-ID": "CODEX_AUTH_ACCOUNT_ID",
+    "model_providers.openshell_chatgpt.env_key": "CODEX_AUTH_ACCESS_TOKEN",
+    "model_providers.openshell_chatgpt.requires_openai_auth": False,
+    "model_providers.openshell_chatgpt.supports_websockets": False,
+    "model_providers.openshell_chatgpt.wire_api": "responses",
+}
+assert "CODEX_AUTH_JSON" in transport["forbidden_environment"]
+assert "~/.codex/auth.json" in "\n".join(transport["external_requirements"])
 PY
 
 FAKE_BIN="${SCRATCH}/bin"

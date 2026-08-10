@@ -49,7 +49,7 @@ therefore not ambient merely because they coexist in `/Users/neon/runtime-env/.e
 | Class | Meaning | Current safe use |
 |---|---|---|
 | `none` | No credential is delivered | deterministic proof/control workloads on an admitted clean revision |
-| `openshell-provider` | The sandbox receives an opaque provider placeholder; the network proxy substitutes the value | API-key HTTP clients whose TLS request is inspected and whose binary/host/path policy is bounded |
+| `openshell-provider` | The sandbox receives an opaque provider placeholder; the network proxy substitutes the value | Supported HTTP clients that put the placeholder directly in an inspected request and whose binary/host/path policy is bounded |
 | `broker-only` | Session cache, cookie state, private file, or subscription login stays in a host process outside the agent filesystem | TestFlight, logged-in browser work, agy, Claude Code, Codex CLI, and other session-backed carriers |
 
 Never add a generic `run -- <arbitrary command>` credential path. Any command
@@ -138,6 +138,25 @@ stdout/stderr is suppressed. Its child environment is rebuilt from a small
 host allowlist and therefore excludes `CLAUDE_CONFIG_DIR`, Anthropic keys, and
 Claude OAuth state. The provider name, not `auth.json`, is the sandbox input.
 
+Codex's ordinary ChatGPT login path cannot consume that placeholder through
+`auth.json`: it parses the JWT before making a request. That is a limitation of
+that credential-loading path, not a reason to put the real session in the
+sandbox. Select the separately synchronized
+`codex-openshell-chatgpt-placeholder` policy instead. Its custom Codex model
+provider uses `CODEX_AUTH_ACCESS_TOKEN` as `env_key`, maps
+`CODEX_AUTH_ACCOUNT_ID` to `ChatGPT-Account-ID`, targets
+`https://chatgpt.com/backend-api/codex`, disables WebSocket transport, and sets
+`requires_openai_auth=false`. Codex then places the opaque values directly in
+the HTTPS request; the OpenShell proxy substitutes them after enforcing the
+endpoint and executable policy. The sandbox must not receive `CODEX_AUTH_JSON`
+or reconstruct `~/.codex/auth.json`.
+
+This transport policy is intentionally separate from
+`codex-cli-native-isolation`. The native policy controls the host CLI's
+workspace, approvals, and inherited environment. The transport policy controls
+only the disposable OpenShell sandbox's model-provider block. Synchronize both;
+do not merge them into one ambient `CODEX_HOME`.
+
 Claude subscription auth is deliberately not folded into that route. The
 macOS Keychain-backed login is not equivalent to an Anthropic API key, while
 OpenShell's built-in `claude-code` profile currently describes API-key auth.
@@ -222,6 +241,9 @@ tool would recreate the local disclosure problem over the network.
   warns against exposing job-wide credentials to untrusted code.
 - [Codex advanced configuration](https://learn.chatgpt.com/docs/config-file/config-advanced)
   defines `shell_environment_policy` filtering and inheritance.
+- [Codex model provider implementation](https://github.com/openai/codex/blob/main/codex-rs/model-provider-info/src/lib.rs)
+  defines custom `env_key`, environment-backed HTTP headers, the ChatGPT Codex
+  base URL, and the default-disabled WebSocket capability used by this adapter.
 - [Anthropic self-hosted sandbox security](https://platform.claude.com/docs/en/managed-agents/self-hosted-sandboxes-security)
   assigns credential storage, network egress, and tool isolation to the
   self-hosted operator.
