@@ -22,4 +22,17 @@ set -e
   exit 1
 }
 
+set +e
+unsafe_output="$(${ROOT}/runtime-env --catalog-root "${ROOT}/tests/fixtures/invalid-value-field" validate 2>&1)"
+unsafe_status=$?
+set -e
+[[ ${unsafe_status} -eq 2 ]] || {
+  echo "FAIL: catalog containing a value field should exit 2, got ${unsafe_status}" >&2
+  exit 1
+}
+[[ "${unsafe_output}" == *"unexpected fields on E2B_API_KEY: value"* ]] || {
+  echo "FAIL: unsafe catalog field was not identified" >&2
+  exit 1
+}
+
 echo "PASS: catalog validation seam"

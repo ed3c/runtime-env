@@ -18,6 +18,11 @@ SCHEMAS = {
     "module": "runtime-env/module/v1",
     "profile": "runtime-env/profile/v1",
 }
+ALLOWED_FIELDS = {
+    "variable": {"name", "secret", "description", "account_url"},
+    "module": {"schema", "id", "summary", "requires", "optional", "defaults"},
+    "profile": {"schema", "id", "summary", "modules"},
+}
 
 
 class ContractError(ValueError):
@@ -59,6 +64,9 @@ def _load_named_documents(directory: Path, kind: str) -> dict[str, dict[str, Any
         raise ContractError(f"{kind} directory is empty: {directory}")
     for path in paths:
         document = _load_json(path)
+        unexpected = sorted(set(document) - ALLOWED_FIELDS[kind])
+        if unexpected:
+            raise ContractError(f"{path}: unexpected fields: {', '.join(unexpected)}")
         if document.get("schema") != SCHEMAS[kind]:
             raise ContractError(f"{path}: expected schema {SCHEMAS[kind]}")
         identifier = document.get("id")
@@ -68,6 +76,8 @@ def _load_named_documents(directory: Path, kind: str) -> dict[str, dict[str, Any
             raise ContractError(f"{path}: id {identifier!r} must match filename")
         if identifier in documents:
             raise ContractError(f"duplicate {kind} id: {identifier}")
+        if not isinstance(document.get("summary"), str) or not document["summary"].strip():
+            raise ContractError(f"{path}: summary must be non-empty")
         documents[identifier] = document
     return documents
 
@@ -91,10 +101,18 @@ def load_catalog(root: Path) -> Catalog:
             raise ContractError(f"invalid variable name: {name!r}")
         if name in variables:
             raise ContractError(f"duplicate variable: {name}")
+        unexpected = sorted(set(entry) - ALLOWED_FIELDS["variable"])
+        if unexpected:
+            raise ContractError(f"unexpected fields on {name}: {', '.join(unexpected)}")
         if not isinstance(entry.get("secret"), bool):
             raise ContractError(f"{name}: secret must be boolean")
         if not isinstance(entry.get("description"), str) or not entry["description"].strip():
             raise ContractError(f"{name}: description must be non-empty")
+        account_url = entry.get("account_url")
+        if account_url is not None and (
+            not isinstance(account_url, str) or not account_url.startswith("https://")
+        ):
+            raise ContractError(f"{name}: account_url must be an HTTPS URL")
         variables[name] = entry
 
     modules = _load_named_documents(root / "modules", "module")

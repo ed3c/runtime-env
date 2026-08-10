@@ -1,0 +1,6 @@
+{
+  "schema": "runtime-env/profile/v1",
+  "id": "e2b",
+  "summary": "Fixture profile.",
+  "modules": ["e2b"]
+}

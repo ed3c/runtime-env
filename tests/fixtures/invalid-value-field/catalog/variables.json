@@ -1,0 +1,11 @@
+{
+  "schema": "runtime-env/variables/v1",
+  "variables": [
+    {
+      "name": "E2B_API_KEY",
+      "secret": true,
+      "description": "Fixture credential.",
+      "value": "fixture-only-value"
+    }
+  ]
+}
