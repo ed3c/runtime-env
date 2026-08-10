@@ -24,5 +24,7 @@ print("PASS: every JSON document parses")
 PY
 
 python3 "${ROOT}/tests/check_schema_consistency.py" "${ROOT}"
+python3 "${ROOT}/tests/check_tracked_text.py" --selftest
+python3 "${ROOT}/tests/check_tracked_text.py" --repo "${ROOT}"
 
 echo "PASS: repository safety boundary"
