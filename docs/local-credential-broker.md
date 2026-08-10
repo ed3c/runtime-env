@@ -32,6 +32,15 @@ workload declares a fixed profile, entrypoints, mutation class, delivery mode,
 agent access, receipt, and independent control. `agent_secret_access` is always
 `denied`.
 
+For local `none` workloads, `runtime-env workload run` is the narrow execution
+surface: it accepts a workload ID and one manifest-owned entrypoint, never an
+arbitrary command. It validates the target Git root and private dotenv metadata,
+passes only selected non-secret names into a minimal environment, suppresses
+child streams, and emits only their byte counts and SHA-256 hashes in a private
+receipt. If the selected profile resolves any secret, execution fails closed.
+`broker-only` and `openshell-provider` describe separate adapters; this local
+runner intentionally does not imitate them by exporting plaintext secrets.
+
 ## Delivery classes
 
 | Class | Meaning | Current safe use |

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 from dataclasses import dataclass
@@ -97,6 +98,10 @@ REQUIRED_FIELDS = {
 
 class ContractError(ValueError):
     """A catalog contract is invalid and cannot be consumed safely."""
+
+
+class MissingConfiguration(ContractError):
+    """A valid workload cannot start because required configuration is absent."""
 
 
 @dataclass(frozen=True)
@@ -676,6 +681,192 @@ def doctor_local_env(*, catalog: Catalog, env_file: Path, catalog_root: Path) ->
     return 0
 
 
+def _load_private_dotenv(*, catalog: Catalog, env_file: Path) -> dict[str, str]:
+    path = env_file.expanduser().absolute()
+    try:
+        metadata = path.lstat()
+    except OSError as exc:
+        raise ContractError(f"cannot inspect env file {path}: {exc.strerror}") from exc
+    if path.is_symlink() or not stat.S_ISREG(metadata.st_mode):
+        raise ContractError("workload env file must be a regular file, not a symlink")
+    if metadata.st_uid != os.getuid():
+        raise ContractError("workload env file must be owned by the current user")
+    if stat.S_IMODE(metadata.st_mode) != 0o600:
+        raise ContractError("workload env file must have mode 0600")
+    values = load_dotenv(path)
+    unknown = sorted(set(values) - set(catalog.variables))
+    if unknown:
+        raise ContractError(f"workload env file contains unknown names: {', '.join(unknown)}")
+    return values
+
+
+def _execution_receipt_path(receipt: dict[str, Any]) -> Path:
+    directory = Path(tempfile.gettempdir()) / f"runtime-env-receipts-{os.getuid()}"
+    directory.mkdir(mode=0o700, parents=True, exist_ok=True)
+    metadata = directory.stat()
+    if metadata.st_uid != os.getuid() or stat.S_IMODE(metadata.st_mode) != 0o700:
+        raise ContractError("runtime receipt directory must be user-owned with mode 0700")
+    descriptor, raw_path = tempfile.mkstemp(prefix="receipt-", suffix=".json", dir=directory)
+    path = Path(raw_path)
+    receipt["receipt_path"] = str(path)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(receipt, handle, indent=2, sort_keys=True, ensure_ascii=False)
+            handle.write("\n")
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+    return path
+
+
+def run_workload(
+    *,
+    catalog: Catalog,
+    workload_id: str,
+    entrypoint_id: str,
+    target_root: Path,
+    env_file: Path | None,
+    json_output: bool,
+) -> int:
+    workload = catalog.workloads.get(workload_id)
+    if workload is None:
+        raise ContractError(f"unknown workload: {workload_id}")
+    if workload["host"] != "local-macos":
+        raise ContractError(
+            f"workload {workload_id}: host {workload['host']} requires its dedicated adapter"
+        )
+    command = workload["entrypoints"].get(entrypoint_id)
+    if command is None:
+        raise ContractError(f"workload {workload_id}: unknown entrypoint {entrypoint_id}")
+    if any(re.search(r"<[^>]+>", part) for part in command):
+        raise ContractError(
+            f"workload {workload_id}: entrypoint {entrypoint_id} has an unresolved placeholder"
+        )
+
+    target = target_root.expanduser().resolve()
+    top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
+    if top_level != target:
+        raise ContractError("target root must be the root of its git repository")
+
+    selected = select_variables(
+        catalog,
+        profile_id=workload["profile"],
+        include_all=False,
+    )
+    dotenv = _load_private_dotenv(catalog=catalog, env_file=env_file) if env_file else {}
+    configured: dict[str, str] = {}
+    for variable in selected:
+        value = os.environ.get(variable.name)
+        if value is None:
+            value = dotenv.get(variable.name)
+        if value is None:
+            value = variable.default
+        if value:
+            configured[variable.name] = value
+
+    missing = sorted(
+        variable.name
+        for variable in selected
+        if variable.required and variable.name not in configured
+    )
+    if missing:
+        raise MissingConfiguration(
+            f"missing required workload variables: {', '.join(missing)}"
+        )
+
+    configured_secrets = sorted(
+        name for name in configured if catalog.variables[name]["secret"]
+    )
+    delivery = workload["secret_delivery"]
+    if configured_secrets and delivery == "none":
+        raise ContractError(
+            f"workload {workload_id}: secret_delivery=none refuses configured secret variables: "
+            + ", ".join(configured_secrets)
+        )
+    if configured_secrets and delivery != "none":
+        raise ContractError(
+            f"workload {workload_id}: {delivery} secrets require a dedicated broker/provider; "
+            "workload run will not inject them into a child environment"
+        )
+
+    safe_inherited = {
+        name: os.environ[name]
+        for name in (
+            "HOME",
+            "LANG",
+            "LC_ALL",
+            "LOGNAME",
+            "PATH",
+            "SHELL",
+            "SSH_AUTH_SOCK",
+            "TERM",
+            "TMPDIR",
+            "USER",
+        )
+        if name in os.environ
+    }
+    child_environment = {**safe_inherited, **configured}
+    child_environment.setdefault("PATH", os.defpath)
+
+    before_head = _git(target, "rev-parse", "HEAD")
+    before_status = _git(target, "status", "--porcelain=v1")
+    started_at = datetime.now(timezone.utc)
+    try:
+        result = subprocess.run(
+            command,
+            cwd=target,
+            env=child_environment,
+            check=False,
+            capture_output=True,
+        )
+    except OSError as exc:
+        raise ContractError(f"cannot execute workload entrypoint: {exc.strerror}") from exc
+    finished_at = datetime.now(timezone.utc)
+    after_head = _git(target, "rev-parse", "HEAD")
+    after_status = _git(target, "status", "--porcelain=v1")
+
+    def stream_metadata(value: bytes) -> dict[str, Any]:
+        return {"bytes": len(value), "sha256": hashlib.sha256(value).hexdigest()}
+
+    receipt: dict[str, Any] = {
+        "schema": "runtime-env/execution-receipt/v1",
+        "status": "passed" if result.returncode == 0 else "failed",
+        "workload": workload_id,
+        "entrypoint": entrypoint_id,
+        "child_exit": result.returncode,
+        "started_at": started_at.isoformat(),
+        "finished_at": finished_at.isoformat(),
+        "command_sha256": hashlib.sha256(
+            json.dumps(command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
+        "environment": {
+            "configured_names": sorted(configured),
+            "secret_names": [],
+            "delivery": delivery,
+        },
+        "stdout": stream_metadata(result.stdout),
+        "stderr": stream_metadata(result.stderr),
+        "target": {
+            "root": str(target),
+            "head_before": before_head,
+            "head_after": after_head,
+            "dirty_before": bool(before_status),
+            "dirty_after": bool(after_status),
+        },
+        "declared_evidence": workload["evidence"],
+    }
+    _execution_receipt_path(receipt)
+    if json_output:
+        print(json.dumps(receipt, sort_keys=True, ensure_ascii=False))
+    else:
+        print(
+            f"{receipt['status'].upper()} workload={workload_id} "
+            f"entrypoint={entrypoint_id} exit={result.returncode} "
+            f"receipt={receipt['receipt_path']}"
+        )
+    return result.returncode
+
+
 def initialize_local_env(*, catalog: Catalog, env_file: Path) -> int:
     path = env_file.expanduser().absolute()
     if path.exists() or path.is_symlink():
@@ -907,6 +1098,14 @@ def build_parser() -> argparse.ArgumentParser:
     workload_subparsers.add_parser("list")
     workload_show = workload_subparsers.add_parser("show")
     workload_show.add_argument("--id", required=True)
+    workload_run = workload_subparsers.add_parser(
+        "run", help="run one fixed local entrypoint and emit a redacted receipt"
+    )
+    workload_run.add_argument("--id", required=True)
+    workload_run.add_argument("--entrypoint", required=True)
+    workload_run.add_argument("--target-root", type=Path, required=True)
+    workload_run.add_argument("--env-file", type=Path)
+    workload_run.add_argument("--json", action="store_true")
     policy_parser = subparsers.add_parser("policy", help="inspect native carrier policies")
     policy_subparsers = policy_parser.add_subparsers(dest="policy_command", required=True)
     policy_subparsers.add_parser("list")
@@ -1047,6 +1246,22 @@ def main(argv: list[str] | None = None) -> int:
             for identifier, workload in sorted(catalog.workloads.items()):
                 print(f"{identifier}\t{workload['summary']}")
             return 0
+        if args.workload_command == "run":
+            try:
+                return run_workload(
+                    catalog=catalog,
+                    workload_id=args.id,
+                    entrypoint_id=args.entrypoint,
+                    target_root=args.target_root,
+                    env_file=args.env_file,
+                    json_output=args.json,
+                )
+            except MissingConfiguration as exc:
+                print(f"ERROR: {exc}", file=sys.stderr)
+                return 3
+            except ContractError as exc:
+                print(f"ERROR: {exc}", file=sys.stderr)
+                return 2
         workload = catalog.workloads.get(args.id)
         if workload is None:
             print(f"ERROR: unknown workload: {args.id}", file=sys.stderr)

@@ -23,6 +23,8 @@ This prevents an optional cloud backend from making a local workflow demand unre
 ./runtime-env local-env doctor    # names and presence only; never values
 ./runtime-env workload list
 ./runtime-env workload show --id ios-testflight-beta
+./runtime-env workload run --id bettor-arena-proof --entrypoint prove-harness \
+  --target-root /path/to/bettor-arena --env-file /Users/neon/runtime-env/.env --json
 ./runtime-env inventory skills --repo-root /Users/neon/ix-agy
 ```
 
@@ -35,6 +37,13 @@ Exit codes are part of the public contract:
 | `3` | Required configuration is absent; the workload did not run |
 
 `check` prints variable names and presence states only. It never prints values.
+`workload run` accepts only a checked-in fixed entrypoint; there is no trailing
+arbitrary command surface. It verifies an optional dotenv is a user-owned
+regular file with mode `0600`, constructs a minimal child environment, and
+returns metadata plus a private `0600` receipt. Child stdout/stderr and dotenv
+values are neither printed nor stored. A `none` workload refuses configured
+secrets; provider/broker workloads refuse ordinary child-environment secret
+injection and must use their dedicated adapter.
 
 ## Explicit consumer synchronization
 
