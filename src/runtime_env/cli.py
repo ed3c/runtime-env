@@ -26,7 +26,9 @@ ENV_REFERENCE = re.compile(
     r"(?:getenv|environ\.get)\([\"']([A-Z][A-Z0-9_]*)[\"']|"
     r"environ\[[\"']([A-Z][A-Z0-9_]*)[\"']\]"
 )
-REPO_MODULE_REFERENCE = re.compile(r"(?<![A-Za-z0-9_.-])((?:kb-ingest|indexing)/[A-Za-z0-9_./-]+)")
+REPO_MODULE_REFERENCE = re.compile(
+    r"(?<![A-Za-z0-9_.-])((?:kb-ingest|indexing)/[A-Za-z0-9_./-]+)"
+)
 SCHEMAS = {
     "variables": "runtime-env/variables/v1",
     "module": "runtime-env/module/v1",
@@ -148,7 +150,9 @@ def _load_named_documents(directory: Path, kind: str) -> dict[str, dict[str, Any
             raise ContractError(f"{path}: unexpected fields: {', '.join(unexpected)}")
         missing = sorted(REQUIRED_FIELDS[kind] - set(document))
         if missing:
-            raise ContractError(f"{path}: missing required fields: {', '.join(missing)}")
+            raise ContractError(
+                f"{path}: missing required fields: {', '.join(missing)}"
+            )
         if document.get("schema") != SCHEMAS[kind]:
             raise ContractError(f"{path}: expected schema {SCHEMAS[kind]}")
         identifier = document.get("id")
@@ -158,7 +162,10 @@ def _load_named_documents(directory: Path, kind: str) -> dict[str, dict[str, Any
             raise ContractError(f"{path}: id {identifier!r} must match filename")
         if identifier in documents:
             raise ContractError(f"duplicate {kind} id: {identifier}")
-        if not isinstance(document.get("summary"), str) or not document["summary"].strip():
+        if (
+            not isinstance(document.get("summary"), str)
+            or not document["summary"].strip()
+        ):
             raise ContractError(f"{path}: summary must be non-empty")
         documents[identifier] = document
     return documents
@@ -168,10 +175,14 @@ def load_catalog(root: Path) -> Catalog:
     variables_document = _load_json(root / "catalog" / "variables.json")
     unexpected = sorted(set(variables_document) - ALLOWED_FIELDS["variables"])
     if unexpected:
-        raise ContractError(f"variables catalog: unexpected fields: {', '.join(unexpected)}")
+        raise ContractError(
+            f"variables catalog: unexpected fields: {', '.join(unexpected)}"
+        )
     missing = sorted(REQUIRED_FIELDS["variables"] - set(variables_document))
     if missing:
-        raise ContractError(f"variables catalog: missing required fields: {', '.join(missing)}")
+        raise ContractError(
+            f"variables catalog: missing required fields: {', '.join(missing)}"
+        )
     if variables_document.get("schema") != SCHEMAS["variables"]:
         raise ContractError(
             f"{root / 'catalog' / 'variables.json'}: expected schema {SCHEMAS['variables']}"
@@ -194,14 +205,23 @@ def load_catalog(root: Path) -> Catalog:
             raise ContractError(f"unexpected fields on {name}: {', '.join(unexpected)}")
         missing = sorted(REQUIRED_FIELDS["variable"] - set(entry))
         if missing:
-            raise ContractError(f"{name}: missing required fields: {', '.join(missing)}")
+            raise ContractError(
+                f"{name}: missing required fields: {', '.join(missing)}"
+            )
         if not isinstance(entry.get("secret"), bool):
             raise ContractError(f"{name}: secret must be boolean")
-        if entry.get("runtime_scope") not in {"local-only", "cloud-runtime", "portable"}:
+        if entry.get("runtime_scope") not in {
+            "local-only",
+            "cloud-runtime",
+            "portable",
+        }:
             raise ContractError(
                 f"{name}: runtime_scope must be local-only, cloud-runtime, or portable"
             )
-        if not isinstance(entry.get("description"), str) or not entry["description"].strip():
+        if (
+            not isinstance(entry.get("description"), str)
+            or not entry["description"].strip()
+        ):
             raise ContractError(f"{name}: description must be non-empty")
         account_url = entry.get("account_url")
         if account_url is not None and (
@@ -216,9 +236,13 @@ def load_catalog(root: Path) -> Catalog:
         optional = module.get("optional", [])
         defaults = module.get("defaults", {})
         if not isinstance(required, list) or not isinstance(optional, list):
-            raise ContractError(f"module {module_id}: requires and optional must be arrays")
+            raise ContractError(
+                f"module {module_id}: requires and optional must be arrays"
+            )
         if any(not isinstance(name, str) for name in required + optional):
-            raise ContractError(f"module {module_id}: variable references must be strings")
+            raise ContractError(
+                f"module {module_id}: variable references must be strings"
+            )
         if not isinstance(defaults, dict):
             raise ContractError(f"module {module_id}: defaults must be an object")
         if any(not isinstance(name, str) for name in defaults):
@@ -231,19 +255,29 @@ def load_catalog(root: Path) -> Catalog:
                 raise ContractError(f"module {module_id}: unknown variable {name}")
         for name, value in defaults.items():
             if name not in names:
-                raise ContractError(f"module {module_id}: default for undeclared variable {name}")
+                raise ContractError(
+                    f"module {module_id}: default for undeclared variable {name}"
+                )
             if variables[name]["secret"]:
-                raise ContractError(f"module {module_id}: secret variable {name} cannot have a default")
+                raise ContractError(
+                    f"module {module_id}: secret variable {name} cannot have a default"
+                )
             if not isinstance(value, str):
-                raise ContractError(f"module {module_id}: default for {name} must be a string")
+                raise ContractError(
+                    f"module {module_id}: default for {name} must be a string"
+                )
 
     profiles = _load_named_documents(root / "profiles", "profile")
     for profile_id, profile in profiles.items():
         module_ids = profile.get("modules")
         if not isinstance(module_ids, list) or not module_ids:
-            raise ContractError(f"profile {profile_id}: modules must be a non-empty array")
+            raise ContractError(
+                f"profile {profile_id}: modules must be a non-empty array"
+            )
         if any(not isinstance(module_id, str) for module_id in module_ids):
-            raise ContractError(f"profile {profile_id}: module references must be strings")
+            raise ContractError(
+                f"profile {profile_id}: module references must be strings"
+            )
         if len(module_ids) != len(set(module_ids)):
             raise ContractError(f"profile {profile_id}: duplicate module reference")
         for module_id in module_ids:
@@ -270,12 +304,20 @@ def load_catalog(root: Path) -> Catalog:
         }:
             raise ContractError(f"workload {workload_id}: unsupported secret delivery")
         if workload.get("agent_secret_access") != "denied":
-            raise ContractError(f"workload {workload_id}: agent secret access must be denied")
-        if workload.get("mutation") not in {"read-only", "workspace", "external-release"}:
+            raise ContractError(
+                f"workload {workload_id}: agent secret access must be denied"
+            )
+        if workload.get("mutation") not in {
+            "read-only",
+            "workspace",
+            "external-release",
+        }:
             raise ContractError(f"workload {workload_id}: unsupported mutation class")
         entrypoints = workload.get("entrypoints")
         if not isinstance(entrypoints, dict) or not entrypoints:
-            raise ContractError(f"workload {workload_id}: entrypoints must be a non-empty object")
+            raise ContractError(
+                f"workload {workload_id}: entrypoints must be a non-empty object"
+            )
         for entrypoint_id, command in entrypoints.items():
             if not isinstance(entrypoint_id, str) or not entrypoint_id:
                 raise ContractError(f"workload {workload_id}: invalid entrypoint id")
@@ -288,9 +330,9 @@ def load_catalog(root: Path) -> Catalog:
                     f"workload {workload_id}: entrypoint {entrypoint_id} must be a string array"
                 )
         entrypoint_environment = workload.get("entrypoint_environment")
-        if not isinstance(entrypoint_environment, dict) or set(entrypoint_environment) != set(
-            entrypoints
-        ):
+        if not isinstance(entrypoint_environment, dict) or set(
+            entrypoint_environment
+        ) != set(entrypoints):
             raise ContractError(
                 f"workload {workload_id}: entrypoint_environment must map every entrypoint exactly"
             )
@@ -323,12 +365,19 @@ def load_catalog(root: Path) -> Catalog:
             raise ContractError(
                 f"workload {workload_id}: evidence must contain receipt and control"
             )
-        if any(not isinstance(evidence[name], str) or not evidence[name] for name in evidence):
-            raise ContractError(f"workload {workload_id}: evidence paths must be non-empty")
+        if any(
+            not isinstance(evidence[name], str) or not evidence[name]
+            for name in evidence
+        ):
+            raise ContractError(
+                f"workload {workload_id}: evidence paths must be non-empty"
+            )
 
     policy_directory = root / "policies"
     policies = (
-        _load_named_documents(policy_directory, "policy") if policy_directory.is_dir() else {}
+        _load_named_documents(policy_directory, "policy")
+        if policy_directory.is_dir()
+        else {}
     )
     for policy_id, policy in policies.items():
         if policy.get("carrier") not in {"claude-code", "codex-cli"}:
@@ -336,16 +385,32 @@ def load_catalog(root: Path) -> Catalog:
         config_home_env = policy.get("config_home_env")
         if config_home_env not in variables or variables[config_home_env]["secret"]:
             raise ContractError(f"policy {policy_id}: invalid config home variable")
-        if not isinstance(policy.get("settings_file"), str) or not policy["settings_file"]:
+        if (
+            not isinstance(policy.get("settings_file"), str)
+            or not policy["settings_file"]
+        ):
             raise ContractError(f"policy {policy_id}: settings_file must be non-empty")
-        if not isinstance(policy.get("required_settings"), dict) or not policy["required_settings"]:
-            raise ContractError(f"policy {policy_id}: required_settings must be non-empty")
-        for field in ("forbidden_environment", "external_requirements", "receipt_commands"):
+        if (
+            not isinstance(policy.get("required_settings"), dict)
+            or not policy["required_settings"]
+        ):
+            raise ContractError(
+                f"policy {policy_id}: required_settings must be non-empty"
+            )
+        for field in (
+            "forbidden_environment",
+            "external_requirements",
+            "receipt_commands",
+        ):
             values = policy.get(field)
-            if not isinstance(values, list) or not values or any(
-                not isinstance(value, str) or not value for value in values
+            if (
+                not isinstance(values, list)
+                or not values
+                or any(not isinstance(value, str) or not value for value in values)
             ):
-                raise ContractError(f"policy {policy_id}: {field} must be a non-empty string array")
+                raise ContractError(
+                    f"policy {policy_id}: {field} must be a non-empty string array"
+                )
 
     catalog = Catalog(
         variables=variables,
@@ -378,15 +443,23 @@ def select_variables(
         for name in module.get("requires", []) + module.get("optional", []):
             current = selected.get(name)
             default = defaults.get(name)
-            if current and current.default is not None and default is not None and current.default != default:
+            if (
+                current
+                and current.default is not None
+                and default is not None
+                and current.default != default
+            ):
                 raise ContractError(
                     f"profile {profile_id}: conflicting defaults for {name}: "
                     f"{current.default!r} and {default!r}"
                 )
             selected[name] = SelectedVariable(
                 name=name,
-                required=(current.required if current else False) or name in required_names,
-                default=default if default is not None else (current.default if current else None),
+                required=(current.required if current else False)
+                or name in required_names,
+                default=default
+                if default is not None
+                else (current.default if current else None),
             )
     return [selected[name] for name in sorted(selected)]
 
@@ -459,7 +532,9 @@ def load_dotenv(path: Path) -> dict[str, str]:
         if not VARIABLE_NAME.fullmatch(name):
             raise ContractError(f"{path}:{line_number}: invalid variable name")
         if name in values:
-            raise ContractError(f"{path}:{line_number}: duplicate assignment for {name}")
+            raise ContractError(
+                f"{path}:{line_number}: duplicate assignment for {name}"
+            )
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
             value = value[1:-1]
@@ -512,7 +587,9 @@ def _repository_url(remote: str) -> str:
     if parsed.scheme != "https" or not parsed.hostname:
         raise ContractError("origin must be a credential-free HTTPS or git@ SSH URL")
     if parsed.username or parsed.password or parsed.query or parsed.fragment:
-        raise ContractError("origin URL must not contain credentials, query, or fragment")
+        raise ContractError(
+            "origin URL must not contain credentials, query, or fragment"
+        )
     path = parsed.path.removesuffix(".git").rstrip("/")
     if not path or path == "/":
         raise ContractError("origin URL must identify a repository")
@@ -524,7 +601,9 @@ def _sha256(content: str) -> str:
 
 
 def _canonical_json(document: dict[str, Any]) -> str:
-    return json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        document, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
 
 
 def _binding_artifacts(
@@ -612,7 +691,9 @@ def _binding_artifacts(
             "schema": "runtime-env/consumer-workload/v1",
             "source": {
                 "commit": _git(root, "rev-parse", "HEAD"),
-                "repository": _repository_url(_git(root, "remote", "get-url", "origin")),
+                "repository": _repository_url(
+                    _git(root, "remote", "get-url", "origin")
+                ),
                 "tree": _git(root, "rev-parse", "HEAD^{tree}"),
             },
             "workload": workload,
@@ -631,7 +712,9 @@ def _binding_artifacts(
             "schema": "runtime-env/consumer-policy/v1",
             "source": {
                 "commit": _git(root, "rev-parse", "HEAD"),
-                "repository": _repository_url(_git(root, "remote", "get-url", "origin")),
+                "repository": _repository_url(
+                    _git(root, "remote", "get-url", "origin")
+                ),
                 "tree": _git(root, "rev-parse", "HEAD^{tree}"),
             },
             "policy": policy,
@@ -645,7 +728,9 @@ def _binding_artifacts(
 
 def _atomic_write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", dir=path.parent
+    )
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             handle.write(content)
@@ -684,7 +769,9 @@ def sync_consumer(
     drift = False
     for relative_path, expected in artifacts.items():
         destination = target / relative_path
-        current = destination.read_text(encoding="utf-8") if destination.is_file() else None
+        current = (
+            destination.read_text(encoding="utf-8") if destination.is_file() else None
+        )
         if current == expected:
             state = "UNCHANGED"
         elif current is None:
@@ -760,7 +847,9 @@ def _load_private_dotenv(*, catalog: Catalog, env_file: Path) -> dict[str, str]:
     values = load_dotenv(path)
     unknown = sorted(set(values) - set(catalog.variables))
     if unknown:
-        raise ContractError(f"workload env file contains unknown names: {', '.join(unknown)}")
+        raise ContractError(
+            f"workload env file contains unknown names: {', '.join(unknown)}"
+        )
     return values
 
 
@@ -770,7 +859,9 @@ def reconcile_local_env(*, catalog: Catalog, env_file: Path) -> int:
     missing = sorted(set(catalog.variables) - set(values))
     content = render_local_dotenv(catalog, values)
     if path.read_text(encoding="utf-8") == content:
-        print("UNCHANGED local env: sections and catalog names are current, values redacted")
+        print(
+            "UNCHANGED local env: sections and catalog names are current, values redacted"
+        )
         return 0
     _atomic_write(path, content)
     path.chmod(0o600)
@@ -810,21 +901,52 @@ def set_local_env_path(
     return 0
 
 
-def _execution_receipt_path(receipt: dict[str, Any]) -> Path:
-    directory = Path(tempfile.gettempdir()) / f"runtime-env-receipts-{os.getuid()}"
+def _execution_receipt_path(
+    receipt: dict[str, Any], requested_path: Path | None = None
+) -> Path:
+    if requested_path is None:
+        directory = Path(tempfile.gettempdir()) / f"runtime-env-receipts-{os.getuid()}"
+        filename = None
+    else:
+        expanded = requested_path.expanduser()
+        if not expanded.is_absolute():
+            raise ContractError("explicit runtime receipt path must be absolute")
+        path = expanded.absolute()
+        if path.exists() or path.is_symlink():
+            raise ContractError(f"runtime receipt already exists: {path}")
+        directory = path.parent
+        filename = path.name
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    metadata = directory.stat()
-    if metadata.st_uid != os.getuid() or stat.S_IMODE(metadata.st_mode) != 0o700:
-        raise ContractError("runtime receipt directory must be user-owned with mode 0700")
-    descriptor, raw_path = tempfile.mkstemp(prefix="receipt-", suffix=".json", dir=directory)
-    path = Path(raw_path)
+    metadata = directory.lstat()
+    if (
+        directory.is_symlink()
+        or not stat.S_ISDIR(metadata.st_mode)
+        or metadata.st_uid != os.getuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o700
+    ):
+        raise ContractError(
+            "runtime receipt directory must be user-owned with mode 0700"
+        )
+    descriptor, raw_path = tempfile.mkstemp(
+        prefix="receipt-", suffix=".json", dir=directory
+    )
+    temporary = Path(raw_path)
+    path = temporary if filename is None else directory / filename
     receipt["receipt_path"] = str(path)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             json.dump(receipt, handle, indent=2, sort_keys=True, ensure_ascii=False)
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.chmod(0o600)
+        if filename is not None:
+            os.link(temporary, path)
+            temporary.unlink()
+    except FileExistsError as exc:
+        raise ContractError(f"runtime receipt already exists: {path}") from exc
     except Exception:
-        path.unlink(missing_ok=True)
+        temporary.unlink(missing_ok=True)
         raise
     return path
 
@@ -836,6 +958,7 @@ def run_workload(
     entrypoint_id: str,
     target_root: Path,
     env_file: Path | None,
+    receipt_path: Path | None,
     json_output: bool,
 ) -> int:
     workload = catalog.workloads.get(workload_id)
@@ -847,7 +970,9 @@ def run_workload(
         )
     command = workload["entrypoints"].get(entrypoint_id)
     if command is None:
-        raise ContractError(f"workload {workload_id}: unknown entrypoint {entrypoint_id}")
+        raise ContractError(
+            f"workload {workload_id}: unknown entrypoint {entrypoint_id}"
+        )
     if any(re.search(r"<[^>]+>", part) for part in command):
         raise ContractError(
             f"workload {workload_id}: entrypoint {entrypoint_id} has an unresolved placeholder"
@@ -864,8 +989,12 @@ def run_workload(
         include_all=False,
     )
     allowed_names = set(workload["entrypoint_environment"][entrypoint_id])
-    selected = [variable for variable in profile_variables if variable.name in allowed_names]
-    dotenv = _load_private_dotenv(catalog=catalog, env_file=env_file) if env_file else {}
+    selected = [
+        variable for variable in profile_variables if variable.name in allowed_names
+    ]
+    dotenv = (
+        _load_private_dotenv(catalog=catalog, env_file=env_file) if env_file else {}
+    )
     configured: dict[str, str] = {}
     for variable in selected:
         value = os.environ.get(variable.name)
@@ -932,7 +1061,9 @@ def run_workload(
             capture_output=True,
         )
     except OSError as exc:
-        raise ContractError(f"cannot execute workload entrypoint: {exc.strerror}") from exc
+        raise ContractError(
+            f"cannot execute workload entrypoint: {exc.strerror}"
+        ) from exc
     finished_at = datetime.now(timezone.utc)
     after_head = _git(target, "rev-parse", "HEAD")
     after_status = _git(target, "status", "--porcelain=v1")
@@ -949,7 +1080,9 @@ def run_workload(
         "started_at": started_at.isoformat(),
         "finished_at": finished_at.isoformat(),
         "command_sha256": hashlib.sha256(
-            json.dumps(command, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+            json.dumps(command, separators=(",", ":"), ensure_ascii=False).encode(
+                "utf-8"
+            )
         ).hexdigest(),
         "environment": {
             "configured_names": sorted(configured),
@@ -967,7 +1100,7 @@ def run_workload(
         },
         "declared_evidence": workload["evidence"],
     }
-    _execution_receipt_path(receipt)
+    _execution_receipt_path(receipt, receipt_path)
     if json_output:
         print(json.dumps(receipt, sort_keys=True, ensure_ascii=False))
     else:
@@ -1008,16 +1141,22 @@ def inventory_skills(repo_root: Path) -> dict[str, Any]:
     code_suffixes = {".py", ".sh", ".js", ".mjs", ".cjs", ".ts", ".tsx"}
     skills: list[dict[str, Any]] = []
     for skill_root in sorted(path for path in skills_root.iterdir() if path.is_dir()):
-        manifests = [path for path in skill_root.iterdir() if path.name.lower() == "skill.md"]
+        manifests = [
+            path for path in skill_root.iterdir() if path.name.lower() == "skill.md"
+        ]
         if len(manifests) != 1:
             if manifests:
-                raise ContractError(f"skill {skill_root.name}: multiple skill manifests")
+                raise ContractError(
+                    f"skill {skill_root.name}: multiple skill manifests"
+                )
             continue
         manifest = manifests[0]
         runtime_modules: list[str] = []
         assertion_modules: list[str] = []
         searchable_text: list[str] = []
-        for current_root, directory_names, file_names in os.walk(skill_root, followlinks=True):
+        for current_root, directory_names, file_names in os.walk(
+            skill_root, followlinks=True
+        ):
             directory_names[:] = sorted(
                 name for name in directory_names if name not in excluded_directories
             )
@@ -1028,9 +1167,21 @@ def inventory_skills(repo_root: Path) -> dict[str, Any]:
                     relative = path.relative_to(repo).as_posix()
                 except ValueError:
                     relative = (
-                        Path(".agents") / "skills" / skill_root.name / path.relative_to(skill_root)
+                        Path(".agents")
+                        / "skills"
+                        / skill_root.name
+                        / path.relative_to(skill_root)
                     ).as_posix()
-                if path.suffix.lower() in {".md", ".py", ".sh", ".js", ".mjs", ".cjs", ".ts", ".tsx"}:
+                if path.suffix.lower() in {
+                    ".md",
+                    ".py",
+                    ".sh",
+                    ".js",
+                    ".mjs",
+                    ".cjs",
+                    ".ts",
+                    ".tsx",
+                }:
                     try:
                         searchable_text.append(path.read_text(encoding="utf-8"))
                     except (OSError, UnicodeDecodeError):
@@ -1038,7 +1189,10 @@ def inventory_skills(repo_root: Path) -> dict[str, Any]:
                 if path.suffix.lower() not in code_suffixes:
                     continue
                 logical_parts = Path(relative).parts
-                if any(part in {"tests", "test", "assertions", "evals"} for part in logical_parts):
+                if any(
+                    part in {"tests", "test", "assertions", "evals"}
+                    for part in logical_parts
+                ):
                     assertion_modules.append(relative)
                 else:
                     runtime_modules.append(relative)
@@ -1087,12 +1241,16 @@ def _consumer_content(target: Path, relative: str, *, staged: bool) -> str:
             text=True,
         )
         if result.returncode != 0:
-            raise ContractError(f"missing staged consumer projection: {path.as_posix()}")
+            raise ContractError(
+                f"missing staged consumer projection: {path.as_posix()}"
+            )
         return result.stdout
     try:
         return (target / path).read_text(encoding="utf-8")
     except OSError as exc:
-        raise ContractError(f"cannot read consumer projection {path}: {exc.strerror}") from exc
+        raise ContractError(
+            f"cannot read consumer projection {path}: {exc.strerror}"
+        ) from exc
 
 
 def _verify_content_hash(document: dict[str, Any], relative: str) -> None:
@@ -1139,7 +1297,10 @@ def verify_consumer(*, target_root: Path, binding_id: str, staged: bool) -> int:
         raise ContractError(f"{render['path']}: render sha256 mismatch")
 
     projections = binding.get("projections")
-    if not isinstance(projections, dict) or set(projections) != {"policies", "workload"}:
+    if not isinstance(projections, dict) or set(projections) != {
+        "policies",
+        "workload",
+    }:
         raise ContractError(f"{binding_path}: invalid projection manifest")
     paths: list[str] = []
     workload_path = projections["workload"]
@@ -1148,7 +1309,9 @@ def verify_consumer(*, target_root: Path, binding_id: str, staged: bool) -> int:
             raise ContractError(f"{binding_path}: invalid workload projection path")
         paths.append(workload_path)
     policy_paths = projections["policies"]
-    if not isinstance(policy_paths, list) or any(not isinstance(path, str) for path in policy_paths):
+    if not isinstance(policy_paths, list) or any(
+        not isinstance(path, str) for path in policy_paths
+    ):
         raise ContractError(f"{binding_path}: invalid policy projection paths")
     if len(set(policy_paths)) != len(policy_paths):
         raise ContractError(f"{binding_path}: duplicate policy projection paths")
@@ -1182,16 +1345,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="runtime-env")
     parser.add_argument("--catalog-root", type=Path, default=_default_catalog_root())
     subparsers = parser.add_subparsers(dest="command", required=True)
-    subparsers.add_parser("validate", help="validate every catalog, module, and profile")
-    render_parser = subparsers.add_parser("render", help="render a secret-free environment template")
+    subparsers.add_parser(
+        "validate", help="validate every catalog, module, and profile"
+    )
+    render_parser = subparsers.add_parser(
+        "render", help="render a secret-free environment template"
+    )
     selection = render_parser.add_mutually_exclusive_group(required=True)
     selection.add_argument("--profile")
     selection.add_argument("--all", action="store_true", dest="include_all")
-    render_parser.add_argument("--format", choices=("dotenv", "github-actions"), required=True)
-    check_parser = subparsers.add_parser("check", help="check required names without printing values")
+    render_parser.add_argument(
+        "--format", choices=("dotenv", "github-actions"), required=True
+    )
+    check_parser = subparsers.add_parser(
+        "check", help="check required names without printing values"
+    )
     check_parser.add_argument("--profile", required=True)
     check_parser.add_argument("--env-file", type=Path)
-    list_parser = subparsers.add_parser("list", help="discover catalog entries or profile requirements")
+    list_parser = subparsers.add_parser(
+        "list", help="discover catalog entries or profile requirements"
+    )
     list_selection = list_parser.add_mutually_exclusive_group(required=True)
     list_selection.add_argument("--kind", choices=("variables", "modules", "profiles"))
     list_selection.add_argument("--profile")
@@ -1209,13 +1382,16 @@ def build_parser() -> argparse.ArgumentParser:
     local_env_parser = subparsers.add_parser(
         "local-env", help="inspect host-only dotenv metadata without printing values"
     )
-    local_env_subparsers = local_env_parser.add_subparsers(dest="local_env_command", required=True)
+    local_env_subparsers = local_env_parser.add_subparsers(
+        dest="local_env_command", required=True
+    )
     local_env_init = local_env_subparsers.add_parser("init")
     local_env_init.add_argument("--env-file", type=Path)
     local_env_doctor = local_env_subparsers.add_parser("doctor")
     local_env_doctor.add_argument("--env-file", type=Path)
     local_env_reconcile = local_env_subparsers.add_parser(
-        "reconcile", help="preserve values and organize all catalog names by runtime scope"
+        "reconcile",
+        help="preserve values and organize all catalog names by runtime scope",
     )
     local_env_reconcile.add_argument("--env-file", type=Path)
     local_env_set_path = local_env_subparsers.add_parser(
@@ -1224,8 +1400,12 @@ def build_parser() -> argparse.ArgumentParser:
     local_env_set_path.add_argument("--env-file", type=Path)
     local_env_set_path.add_argument("--name", required=True)
     local_env_set_path.add_argument("--path", type=Path, required=True)
-    workload_parser = subparsers.add_parser("workload", help="inspect typed local workloads")
-    workload_subparsers = workload_parser.add_subparsers(dest="workload_command", required=True)
+    workload_parser = subparsers.add_parser(
+        "workload", help="inspect typed local workloads"
+    )
+    workload_subparsers = workload_parser.add_subparsers(
+        dest="workload_command", required=True
+    )
     workload_subparsers.add_parser("list")
     workload_show = workload_subparsers.add_parser("show")
     workload_show.add_argument("--id", required=True)
@@ -1236,14 +1416,22 @@ def build_parser() -> argparse.ArgumentParser:
     workload_run.add_argument("--entrypoint", required=True)
     workload_run.add_argument("--target-root", type=Path, required=True)
     workload_run.add_argument("--env-file", type=Path)
+    workload_run.add_argument(
+        "--receipt", type=Path, help="write one immutable metadata receipt to this path"
+    )
     workload_run.add_argument("--json", action="store_true")
-    policy_parser = subparsers.add_parser("policy", help="inspect native carrier policies")
-    policy_subparsers = policy_parser.add_subparsers(dest="policy_command", required=True)
+    policy_parser = subparsers.add_parser(
+        "policy", help="inspect native carrier policies"
+    )
+    policy_subparsers = policy_parser.add_subparsers(
+        dest="policy_command", required=True
+    )
     policy_subparsers.add_parser("list")
     policy_show = policy_subparsers.add_parser("show")
     policy_show.add_argument("--id", required=True)
     inventory_parser = subparsers.add_parser(
-        "inventory", help="enumerate physical runtime modules without reading secret values"
+        "inventory",
+        help="enumerate physical runtime modules without reading secret values",
     )
     inventory_subparsers = inventory_parser.add_subparsers(
         dest="inventory_command", required=True
@@ -1251,7 +1439,8 @@ def build_parser() -> argparse.ArgumentParser:
     inventory_skills_parser = inventory_subparsers.add_parser("skills")
     inventory_skills_parser.add_argument("--repo-root", type=Path, required=True)
     verify_consumer_parser = subparsers.add_parser(
-        "verify-consumer", help="verify consumer projections from the working tree or Git index"
+        "verify-consumer",
+        help="verify consumer projections from the working tree or Git index",
     )
     verify_consumer_parser.add_argument("--target-root", type=Path, required=True)
     verify_consumer_parser.add_argument("--binding", required=True)
@@ -1305,7 +1494,9 @@ def main(argv: list[str] | None = None) -> int:
                 profile_id=args.profile,
                 include_all=False,
             )
-            lines, missing_required = check_environment(selected, env_file=args.env_file)
+            lines, missing_required = check_environment(
+                selected, env_file=args.env_file
+            )
         except ContractError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 2
@@ -1336,7 +1527,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 2
         for variable in selected:
-            sensitivity = "secret" if catalog.variables[variable.name]["secret"] else "non-secret"
+            sensitivity = (
+                "secret" if catalog.variables[variable.name]["secret"] else "non-secret"
+            )
             requirement = "required" if variable.required else "optional"
             default = variable.default if variable.default is not None else "-"
             print(f"{requirement}\t{sensitivity}\t{variable.name}\t{default}")
@@ -1397,6 +1590,7 @@ def main(argv: list[str] | None = None) -> int:
                     entrypoint_id=args.entrypoint,
                     target_root=args.target_root,
                     env_file=args.env_file,
+                    receipt_path=args.receipt,
                     json_output=args.json,
                 )
             except MissingConfiguration as exc:
