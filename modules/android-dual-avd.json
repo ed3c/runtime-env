@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"android-dual-avd","summary":"Two-role Android emulator runtime.","requires":["ANDROID_SENDER_AVD","ANDROID_RECEIVER_AVD"],"optional":["ANDROID_HOME","ANDROID_SDK_ROOT","ANDROID_AVD_HOME","JAVA_HOME","ANDROID_SENDER_PORT","ANDROID_RECEIVER_PORT"],"defaults":{"ANDROID_SENDER_PORT":"5554","ANDROID_RECEIVER_PORT":"5556"}}

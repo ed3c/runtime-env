@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"docker","summary":"Local or remote Docker daemon.","requires":[],"optional":["DOCKER_HOST"],"defaults":{}}

@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"openai","summary":"OpenAI Platform API workloads.","requires":["OPENAI_API_KEY"],"optional":["OPENAI_ORG_ID","OPENAI_PROJECT_ID"],"defaults":{}}

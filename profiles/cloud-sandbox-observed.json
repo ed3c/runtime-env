@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"cloud-sandbox-observed","summary":"Cloudflare sandbox with Sentry and Applitools receipts.","modules":["cloudflare-sandbox","sentry","applitools"]}

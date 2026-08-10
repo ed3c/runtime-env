@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"sentry","summary":"Sentry release and source-map operations.","requires":["SENTRY_AUTH_TOKEN","SENTRY_ORG","SENTRY_PROJECT"],"optional":[],"defaults":{}}

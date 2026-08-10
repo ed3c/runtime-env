@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"github-cli","summary":"Non-interactive GitHub CLI authentication.","requires":[],"optional":["GH_TOKEN"],"defaults":{}}

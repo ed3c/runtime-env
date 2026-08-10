@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"secure-mcp-tunnel","summary":"Typed local tools exposed through an OpenAI Secure MCP Tunnel.","modules":["secure-mcp-tunnel"]}

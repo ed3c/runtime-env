@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"anthropic","summary":"Anthropic API workloads.","requires":["ANTHROPIC_API_KEY"],"optional":[],"defaults":{}}

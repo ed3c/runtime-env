@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"nvidia-ngc","summary":"NVIDIA NGC artifact access.","requires":["NGC_API_KEY"],"optional":[],"defaults":{}}

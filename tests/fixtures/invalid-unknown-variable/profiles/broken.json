@@ -1,0 +1,6 @@
+{
+  "schema": "runtime-env/profile/v1",
+  "id": "broken",
+  "summary": "Invalid fixture profile.",
+  "modules": ["broken"]
+}

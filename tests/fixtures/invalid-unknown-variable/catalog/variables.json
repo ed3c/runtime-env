@@ -1,0 +1,10 @@
+{
+  "schema": "runtime-env/variables/v1",
+  "variables": [
+    {
+      "name": "KNOWN_TOKEN",
+      "secret": true,
+      "description": "Known fixture token."
+    }
+  ]
+}
