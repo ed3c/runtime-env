@@ -19,7 +19,11 @@ if arguments[:2] == ["credential-osxkeychain", "store"]:
 elif arguments[:2] == ["credential-osxkeychain", "get"]:
     path = state_root / "keychain"
     if path.is_file():
-        stored = path.read_text(encoding="utf-8")
+        stored = "\n".join(
+            line
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if not line.startswith("username=")
+        ) + "\n"
         if mode == "keychain-mismatch":
             stored = "\n".join(
                 "password=mismatch" if line.startswith("password=") else line
