@@ -75,6 +75,7 @@ cd /Users/neon/runtime-env
 ./runtime-env local-env init   # first use only; creates blank 0600 file
 ./runtime-env local-env doctor
 ./runtime-env local-env reconcile # preserve values and organize scope sections
+./runtime-env local-env migrate-forgejo-keychain # after filling Forgejo username/password
 ```
 
 Fill the resulting file outside an agent session. Do not paste its values into
@@ -87,6 +88,15 @@ variable names, and a catalog-local dotenv that Git would track. It reports
 only names and `PRESENT`/`EMPTY`; it never prints values. This is a redaction
 control, not a filesystem sandbox: the agent process must also be unable to
 open `/Users/neon/runtime-env/.env` directly.
+
+The Forgejo migration command is the only component allowed to bridge the
+`forgejo-local-password` module into Git credentials. It reads the private
+dotenv inside the local process, passes the password to Git helpers over stdin,
+and suppresses helper output. It refuses any non-loopback URL or port other
+than 3000. The commit point is deliberately last: `FORGEJO_PASSWORD` is cleared
+only after Keychain store/get, URL-scoped helper configuration, plaintext-store
+erase/get, and `git credential fill` all agree. A failed intermediate step
+leaves the dotenv password available for recovery.
 
 The sections come from catalog metadata, not hand-written comments.
 `local-only` identifies host paths, loopback services, and local carrier
