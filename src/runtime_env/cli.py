@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass
+import os
 from pathlib import Path
 import re
 import sys
@@ -190,6 +191,48 @@ def render_github_actions(catalog: Catalog, variables: list[SelectedVariable]) -
     return "\n".join(lines) + "\n"
 
 
+def load_dotenv(path: Path) -> dict[str, str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise ContractError(f"cannot read env file {path}: {exc.strerror}") from exc
+    values: dict[str, str] = {}
+    for line_number, raw_line in enumerate(lines, start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        if "=" not in line:
+            raise ContractError(f"{path}:{line_number}: expected NAME=VALUE")
+        name, value = line.split("=", 1)
+        name = name.strip()
+        if not VARIABLE_NAME.fullmatch(name):
+            raise ContractError(f"{path}:{line_number}: invalid variable name")
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            value = value[1:-1]
+        values[name] = value
+    return values
+
+
+def check_environment(
+    variables: list[SelectedVariable], *, env_file: Path | None
+) -> tuple[list[str], list[str]]:
+    configured = load_dotenv(env_file) if env_file else {}
+    configured.update(os.environ)
+    lines: list[str] = []
+    missing_required: list[str] = []
+    for selected in variables:
+        present = bool(configured.get(selected.name) or selected.default)
+        requirement = "required" if selected.required else "optional"
+        state = "PRESENT" if present else "MISSING"
+        lines.append(f"{state} {requirement}: {selected.name}")
+        if selected.required and not present:
+            missing_required.append(selected.name)
+    return lines, missing_required
+
+
 def _default_catalog_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -204,6 +247,9 @@ def build_parser() -> argparse.ArgumentParser:
     selection.add_argument("--profile")
     selection.add_argument("--all", action="store_true", dest="include_all")
     render_parser.add_argument("--format", choices=("dotenv", "github-actions"), required=True)
+    check_parser = subparsers.add_parser("check", help="check required names without printing values")
+    check_parser.add_argument("--profile", required=True)
+    check_parser.add_argument("--env-file", type=Path)
     return parser
 
 
@@ -234,5 +280,22 @@ def main(argv: list[str] | None = None) -> int:
             sys.stdout.write(render_dotenv(catalog, selected))
         else:
             sys.stdout.write(render_github_actions(catalog, selected))
+        return 0
+    if args.command == "check":
+        try:
+            selected = select_variables(
+                catalog,
+                profile_id=args.profile,
+                include_all=False,
+            )
+            lines, missing_required = check_environment(selected, env_file=args.env_file)
+        except ContractError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        for line in lines:
+            print(line)
+        if missing_required:
+            return 3
+        print(f"OK profile {args.profile}: all required variables are present")
         return 0
     raise AssertionError(f"unhandled command: {args.command}")
