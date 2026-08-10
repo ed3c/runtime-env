@@ -33,7 +33,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "required", "secret", "description"],
+        "required": ["name", "required", "secret", "runtime_scope", "description"],
         "allOf": [
           {
             "if": {"properties": {"secret": {"const": true}}, "required": ["secret"]},
@@ -44,6 +44,9 @@
           "name": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
           "required": {"type": "boolean"},
           "secret": {"type": "boolean"},
+          "runtime_scope": {
+            "enum": ["local-only", "cloud-runtime", "portable"]
+          },
           "description": {"type": "string", "minLength": 1},
           "account_url": {"type": "string", "pattern": "^https://"},
           "default": {"type": "string"}

@@ -1,0 +1,6 @@
+{
+  "schema": "runtime-env/profile/v1",
+  "id": "java-build-cloud",
+  "summary": "Cloud Java build plane with a provider-neutral JDK 21 selector.",
+  "modules": ["jdk-cloud"]
+}

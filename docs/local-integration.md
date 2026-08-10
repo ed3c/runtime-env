@@ -74,6 +74,7 @@ The canonical dotenv metadata check is:
 cd /Users/neon/runtime-env
 ./runtime-env local-env init   # first use only; creates blank 0600 file
 ./runtime-env local-env doctor
+./runtime-env local-env reconcile # preserve values and organize scope sections
 ```
 
 Fill the resulting file outside an agent session. Do not paste its values into
@@ -86,6 +87,13 @@ variable names, and a catalog-local dotenv that Git would track. It reports
 only names and `PRESENT`/`EMPTY`; it never prints values. This is a redaction
 control, not a filesystem sandbox: the agent process must also be unable to
 open `/Users/neon/runtime-env/.env` directly.
+
+The sections come from catalog metadata, not hand-written comments.
+`local-only` identifies host paths, loopback services, and local carrier
+selectors. `cloud-runtime` identifies remote-service inputs even though their
+values remain staged in this one local file. `portable` identifies selectors
+shared by both planes. Reconciliation preserves values and rewrites all three
+sections without emitting them.
 
 ## Session and private-file locations that never move into dotenv
 

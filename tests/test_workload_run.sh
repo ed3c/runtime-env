@@ -11,9 +11,9 @@ mkdir -p "${CATALOG}"/{catalog,modules,profiles,workloads} "${TARGET}/scripts"
 
 printf '%s\n' \
   '{"schema":"runtime-env/variables/v1","variables":[' \
-  '{"name":"RUNTIME_SENTINEL","secret":false,"description":"Non-secret runner test value."},' \
-  '{"name":"UNRELATED_CONFIG","secret":false,"description":"A second carrier value that this entrypoint must not inherit."},' \
-  '{"name":"BROKER_SECRET","secret":true,"description":"Secret that none-delivery must refuse."}' \
+  '{"name":"RUNTIME_SENTINEL","secret":false,"runtime_scope":"portable","description":"Non-secret runner test value."},' \
+  '{"name":"UNRELATED_CONFIG","secret":false,"runtime_scope":"local-only","description":"A second carrier value that this entrypoint must not inherit."},' \
+  '{"name":"BROKER_SECRET","secret":true,"runtime_scope":"cloud-runtime","description":"Secret that none-delivery must refuse."}' \
   ']}' > "${CATALOG}/catalog/variables.json"
 printf '%s\n' \
   '{"schema":"runtime-env/module/v1","id":"runner","summary":"Runner fixture.","requires":[],"optional":["RUNTIME_SENTINEL","UNRELATED_CONFIG"],"defaults":{"RUNTIME_SENTINEL":"catalog-default"}}' \

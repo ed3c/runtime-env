@@ -1,0 +1,6 @@
+{
+  "schema": "runtime-env/profile/v1",
+  "id": "java-build-local",
+  "summary": "Local Java build plane backed by a host JDK with javac.",
+  "modules": ["jdk-local"]
+}
