@@ -28,15 +28,29 @@ printf '%s\n' \
   '{"schema":"runtime-env/profile/v1","id":"secret","summary":"Secret fixture.","modules":["secret"]}' \
   > "${CATALOG}/profiles/secret.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"runner","summary":"Runner fixture.","profile":"runner","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"],"placeholder":["sh","<script>"]},"entrypoint_environment":{"fixed":["RUNTIME_SENTINEL"],"placeholder":[]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
+  '{"schema":"runtime-env/workload/v1","id":"runner","summary":"Runner fixture.","profile":"runner","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"],"placeholder":["sh","<script>"],"trusted":["@runtime-env/trusted.sh"]},"entrypoint_environment":{"fixed":["RUNTIME_SENTINEL"],"placeholder":[],"trusted":[]},"clean_catalog_entrypoints":["trusted"],"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
   > "${CATALOG}/workloads/runner.json"
 printf '%s\n' \
   '{"schema":"runtime-env/workload/v1","id":"secret","summary":"Secret fixture.","profile":"secret","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"]},"entrypoint_environment":{"fixed":["BROKER_SECRET"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
   > "${CATALOG}/workloads/secret.json"
+printf '%s\n' \
+  '{"schema":"runtime-env/workload/v1","id":"read-only","summary":"Read-only enforcement fixture.","profile":"runner","host":"local-macos","entrypoints":{"mutates":["sh","scripts/mutates.sh"]},"entrypoint_environment":{"mutates":[]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"read-only","evidence":{"receipt":"must-not-write.txt","control":"scripts/mutates.sh"}}' \
+  > "${CATALOG}/workloads/read-only.json"
 
 printf '%s\n' '#!/bin/sh' 'printf "%s\n" "${RUNTIME_SENTINEL:-missing}" > artifact.txt' '[ -z "${UNRELATED_CONFIG+x}" ]' 'printf "runner emitted ordinary output\n"' \
   > "${TARGET}/scripts/fixed.sh"
 chmod +x "${TARGET}/scripts/fixed.sh"
+printf '%s\n' '#!/bin/sh' 'printf "unexpected write\n" > must-not-write.txt' \
+  > "${TARGET}/scripts/mutates.sh"
+chmod +x "${TARGET}/scripts/mutates.sh"
+printf '%s\n' '#!/bin/sh' 'test "${PATH}" = "/usr/bin:/bin:/usr/sbin:/sbin"' \
+  > "${CATALOG}/trusted.sh"
+chmod +x "${CATALOG}/trusted.sh"
+git -C "${CATALOG}" init -q
+git -C "${CATALOG}" config user.email runtime-env@test
+git -C "${CATALOG}" config user.name runtime-env-test
+git -C "${CATALOG}" add -A
+git -C "${CATALOG}" commit -qm fixture
 git -C "${TARGET}" init -q
 git -C "${TARGET}" config user.email runtime-env@test
 git -C "${TARGET}" config user.name runtime-env-test
@@ -66,6 +80,27 @@ assert os.stat(d["receipt_path"]).st_mode & 0o777 == 0o600
 assert d["receipt_path"].endswith("/receipts/fixed.json")
 ' <<< "${output}"
 [[ "$(cat "${TARGET}/artifact.txt")" == 'broker-value' ]]
+
+PATH="${TARGET}:${PATH}" ${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
+  --id runner --entrypoint trusted --target-root "${TARGET}" --json >/dev/null
+
+set +e
+readonly_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
+  --id read-only --entrypoint mutates --target-root "${TARGET}" \
+  --receipt "${SCRATCH}/receipts/read-only.json" --json 2>&1)"
+readonly_status=$?
+set -e
+[[ ${readonly_status} -eq 2 ]]
+python3 - "${SCRATCH}/receipts/read-only.json" <<'PY'
+import json
+import sys
+
+receipt = json.load(open(sys.argv[1], encoding="utf-8"))
+assert receipt["status"] == "failed"
+assert receipt["child_exit"] == 0
+assert receipt["policy"]["read_only_unchanged"] is False
+PY
+rm -f "${TARGET}/must-not-write.txt"
 
 set +e
 collision_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \

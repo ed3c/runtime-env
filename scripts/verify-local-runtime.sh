@@ -8,6 +8,7 @@ set +x
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 env_file="${HOME}/.config/runtime-env/secrets/forgejo-local.env"
 canonical_path=""
+credential_helper_only=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -27,8 +28,12 @@ while [[ $# -gt 0 ]]; do
       canonical_path="$2"
       shift 2
       ;;
+    --credential-helper-only)
+      credential_helper_only=true
+      shift
+      ;;
     *)
-      echo "usage: verify-local-runtime.sh [--env-file PATH] [--canonical-path PATH]" >&2
+      echo "usage: verify-local-runtime.sh [--env-file PATH] [--canonical-path PATH] [--credential-helper-only]" >&2
       exit 2
       ;;
   esac
@@ -49,6 +54,24 @@ if [[ -n "${canonical_path}" ]]; then
 fi
 
 "${ROOT}/runtime-env" validate
+
+if [[ "${credential_helper_only}" == true ]]; then
+  set +e
+  helper_chain="$(git config --get-all credential.http://localhost:3000.helper 2>/dev/null)"
+  helper_chain_status=$?
+  set -e
+  expected_helper_chain=$'\nosxkeychain'
+  if [[ ${helper_chain_status} -ne 0 || "${helper_chain}" != "${expected_helper_chain}" ]]; then
+    helper_chain=""
+    expected_helper_chain=""
+    unset helper_chain expected_helper_chain
+    echo "REFUSED Forgejo helper chain is not URL-scoped osxkeychain" >&2
+    exit 2
+  fi
+  helper_chain=""
+  expected_helper_chain=""
+  unset helper_chain expected_helper_chain
+fi
 
 version_json="$(curl -q --noproxy '*' -fsS --connect-timeout 2 --max-time 5 http://localhost:3000/api/v1/version)" || {
   echo "UNREACHABLE Forgejo at http://localhost:3000" >&2
@@ -94,6 +117,9 @@ unset credential_payload
 
 if [[ -n "${credential_user}" && "${credential_secret_present}" == true ]]; then
   credential_source="git credential helper"
+elif [[ "${credential_helper_only}" == true ]]; then
+  echo "MISSING Forgejo credential: helper empty in helper-only mode" >&2
+  exit 3
 elif [[ -f "${env_file}" ]]; then
   set +e
   python3 - "${env_file}" <<'PY'

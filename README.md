@@ -183,11 +183,19 @@ Generated examples live in [`examples/`](examples/). CI proves they equal curren
 |---|---|
 | `forgejo-delivery-local-password` | Optional bootstrap input: `FORGEJO_USERNAME` and `FORGEJO_PASSWORD` when no helper/session is usable |
 | `forgejo-delivery-local-api` | Opt-in typed API client: `FORGEJO_TOKEN`; not consumed by the current Chrome/helper loop |
+| `forgejo-delivery-keychain-local` | Runtime-owned authenticated canary through `git credential fill`; no dotenv variable is injected |
 
 Both default `FORGEJO_URL` to `http://localhost:3000`. Exact template, local
 secret-store, Git credential helper, Keychain, legacy plaintext store, repo
 identity, Chrome logical surface, and token UI route are listed in
 [`docs/runtimes/forgejo-localhost.md`](docs/runtimes/forgejo-localhost.md).
+The fixed `forgejo-delivery-loop` workload runs the catalog's offline
+`broker-selftest` or live `credential-canary` from versioned runtime-env code
+and emits a metadata-only receipt bound to the catalog HEAD/tree. The credential
+canary refuses a dirty catalog, does not execute consumer-repo code, and exposes
+no Forgejo mutation entrypoint. It is Keychain-only (URL-scoped reset plus
+`osxkeychain`), runs with a fixed system `PATH`, and fails if a read-only
+workload changes the target Git state.
 
 ## Local and cloud JDK 21
 

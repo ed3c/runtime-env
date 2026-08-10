@@ -10,6 +10,7 @@ from GitHub-hosted or Codex-cloud runners.
 |---|---|---|
 | `forgejo-delivery-local-password` | `FORGEJO_URL`, `FORGEJO_USERNAME`, `FORGEJO_PASSWORD` | Bootstrap only, when neither the existing Chrome session nor Git credential helper is usable |
 | `forgejo-delivery-local-api` | `FORGEJO_URL`, optional `FORGEJO_USERNAME`, `FORGEJO_TOKEN` | Opt-in typed API client; the current delivery loop does not consume it |
+| `forgejo-delivery-keychain-local` | none | Normal post-migration canary: fixed runtime-env-owned code inherits `HOME`, and Git resolves the URL-scoped Keychain helper without dotenv injection |
 
 `FORGEJO_URL` defaults to `http://localhost:3000`. Account names and secrets
 have no committed defaults. These profiles are not unconditional requirements
@@ -83,6 +84,47 @@ pre-clear verification fails, the dotenv password remains present for recovery.
 This is the supported handoff to `forgejo-delivery-loop`: that skill consumes
 `git credential fill` and must not parse the dotenv or implement a second
 password store.
+
+## Modular delivery-loop workload
+
+After migration, any Git consumer can select the same bounded broker workload;
+the executed verifier comes from the selected runtime-env catalog checkout, not
+from the consumer repository:
+
+```bash
+cd /Users/neon/runtime-env
+./runtime-env workload run \
+  --id forgejo-delivery-loop \
+  --entrypoint broker-selftest \
+  --target-root /absolute/path/to/consumer \
+  --receipt ~/.local/state/runtime-env/receipts/forgejo-delivery/selftest.json
+
+./runtime-env workload run \
+  --id forgejo-delivery-loop \
+  --entrypoint credential-canary \
+  --target-root /absolute/path/to/consumer \
+  --receipt ~/.local/state/runtime-env/receipts/forgejo-delivery/status.json
+```
+
+`broker-selftest` is offline. `credential-canary` uses
+`--credential-helper-only` to check loopback reachability, Git helper resolution,
+and authenticated `/api/v1/user` access. Before `fill`, it requires the effective
+URL-scoped helper chain to be exactly an empty reset followed by `osxkeychain`;
+an empty, `store`, or shell helper fails instead of reading a dotenv fallback.
+The workload declares `secret_delivery=none`, passes no
+`FORGEJO_*` environment variables, replaces child `PATH` with
+`/usr/bin:/bin:/usr/sbin:/sbin`, and returns only child stream hashes in its
+mode-`0600` receipt. Git can still reach Keychain because the fixed runner's
+safe host allowlist includes `HOME`; the secret remains inside the Git helper
+and runtime-owned verifier. The
+`@runtime-env/` command prefix is resolved only to a regular file within the
+selected catalog root, preventing a consumer path from replacing the broker.
+The credential entrypoint also refuses a dirty or unversioned catalog root;
+its receipt records the runtime-env HEAD, tree, and dirty state.
+The runner also compares target HEAD and porcelain state before and after every
+`mutation=read-only` workload; any change makes the receipt and process fail.
+Forgejo line status and every mutation remain owned by
+`forgejo-delivery-loop`; this workload only proves its credential precondition.
 
 ## Official contract anchors
 

@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"forgejo-delivery-keychain-local","summary":"Read-only forgejo-delivery-loop runtime using the host Git credential helper after one-time Keychain migration.","modules":["forgejo-local-keychain-helper"]}
