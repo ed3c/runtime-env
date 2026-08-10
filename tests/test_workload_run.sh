@@ -48,7 +48,8 @@ printf '%s\n' 'RUNTIME_SENTINEL=broker-value' 'UNRELATED_CONFIG=must-not-cross-c
 chmod 0600 "${ENV_FILE}"
 
 output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
-  --id runner --entrypoint fixed --target-root "${TARGET}" --env-file "${ENV_FILE}" --json)"
+  --id runner --entrypoint fixed --target-root "${TARGET}" --env-file "${ENV_FILE}" \
+  --receipt "${SCRATCH}/receipts/fixed.json" --json)"
 [[ "${output}" != *'broker-value'* && "${output}" != *'runner emitted ordinary output'* ]] || {
   echo 'FAIL: workload runner leaked dotenv or child stdout' >&2
   exit 1
@@ -62,8 +63,20 @@ assert d["workload"] == "runner" and d["entrypoint"] == "fixed"
 assert d["stdout"]["bytes"] > 0 and len(d["stdout"]["sha256"]) == 64
 assert d["stderr"]["bytes"] == 0 and len(d["stderr"]["sha256"]) == 64
 assert os.stat(d["receipt_path"]).st_mode & 0o777 == 0o600
+assert d["receipt_path"].endswith("/receipts/fixed.json")
 ' <<< "${output}"
 [[ "$(cat "${TARGET}/artifact.txt")" == 'broker-value' ]]
+
+set +e
+collision_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
+  --id runner --entrypoint fixed --target-root "${TARGET}" --env-file "${ENV_FILE}" \
+  --receipt "${SCRATCH}/receipts/fixed.json" --json 2>&1)"
+collision_status=$?
+set -e
+[[ ${collision_status} -eq 2 && "${collision_output}" == *'already exists'* ]] || {
+  echo 'FAIL: explicit receipt path was overwritten' >&2
+  exit 1
+}
 
 printf '%s\n' 'RUNTIME_SENTINEL=' 'UNRELATED_CONFIG=must-not-cross-carriers' > "${ENV_FILE}"
 ${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
