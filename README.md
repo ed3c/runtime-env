@@ -53,6 +53,22 @@ existing macOS Keychain-backed Claude login receives neither override and the
 Codex entrypoint receives only `CODEX_HOME`. Neither receives the other
 carrier's authentication or configuration environment.
 
+For an OpenShell sandbox, bootstrap the Codex ChatGPT provider once from a
+trusted host terminal. OAuth components travel in the `openshell` child
+environment, never argv, stdout, a repository, dotenv, or the sandbox:
+
+```bash
+python3 scripts/bootstrap-openshell-provider.py codex-chatgpt \
+  --name codex-runtime-env \
+  --receipt ~/.local/state/runtime-env/receipts/openshell/codex-runtime-env.json
+```
+
+The bootstrap strips all Claude/Anthropic variables before launching
+OpenShell. It does not modify `CODEX_HOME`, `CLAUDE_CONFIG_DIR`,
+`config.toml`, or `settings.json`. See
+[`docs/local-credential-broker.md`](docs/local-credential-broker.md) for the
+trust boundary and the separate Claude subscription route.
+
 ## Explicit consumer synchronization
 
 `sync` exports a profile into a consuming repository without copying this
