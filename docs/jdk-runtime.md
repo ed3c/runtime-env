@@ -56,11 +56,15 @@ should be pinned according to that repository's supply-chain policy.
 
 ## License boundary
 
-JetBrains describes JBR as an OpenJDK fork and publishes GPLv2 license and
-assembly-exception files in its source repository. Using the bundled JDK to run
-Gradle or compile an independent commercial application does not by itself
-make that application's source a derivative of the JDK. Redistributing or
-modifying JBR is a different act and can carry source, notice, and license
+JetBrains describes JBR as an OpenJDK fork. Its repository publishes GPLv2,
+includes the Classpath Exception for designated source files in `LICENSE`, and
+also carries a separate OpenJDK Assembly Exception. GPLv2 itself states that
+running the program is outside its restricted activities, while the Classpath
+Exception permits designated library code to link with independent modules
+under the modules' own terms. Therefore using the bundled JDK to run Gradle or
+compile an independent commercial application does not by itself require that
+application's source to adopt GPLv2. Redistributing or modifying JBR is a
+different act and can carry source, notice, file-designation, and license
 obligations. This repository records the runtime boundary; it is not legal
 advice and does not claim an unconditional exemption.
 
@@ -68,6 +72,6 @@ Official anchors:
 
 - [Android: Java versions in Android builds](https://developer.android.com/build/jdks)
 - [JetBrains Runtime source repository](https://github.com/JetBrains/JetBrainsRuntime)
-- [JetBrains Runtime GPLv2 license](https://github.com/JetBrains/JetBrainsRuntime/blob/master/LICENSE)
+- [JetBrains Runtime GPLv2 and Classpath Exception](https://github.com/JetBrains/JetBrainsRuntime/blob/master/LICENSE)
 - [JetBrains Runtime assembly exception](https://github.com/JetBrains/JetBrainsRuntime/blob/master/ASSEMBLY_EXCEPTION)
 - [GitHub `actions/setup-java`](https://github.com/actions/setup-java)
