@@ -16,14 +16,19 @@ variables = {
     for item in json.loads((root / "catalog/variables.json").read_text())["variables"]
 }
 module = json.loads((root / "modules/openshell-agent-providers.json").read_text())
+transport = json.loads(
+    (root / "policies/codex-openshell-chatgpt-placeholder.json").read_text()
+)
 for name in (
     "OPENSHELL_CLAUDE_PROVIDER",
     "OPENSHELL_CODEX_PROVIDER",
+    "CODEX_SANDBOX_MODEL",
     "OPENSHELL_GATEWAY",
     "OPENSHELL_GATEWAY_ENDPOINT",
 ):
     assert name in variables and variables[name]["secret"] is False
     assert name in module["optional"]
+assert module["defaults"]["CODEX_SANDBOX_MODEL"] == "gpt-5.6-sol"
 for profile_name in (
     "bettor-arena-runtime-local",
     "dr-research-loop-local",
@@ -31,6 +36,20 @@ for profile_name in (
 ):
     profile = json.loads((root / f"profiles/{profile_name}.json").read_text())
     assert "openshell-agent-providers" in profile["modules"]
+
+settings = transport["required_settings"]
+assert transport["carrier"] == "codex-cli"
+assert settings == {
+    "model_provider": "openshell_chatgpt",
+    "model_providers.openshell_chatgpt.base_url": "https://chatgpt.com/backend-api/codex",
+    "model_providers.openshell_chatgpt.env_http_headers.ChatGPT-Account-ID": "CODEX_AUTH_ACCOUNT_ID",
+    "model_providers.openshell_chatgpt.env_key": "CODEX_AUTH_ACCESS_TOKEN",
+    "model_providers.openshell_chatgpt.requires_openai_auth": False,
+    "model_providers.openshell_chatgpt.supports_websockets": False,
+    "model_providers.openshell_chatgpt.wire_api": "responses",
+}
+assert "CODEX_AUTH_JSON" in transport["forbidden_environment"]
+assert "~/.codex/auth.json" in "\n".join(transport["external_requirements"])
 PY
 
 FAKE_BIN="${SCRATCH}/bin"

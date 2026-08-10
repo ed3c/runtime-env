@@ -25,6 +25,7 @@
     {"name": "CLOUDFLARE_API_TOKEN", "secret": true, "description": "Scoped Cloudflare API token.", "account_url": "https://dash.cloudflare.com/profile/api-tokens"},
     {"name": "CLAUDE_CONFIG_DIR", "secret": false, "description": "Dedicated Claude Code configuration root; its contents remain host-only."},
     {"name": "CODEX_HOME", "secret": false, "description": "Dedicated Codex configuration root; its contents remain host-only."},
+    {"name": "CODEX_SANDBOX_MODEL", "secret": false, "description": "Codex model selected by the disposable OpenShell ChatGPT carrier."},
     {"name": "DEVELOPER_DIR", "secret": false, "description": "Selected Xcode developer directory."},
     {"name": "DR_CDP_URL", "secret": false, "description": "Loopback CDP endpoint for an already-running dedicated research browser."},
     {"name": "DR_HEADED", "secret": false, "description": "Whether broker-owned deep-research browser operations use a visible window."},

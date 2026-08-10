@@ -67,7 +67,10 @@ The bootstrap strips all Claude/Anthropic variables before launching
 OpenShell. It does not modify `CODEX_HOME`, `CLAUDE_CONFIG_DIR`,
 `config.toml`, or `settings.json`. See
 [`docs/local-credential-broker.md`](docs/local-credential-broker.md) for the
-trust boundary and the separate Claude subscription route.
+trust boundary and the separate Claude subscription route. Consumer sandboxes
+also select `codex-openshell-chatgpt-placeholder`: Codex sends the provider's
+opaque access-token and account-id placeholders through a custom HTTPS model
+provider, so no sandbox-side `auth.json` is needed.
 
 ## Explicit consumer synchronization
 
@@ -81,6 +84,7 @@ repository or any credential value:
   --workload bettor-arena-proof \
   --policy claude-code-native-isolation \
   --policy codex-cli-native-isolation \
+  --policy codex-openshell-chatgpt-placeholder \
   --target-root /path/to/bettor-arena
 
 # Review the WOULD-CREATE / WOULD-UPDATE receipt, then write explicitly:
@@ -90,6 +94,7 @@ repository or any credential value:
   --workload bettor-arena-proof \
   --policy claude-code-native-isolation \
   --policy codex-cli-native-isolation \
+  --policy codex-openshell-chatgpt-placeholder \
   --target-root /path/to/bettor-arena \
   --apply
 
@@ -100,6 +105,7 @@ repository or any credential value:
   --workload bettor-arena-proof \
   --policy claude-code-native-isolation \
   --policy codex-cli-native-isolation \
+  --policy codex-openshell-chatgpt-placeholder \
   --target-root /path/to/bettor-arena \
   --check
 ```
