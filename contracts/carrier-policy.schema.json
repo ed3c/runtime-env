@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ed3c/runtime-env/blob/main/contracts/carrier-policy.schema.json",
+  "title": "runtime-env carrier policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "summary", "carrier", "config_home_env", "settings_file", "required_settings", "forbidden_environment", "external_requirements", "receipt_commands"],
+  "properties": {
+    "schema": {"const": "runtime-env/carrier-policy/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "carrier": {"enum": ["claude-code", "codex-cli"]},
+    "config_home_env": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+    "settings_file": {"type": "string", "minLength": 1},
+    "required_settings": {"type": "object", "minProperties": 1},
+    "forbidden_environment": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "external_requirements": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "receipt_commands": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

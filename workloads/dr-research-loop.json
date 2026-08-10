@@ -1,0 +1,18 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "dr-research-loop",
+  "summary": "Run the three-pool proposal research loop with independent receipts and a Human admit boundary.",
+  "profile": "dr-research-loop-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "engine": ["sh", "loop_wiki/engine.sh", "<dr-topic>", "--target", "<proposal>", "--driver", "agy"],
+    "verify": ["sh", "loop_wiki/<dr-topic>/verify.sh"]
+  },
+  "secret_delivery": "broker-only",
+  "agent_secret_access": "denied",
+  "mutation": "workspace",
+  "evidence": {
+    "receipt": "loop_wiki/<dr-topic>/trajectory.log",
+    "control": "loop_wiki/<dr-topic>/selftest.sh"
+  }
+}

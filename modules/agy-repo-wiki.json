@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"agy-repo-wiki","summary":"Local Antigravity repo-wiki author and ingest runtime.","requires":[],"optional":["AGY_TIMEOUT","ANTIGRAVITY_REPO_ROOT"],"defaults":{"AGY_TIMEOUT":"30m"}}

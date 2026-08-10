@@ -1,0 +1,18 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "ios-testflight-verify",
+  "summary": "Verify App Store Connect authentication without uploading a build.",
+  "profile": "ios-testflight-ship-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "preflight": ["bash", ".agents/skills/ios-testflight-ship/scripts/preflight.sh"],
+    "verify-asc": ["bash", ".agents/skills/ios-testflight-ship/scripts/ship.sh", "<target-repo>", "verify_asc"]
+  },
+  "secret_delivery": "broker-only",
+  "agent_secret_access": "denied",
+  "mutation": "read-only",
+  "evidence": {
+    "receipt": "broker-receipts/ios-testflight-verify/<run-id>.json",
+    "control": ".agents/skills/ios-testflight-ship/tests/run-all.sh"
+  }
+}

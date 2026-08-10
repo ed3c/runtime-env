@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"claude-in-chrome-carrier","summary":"Claude Code browser extension carrier using an already logged-in user Chrome profile.","requires":[],"optional":[],"defaults":{}}

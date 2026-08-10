@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"ios-testflight-ship-local","summary":"Local macOS TestFlight verification and release through a secret-isolated broker.","modules":["apple-signing"]}

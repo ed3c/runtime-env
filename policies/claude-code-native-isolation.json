@@ -1,0 +1,34 @@
+{
+  "schema": "runtime-env/carrier-policy/v1",
+  "id": "claude-code-native-isolation",
+  "summary": "Claude Code native permission and sandbox controls without Codex state inheritance.",
+  "carrier": "claude-code",
+  "config_home_env": "CLAUDE_CONFIG_DIR",
+  "settings_file": "settings.json",
+  "required_settings": {
+    "permissions.defaultMode": "acceptEdits",
+    "permissions.disableBypassPermissionsMode": "disable",
+    "permissions.deny": [
+      "Read(<runtime-env-root>/.env)",
+      "Edit(<runtime-env-root>/.env)",
+      "Read(<claude-config-dir>/**)",
+      "Edit(<claude-config-dir>/**)",
+      "Read(<codex-home>/**)",
+      "Edit(<codex-home>/**)",
+      "Read(<agy-home>/**)",
+      "Edit(<agy-home>/**)",
+      "Read(<stealth-browser-root>/profiles/**)",
+      "Edit(<stealth-browser-root>/profiles/**)",
+      "Read(<appstoreconnect-private-keys>/**)",
+      "Edit(<appstoreconnect-private-keys>/**)"
+    ],
+    "sandbox.enabled": true,
+    "sandbox.failIfUnavailable": true,
+    "sandbox.allowUnsandboxedCommands": false,
+    "sandbox.filesystem.denyRead": ["<runtime-env-root>/.env", "<claude-config-dir>", "<codex-home>", "<agy-home>", "<stealth-browser-root>/profiles", "<appstoreconnect-private-keys>"],
+    "sandbox.filesystem.denyWrite": ["<runtime-env-root>/.env", "<claude-config-dir>", "<codex-home>", "<agy-home>", "<stealth-browser-root>/profiles", "<appstoreconnect-private-keys>"]
+  },
+  "forbidden_environment": ["CODEX_ACCESS_TOKEN", "CODEX_API_KEY", "CODEX_HOME", "OPENAI_API_KEY"],
+  "external_requirements": ["Render placeholders to absolute host paths and install the resulting deny rules in a host or managed settings layer that the repository cannot widen."],
+  "receipt_commands": ["claude auth status", "claude --settings <rendered-settings> --permission-mode acceptEdits"]
+}

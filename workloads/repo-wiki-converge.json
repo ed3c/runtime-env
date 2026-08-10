@@ -1,0 +1,19 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "repo-wiki-converge",
+  "summary": "Create or refine a repository wiki and ingest verified pages into the local knowledge graph.",
+  "profile": "repo-wiki-converge-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "author": ["bash", "kb-ingest/agy-pass.sh"],
+    "verify": ["bash", "kb-ingest/verify-claims.sh"],
+    "ingest": ["python3", "-m", "indexing.ingest_repodoc_cli"]
+  },
+  "secret_delivery": "broker-only",
+  "agent_secret_access": "denied",
+  "mutation": "workspace",
+  "evidence": {
+    "receipt": "<output-dir>/agy-receipt.jsonl",
+    "control": "kb-ingest/verify-claims.sh"
+  }
+}

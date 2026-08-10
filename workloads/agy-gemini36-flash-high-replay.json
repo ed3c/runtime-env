@@ -1,0 +1,18 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "agy-gemini36-flash-high-replay",
+  "summary": "Run an admitted file-based independent replay with agy Gemini 3.6 Flash High.",
+  "profile": "agy-gemini36-flash-high-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "inventory": ["agy", "models"],
+    "replay": ["python3", "loop_wiki/evolve-unknown-discovery-plan-truth/scripts/execute_agy_replay_requests.py", "--approved-external-call"]
+  },
+  "secret_delivery": "broker-only",
+  "agent_secret_access": "denied",
+  "mutation": "workspace",
+  "evidence": {
+    "receipt": "loop_wiki/evolve-unknown-discovery-plan-truth/data/agy-replay-execution-report.json",
+    "control": "loop_wiki/evolve-unknown-discovery-plan-truth/verify.sh"
+  }
+}

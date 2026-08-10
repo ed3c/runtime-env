@@ -4,11 +4,20 @@
   "title": "runtime-env consumer binding v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "binding", "profile", "source", "variables", "render", "content_sha256"],
+  "required": ["schema", "binding", "profile", "source", "variables", "render", "projections", "content_sha256"],
   "properties": {
     "schema": {"const": "runtime-env/consumer-binding/v1"},
     "binding": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "profile": {"type": "string", "minLength": 1},
+    "projections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workload", "policies"],
+      "properties": {
+        "workload": {"type": ["string", "null"]},
+        "policies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,

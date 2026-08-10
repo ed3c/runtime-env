@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"codex-chrome-carrier","summary":"Codex browser runtime carrier using an already logged-in user Chrome profile and bounded adapters.","requires":[],"optional":[],"defaults":{}}

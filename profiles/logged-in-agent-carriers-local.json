@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"logged-in-agent-carriers-local","summary":"Existing browser, Claude Code, Codex CLI, and agy host sessions without credential copying.","modules":["logged-in-research-browser","claude-in-chrome-carrier","codex-chrome-carrier","claude-code-session","codex-cli-session","agy-cli-session"]}

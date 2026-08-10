@@ -39,6 +39,10 @@ typed MCP server.
 - Contract names and empty templates: `/Users/neon/runtime-env/catalog/`,
   `/Users/neon/runtime-env/modules/`, `/Users/neon/runtime-env/profiles/`, and
   `/Users/neon/runtime-env/examples/`.
+- Canonical host-only dotenv entry: `/Users/neon/runtime-env/.env`, mode
+  `0600`, owned by the local user, untracked, and ignored by Git. It is an
+  import/staging surface for the host broker, not a file that is copied into
+  consumer repositories or mounted into an agent sandbox.
 - Preferred Git credential source: macOS Keychain through
   `credential.helper=osxkeychain`; Git resolves it through
   `git credential fill` without the Agent reading the Keychain database.
@@ -63,3 +67,37 @@ Absence, refusal, and inability remain distinct: no credentials is a missing
 runtime input; an invalid credential is an authentication refusal; an
 unreachable localhost service is an execution-plane failure. Do not fix one by
 widening another plane's permissions.
+
+The canonical dotenv metadata check is:
+
+```bash
+cd /Users/neon/runtime-env
+./runtime-env local-env init   # first use only; creates blank 0600 file
+./runtime-env local-env doctor
+```
+
+Fill the resulting file outside an agent session. Do not paste its values into
+chat. A synchronized consumer reads its secret-free binding while the local
+broker resolves values from this one canonical file; the dotenv itself is not
+copied to that consumer.
+
+It rejects symlinks, the wrong owner, any mode other than `0600`, unknown
+variable names, and a catalog-local dotenv that Git would track. It reports
+only names and `PRESENT`/`EMPTY`; it never prints values. This is a redaction
+control, not a filesystem sandbox: the agent process must also be unable to
+open `/Users/neon/runtime-env/.env` directly.
+
+## Session and private-file locations that never move into dotenv
+
+| Capability | Host-only location | Agent-visible representation |
+|---|---|---|
+| Codex CLI ChatGPT login | OS keyring or `~/.codex/auth.json`, according to Codex configuration | authenticated/not-authenticated receipt only |
+| Claude Code subscription login | macOS Keychain and Claude-owned host state | authenticated/not-authenticated receipt only |
+| Antigravity `agy` login and artifacts | `~/.gemini/antigravity-cli/` | exact model inventory plus file-output canary receipt |
+| Stealth-browser login profiles | `/Users/neon/stealth-browser/profiles/<name>/state.json` | typed browser operation plus metadata-only receipt |
+| App Store Connect private key | `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8` or another broker-owned `0600` path | `verify_asc`/upload receipt only |
+
+Do not copy, bind-mount, upload, render, or synchronize any of these stores.
+`ASC_KEY_PATH` may identify the host file to the broker, but the `.p8` bytes are
+never dotenv content. A logged-in browser is also a credential store: cookies
+and localStorage are credential material even when no API key is visible.

@@ -1,0 +1,18 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "bettor-arena-proof",
+  "summary": "Generate bettor-arena proof receipts and run independent controls.",
+  "profile": "bettor-arena-runtime-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "prove-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "prove", "--force-receipt"],
+    "control-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "test", "--force-receipt"]
+  },
+  "secret_delivery": "none",
+  "agent_secret_access": "denied",
+  "mutation": "workspace",
+  "evidence": {
+    "receipt": "data/proof-workflow/equivalence-<commit12>.json",
+    "control": "data/proof-workflow/control-equivalence-<commit12>.json"
+  }
+}

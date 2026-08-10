@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"agy-cli-session","summary":"Host agy CLI session with exact model inventory and file-output liveness checks.","requires":[],"optional":["AGY_MODEL","AGY_EFFORT"],"defaults":{"AGY_MODEL":"gemini-3.6-flash-high","AGY_EFFORT":"high"}}

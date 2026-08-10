@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"stealth-browser","summary":"Local stealth-browser MCP with broker-owned persistent profiles and bounded file sinks.","requires":[],"optional":["STEALTH_BROWSER_EXTRA_ALLOW","STEALTH_DEBUG_LOG","STEALTH_LANGUAGES","STEALTH_USER_AGENT"],"defaults":{}}

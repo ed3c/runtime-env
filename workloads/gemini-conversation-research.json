@@ -1,0 +1,19 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "gemini-conversation-research",
+  "summary": "Extract and guide a Gemini conversation through a logged-in browser with file-only content sinks.",
+  "profile": "gemini-conversation-research-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "extract": ["node", "scripts/extract-gemini-conversation-browser-runtime.mjs"],
+    "guided-edge": ["node", "scripts/run-gemini-guided-conversation-browser-runtime.mjs"],
+    "carrier-gate": ["bun", "run", "scripts/test-extract-gemini-conversation-browser-runtime.mjs"]
+  },
+  "secret_delivery": "broker-only",
+  "agent_secret_access": "denied",
+  "mutation": "workspace",
+  "evidence": {
+    "receipt": "gemini_research/gcr/<run-id>-receipt.json",
+    "control": "scripts/test-run-gemini-guided-conversation-browser-runtime.mjs"
+  }
+}

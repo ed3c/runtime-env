@@ -1,0 +1,18 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "stealth-browser-mcp",
+  "summary": "Serve bounded stealth browser tools while persistent cookie state remains outside the agent filesystem.",
+  "profile": "gemini-conversation-research-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "serve": ["npx", "tsx", "<stealth-browser-root>/src/index.ts"],
+    "test": ["npm", "test"]
+  },
+  "secret_delivery": "broker-only",
+  "agent_secret_access": "denied",
+  "mutation": "workspace",
+  "evidence": {
+    "receipt": "<file-sink>/stealth-browser/<run-id>.json",
+    "control": "tests/"
+  }
+}
