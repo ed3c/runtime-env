@@ -48,9 +48,10 @@ secrets; provider/broker workloads refuse ordinary child-environment secret
 injection and must use their dedicated adapter.
 Each `entrypoint_environment` allowlist is exact: variables selected by the
 profile but not named for that entrypoint are absent from its child. This lets
-one host-only dotenv hold both `CLAUDE_CONFIG_DIR` and `CODEX_HOME` while a
-Claude entrypoint receives no Codex configuration variable and a Codex
-entrypoint receives no Claude configuration variable.
+one host-only dotenv hold both `CLAUDE_CONFIG_DIR` and `CODEX_HOME` while the
+existing macOS Keychain-backed Claude login receives neither override and the
+Codex entrypoint receives only `CODEX_HOME`. Neither receives the other
+carrier's authentication or configuration environment.
 
 ## Explicit consumer synchronization
 

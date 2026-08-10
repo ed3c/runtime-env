@@ -101,6 +101,14 @@ The fixed workload runner enforces the same split at process creation through
 controls are complementary, and neither policy file is rewritten by the other
 carrier.
 
+On macOS, the existing Claude subscription login is Keychain-backed. Its fixed
+status canary deliberately leaves `CLAUDE_CONFIG_DIR` unset because setting the
+override—even to the textual default path—selects a separate Claude config
+identity. The canary also fails if any Codex/OpenAI auth or config environment
+is present. A separately logged-in Claude identity may use an explicit override
+in a distinct admitted workload; it must not silently replace the default-login
+canary.
+
 Use `runtime-env policy show --id <policy>` to inspect a policy. Pass both
 repeatable `--policy` options to `runtime-env sync`; consumer `sync --check` or
 its staged pre-commit validator then detects either native policy drifting.

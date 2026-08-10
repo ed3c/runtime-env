@@ -7,16 +7,16 @@
   "entrypoints": {
     "prove-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "prove", "--force-receipt"],
     "control-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "test", "--force-receipt"],
-    "claude-auth-status": ["claude", "auth", "status"],
-    "codex-login-status": ["codex", "login", "status"],
-    "agy-model-inventory": ["agy", "models"],
+    "claude-auth-status": ["python3", "scripts/runtime-env/check-carrier-status.py", "claude"],
+    "codex-login-status": ["python3", "scripts/runtime-env/check-carrier-status.py", "codex"],
+    "agy-model-inventory": ["python3", "scripts/runtime-env/check-carrier-status.py", "agy"],
     "stealth-browser-control": ["sh", "scripts/runtime-env/check-stealth-browser.sh"],
     "equivalence-live": ["python3", "scripts/runtime-env/run-equivalence-live.py"]
   },
   "entrypoint_environment": {
     "prove-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"],
     "control-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"],
-    "claude-auth-status": ["CLAUDE_CONFIG_DIR"],
+    "claude-auth-status": [],
     "codex-login-status": ["CODEX_HOME"],
     "agy-model-inventory": ["AGY_MODEL", "AGY_EFFORT"],
     "stealth-browser-control": ["STEALTH_BROWSER_ROOT"],
