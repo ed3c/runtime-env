@@ -30,6 +30,9 @@
     {"name": "DR_HEADED", "secret": false, "description": "Whether broker-owned deep-research browser operations use a visible window."},
     {"name": "DOCKER_HOST", "secret": false, "description": "Optional Docker daemon endpoint override."},
     {"name": "E2B_API_KEY", "secret": true, "description": "E2B cloud sandbox API credential.", "account_url": "https://e2b.dev/dashboard"},
+    {"name": "EQUIVALENCE_APPROVAL_RECEIPT_PATH", "secret": false, "description": "Path to a per-request external-transmission approval receipt; the receipt contains no credential values."},
+    {"name": "EQUIVALENCE_REQUEST_PATH", "secret": false, "description": "Path to the digest-bound technical-equivalence request approved for execution."},
+    {"name": "EQUIVALENCE_RUN_ROOT", "secret": false, "description": "Broker-owned file sink for technical-equivalence prompts, reports, and receipts."},
     {"name": "FORGEJO_PASSWORD", "secret": true, "description": "Password for a local Forgejo account; prefer a credential helper over dotenv storage."},
     {"name": "FORGEJO_TOKEN", "secret": true, "description": "Scoped access token for local Forgejo API automation."},
     {"name": "FORGEJO_URL", "secret": false, "description": "Base URL of the local Forgejo instance."},
@@ -55,6 +58,7 @@
     {"name": "SENTRY_PROJECT", "secret": false, "description": "Sentry project slug."},
     {"name": "SKILL_BETTOR_PEER", "secret": false, "description": "Explicit local path to the skill-bettor target peer used by proof controls."},
     {"name": "STEALTH_BROWSER_EXTRA_ALLOW", "secret": false, "description": "Additional broker-approved output roots for stealth-browser file sinks."},
+    {"name": "STEALTH_BROWSER_ROOT", "secret": false, "description": "Absolute path to the separately versioned stealth-browser checkout."},
     {"name": "STEALTH_DEBUG_LOG", "secret": false, "description": "Broker-owned path for sanitized stealth-browser diagnostics."},
     {"name": "STEALTH_LANGUAGES", "secret": false, "description": "Stable browser language list used by the stealth fingerprint layer."},
     {"name": "STEALTH_USER_AGENT", "secret": false, "description": "Explicit browser user-agent override for deterministic probes."}

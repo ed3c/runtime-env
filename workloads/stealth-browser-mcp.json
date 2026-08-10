@@ -8,6 +8,10 @@
     "serve": ["npx", "tsx", "<stealth-browser-root>/src/index.ts"],
     "test": ["npm", "test"]
   },
+  "entrypoint_environment": {
+    "serve": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],
+    "test": []
+  },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",

@@ -32,6 +32,18 @@ workload declares a fixed profile, entrypoints, mutation class, delivery mode,
 agent access, receipt, and independent control. `agent_secret_access` is always
 `denied`.
 
+For local `none` workloads, `runtime-env workload run` is the narrow execution
+surface: it accepts a workload ID and one manifest-owned entrypoint, never an
+arbitrary command. It validates the target Git root and private dotenv metadata,
+passes only selected non-secret names into a minimal environment, suppresses
+child streams, and emits only their byte counts and SHA-256 hashes in a private
+receipt. If the selected profile resolves any secret, execution fails closed.
+`broker-only` and `openshell-provider` describe separate adapters; this local
+runner intentionally does not imitate them by exporting plaintext secrets.
+The workload's `entrypoint_environment` is the second boundary: it narrows the
+profile independently for every fixed command. Carrier configuration names are
+therefore not ambient merely because they coexist in `/Users/neon/runtime-env/.env`.
+
 ## Delivery classes
 
 | Class | Meaning | Current safe use |
@@ -84,6 +96,18 @@ Do not launch Claude from an environment containing `CODEX_HOME` or Codex auth
 variables, and do not launch Codex with `CLAUDE_CONFIG_DIR`, Anthropic keys, or
 Claude OAuth material. The shared repository projection contains settings
 requirements only; host-specific homes and their contents never synchronize.
+The fixed workload runner enforces the same split at process creation through
+`entrypoint_environment`; native policy controls and process-environment
+controls are complementary, and neither policy file is rewritten by the other
+carrier.
+
+On macOS, the existing Claude subscription login is Keychain-backed. Its fixed
+status canary deliberately leaves `CLAUDE_CONFIG_DIR` unset because setting the
+override—even to the textual default path—selects a separate Claude config
+identity. The canary also fails if any Codex/OpenAI auth or config environment
+is present. A separately logged-in Claude identity may use an explicit override
+in a distinct admitted workload; it must not silently replace the default-login
+canary.
 
 Use `runtime-env policy show --id <policy>` to inspect a policy. Pass both
 repeatable `--policy` options to `runtime-env sync`; consumer `sync --check` or
@@ -109,7 +133,10 @@ The caller receives only the bounded receipt required by
 `gemini-conversation-research/modules/browser-content-isolation.md`. The
 dedicated `:9333` research profile and an interactive extension profile are
 different carriers and must not be driven concurrently as if they were one
-browser.
+browser. The bettor binding includes a metadata-only `research-browser-health`
+entrypoint. It accepts only loopback HTTP, reads `/json/version`, verifies the
+debugger WebSocket is also loopback, and emits only a browser-version hash. It
+does not enumerate tabs, inspect DOM, or transmit a prompt.
 
 ### Agy Gemini 3.6 Flash High
 

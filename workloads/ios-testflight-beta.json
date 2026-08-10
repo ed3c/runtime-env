@@ -7,6 +7,9 @@
   "entrypoints": {
     "upload": ["bash", ".agents/skills/ios-testflight-ship/scripts/ship.sh", "<target-repo>", "beta"]
   },
+  "entrypoint_environment": {
+    "upload": ["APPLE_TEAM_ID", "ASC_ISSUER_ID", "ASC_KEY_ID", "ASC_KEY_PATH", "DEVELOPER_DIR", "IOS_DEVICE_UDID", "JAVA_HOME", "MATCH_PASSWORD"]
+  },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "external-release",

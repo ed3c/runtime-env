@@ -21,8 +21,12 @@ This prevents an optional cloud backend from making a local workflow demand unre
 ./runtime-env check --profile skill-bettor-e2b --env-file .env
 ./runtime-env local-env init      # first use: blank, untracked, mode 0600
 ./runtime-env local-env doctor    # names and presence only; never values
+./runtime-env local-env reconcile # append newly cataloged names with empty values
+./runtime-env local-env set-path --name CODEX_HOME --path /absolute/existing/path
 ./runtime-env workload list
 ./runtime-env workload show --id ios-testflight-beta
+./runtime-env workload run --id bettor-arena-proof --entrypoint prove-harness \
+  --target-root /path/to/bettor-arena --env-file /Users/neon/runtime-env/.env --json
 ./runtime-env inventory skills --repo-root /Users/neon/ix-agy
 ```
 
@@ -35,6 +39,19 @@ Exit codes are part of the public contract:
 | `3` | Required configuration is absent; the workload did not run |
 
 `check` prints variable names and presence states only. It never prints values.
+`workload run` accepts only a checked-in fixed entrypoint; there is no trailing
+arbitrary command surface. It verifies an optional dotenv is a user-owned
+regular file with mode `0600`, constructs a minimal child environment, and
+returns metadata plus a private `0600` receipt. Child stdout/stderr and dotenv
+values are neither printed nor stored. A `none` workload refuses configured
+secrets; provider/broker workloads refuse ordinary child-environment secret
+injection and must use their dedicated adapter.
+Each `entrypoint_environment` allowlist is exact: variables selected by the
+profile but not named for that entrypoint are absent from its child. This lets
+one host-only dotenv hold both `CLAUDE_CONFIG_DIR` and `CODEX_HOME` while the
+existing macOS Keychain-backed Claude login receives neither override and the
+Codex entrypoint receives only `CODEX_HOME`. Neither receives the other
+carrier's authentication or configuration environment.
 
 ## Explicit consumer synchronization
 

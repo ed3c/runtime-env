@@ -4,7 +4,7 @@
   "title": "runtime-env workload v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "id", "summary", "profile", "host", "entrypoints", "secret_delivery", "agent_secret_access", "mutation", "evidence"],
+  "required": ["schema", "id", "summary", "profile", "host", "entrypoints", "entrypoint_environment", "secret_delivery", "agent_secret_access", "mutation", "evidence"],
   "properties": {
     "schema": {"const": "runtime-env/workload/v1"},
     "id": {"type": "string", "minLength": 1},
@@ -12,6 +12,7 @@
     "profile": {"type": "string", "minLength": 1},
     "host": {"enum": ["local-macos", "openshell"]},
     "entrypoints": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}},
+    "entrypoint_environment": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}}},
     "secret_delivery": {"enum": ["none", "openshell-provider", "broker-only"]},
     "agent_secret_access": {"const": "denied"},
     "mutation": {"enum": ["read-only", "workspace", "external-release"]},
