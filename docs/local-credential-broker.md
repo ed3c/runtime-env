@@ -40,6 +40,9 @@ child streams, and emits only their byte counts and SHA-256 hashes in a private
 receipt. If the selected profile resolves any secret, execution fails closed.
 `broker-only` and `openshell-provider` describe separate adapters; this local
 runner intentionally does not imitate them by exporting plaintext secrets.
+The workload's `entrypoint_environment` is the second boundary: it narrows the
+profile independently for every fixed command. Carrier configuration names are
+therefore not ambient merely because they coexist in `/Users/neon/runtime-env/.env`.
 
 ## Delivery classes
 
@@ -93,6 +96,10 @@ Do not launch Claude from an environment containing `CODEX_HOME` or Codex auth
 variables, and do not launch Codex with `CLAUDE_CONFIG_DIR`, Anthropic keys, or
 Claude OAuth material. The shared repository projection contains settings
 requirements only; host-specific homes and their contents never synchronize.
+The fixed workload runner enforces the same split at process creation through
+`entrypoint_environment`; native policy controls and process-environment
+controls are complementary, and neither policy file is rewritten by the other
+carrier.
 
 Use `runtime-env policy show --id <policy>` to inspect a policy. Pass both
 repeatable `--policy` options to `runtime-env sync`; consumer `sync --check` or

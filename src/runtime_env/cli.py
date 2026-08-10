@@ -46,6 +46,7 @@ ALLOWED_FIELDS = {
         "profile",
         "host",
         "entrypoints",
+        "entrypoint_environment",
         "secret_delivery",
         "agent_secret_access",
         "mutation",
@@ -76,6 +77,7 @@ REQUIRED_FIELDS = {
         "profile",
         "host",
         "entrypoints",
+        "entrypoint_environment",
         "secret_delivery",
         "agent_secret_access",
         "mutation",
@@ -280,6 +282,37 @@ def load_catalog(root: Path) -> Catalog:
             ):
                 raise ContractError(
                     f"workload {workload_id}: entrypoint {entrypoint_id} must be a string array"
+                )
+        entrypoint_environment = workload.get("entrypoint_environment")
+        if not isinstance(entrypoint_environment, dict) or set(entrypoint_environment) != set(
+            entrypoints
+        ):
+            raise ContractError(
+                f"workload {workload_id}: entrypoint_environment must map every entrypoint exactly"
+            )
+        profile_variables = {
+            selected.name
+            for selected in select_variables(
+                Catalog(variables, modules, profiles, {}, {}),
+                profile_id=workload["profile"],
+                include_all=False,
+            )
+        }
+        for entrypoint_id, names in entrypoint_environment.items():
+            if (
+                not isinstance(names, list)
+                or any(not isinstance(name, str) or not name for name in names)
+                or len(names) != len(set(names))
+            ):
+                raise ContractError(
+                    f"workload {workload_id}: entrypoint_environment.{entrypoint_id} "
+                    "must be a unique string array"
+                )
+            unknown = sorted(set(names) - profile_variables)
+            if unknown:
+                raise ContractError(
+                    f"workload {workload_id}: entrypoint_environment.{entrypoint_id} "
+                    f"references variables outside profile: {', '.join(unknown)}"
                 )
         evidence = workload.get("evidence")
         if not isinstance(evidence, dict) or set(evidence) != {"receipt", "control"}:
@@ -748,11 +781,13 @@ def run_workload(
     if top_level != target:
         raise ContractError("target root must be the root of its git repository")
 
-    selected = select_variables(
+    profile_variables = select_variables(
         catalog,
         profile_id=workload["profile"],
         include_all=False,
     )
+    allowed_names = set(workload["entrypoint_environment"][entrypoint_id])
+    selected = [variable for variable in profile_variables if variable.name in allowed_names]
     dotenv = _load_private_dotenv(catalog=catalog, env_file=env_file) if env_file else {}
     configured: dict[str, str] = {}
     for variable in selected:

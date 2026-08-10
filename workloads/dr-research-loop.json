@@ -8,6 +8,10 @@
     "engine": ["sh", "loop_wiki/engine.sh", "<dr-topic>", "--target", "<proposal>", "--driver", "agy"],
     "verify": ["sh", "loop_wiki/<dr-topic>/verify.sh"]
   },
+  "entrypoint_environment": {
+    "engine": ["AGY_MODEL", "AGY_EFFORT"],
+    "verify": []
+  },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",

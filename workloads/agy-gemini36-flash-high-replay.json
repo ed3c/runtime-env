@@ -8,6 +8,10 @@
     "inventory": ["agy", "models"],
     "replay": ["python3", "loop_wiki/evolve-unknown-discovery-plan-truth/scripts/execute_agy_replay_requests.py", "--approved-external-call"]
   },
+  "entrypoint_environment": {
+    "inventory": ["AGY_MODEL", "AGY_EFFORT"],
+    "replay": ["AGY_MODEL", "AGY_EFFORT"]
+  },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",

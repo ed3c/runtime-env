@@ -9,6 +9,11 @@
     "verify": ["bash", "kb-ingest/verify-claims.sh"],
     "ingest": ["python3", "-m", "indexing.ingest_repodoc_cli"]
   },
+  "entrypoint_environment": {
+    "author": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT"],
+    "ingest": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT"],
+    "verify": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT"]
+  },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",

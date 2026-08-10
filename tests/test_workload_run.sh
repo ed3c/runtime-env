@@ -12,10 +12,11 @@ mkdir -p "${CATALOG}"/{catalog,modules,profiles,workloads} "${TARGET}/scripts"
 printf '%s\n' \
   '{"schema":"runtime-env/variables/v1","variables":[' \
   '{"name":"RUNTIME_SENTINEL","secret":false,"description":"Non-secret runner test value."},' \
+  '{"name":"UNRELATED_CONFIG","secret":false,"description":"A second carrier value that this entrypoint must not inherit."},' \
   '{"name":"BROKER_SECRET","secret":true,"description":"Secret that none-delivery must refuse."}' \
   ']}' > "${CATALOG}/catalog/variables.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/module/v1","id":"runner","summary":"Runner fixture.","requires":[],"optional":["RUNTIME_SENTINEL"],"defaults":{}}' \
+  '{"schema":"runtime-env/module/v1","id":"runner","summary":"Runner fixture.","requires":[],"optional":["RUNTIME_SENTINEL","UNRELATED_CONFIG"],"defaults":{}}' \
   > "${CATALOG}/modules/runner.json"
 printf '%s\n' \
   '{"schema":"runtime-env/module/v1","id":"secret","summary":"Secret fixture.","requires":["BROKER_SECRET"],"optional":[],"defaults":{}}' \
@@ -27,13 +28,13 @@ printf '%s\n' \
   '{"schema":"runtime-env/profile/v1","id":"secret","summary":"Secret fixture.","modules":["secret"]}' \
   > "${CATALOG}/profiles/secret.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"runner","summary":"Runner fixture.","profile":"runner","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"],"placeholder":["sh","<script>"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
+  '{"schema":"runtime-env/workload/v1","id":"runner","summary":"Runner fixture.","profile":"runner","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"],"placeholder":["sh","<script>"]},"entrypoint_environment":{"fixed":["RUNTIME_SENTINEL"],"placeholder":[]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
   > "${CATALOG}/workloads/runner.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"secret","summary":"Secret fixture.","profile":"secret","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
+  '{"schema":"runtime-env/workload/v1","id":"secret","summary":"Secret fixture.","profile":"secret","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"]},"entrypoint_environment":{"fixed":["BROKER_SECRET"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
   > "${CATALOG}/workloads/secret.json"
 
-printf '%s\n' '#!/bin/sh' 'printf "%s\n" "${RUNTIME_SENTINEL:-missing}" > artifact.txt' 'printf "runner emitted ordinary output\n"' \
+printf '%s\n' '#!/bin/sh' 'printf "%s\n" "${RUNTIME_SENTINEL:-missing}" > artifact.txt' '[ -z "${UNRELATED_CONFIG+x}" ]' 'printf "runner emitted ordinary output\n"' \
   > "${TARGET}/scripts/fixed.sh"
 chmod +x "${TARGET}/scripts/fixed.sh"
 git -C "${TARGET}" init -q
@@ -43,7 +44,7 @@ git -C "${TARGET}" add -A
 git -C "${TARGET}" commit -qm fixture
 
 ENV_FILE="${SCRATCH}/runtime.env"
-printf '%s\n' 'RUNTIME_SENTINEL=broker-value' > "${ENV_FILE}"
+printf '%s\n' 'RUNTIME_SENTINEL=broker-value' 'UNRELATED_CONFIG=must-not-cross-carriers' > "${ENV_FILE}"
 chmod 0600 "${ENV_FILE}"
 
 output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \

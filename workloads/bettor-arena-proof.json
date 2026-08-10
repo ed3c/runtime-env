@@ -8,6 +8,10 @@
     "prove-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "prove", "--force-receipt"],
     "control-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "test", "--force-receipt"]
   },
+  "entrypoint_environment": {
+    "prove-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"],
+    "control-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"]
+  },
   "secret_delivery": "none",
   "agent_secret_access": "denied",
   "mutation": "workspace",

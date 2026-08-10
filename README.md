@@ -44,6 +44,11 @@ returns metadata plus a private `0600` receipt. Child stdout/stderr and dotenv
 values are neither printed nor stored. A `none` workload refuses configured
 secrets; provider/broker workloads refuse ordinary child-environment secret
 injection and must use their dedicated adapter.
+Each `entrypoint_environment` allowlist is exact: variables selected by the
+profile but not named for that entrypoint are absent from its child. This lets
+one host-only dotenv hold both `CLAUDE_CONFIG_DIR` and `CODEX_HOME` while a
+Claude entrypoint receives no Codex configuration variable and a Codex
+entrypoint receives no Claude configuration variable.
 
 ## Explicit consumer synchronization
 
