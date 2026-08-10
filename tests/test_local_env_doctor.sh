@@ -22,6 +22,18 @@ init_output="$(${ROOT}/runtime-env local-env init --env-file "${initialized}")"
 [[ "$(file_mode "${initialized}")" == '600' ]]
 grep -Fq 'E2B_API_KEY=' "${initialized}"
 grep -Fq 'GEMINI_API_KEY=' "${initialized}"
+grep -Fq '# === LOCAL-ONLY HOST SETTINGS ===' "${initialized}"
+grep -Fq '# === CLOUD / REMOTE RUNTIME SETTINGS ===' "${initialized}"
+grep -Fq '# === PORTABLE RUNTIME SETTINGS ===' "${initialized}"
+local_heading_line="$(grep -nF '# === LOCAL-ONLY HOST SETTINGS ===' "${initialized}" | cut -d: -f1)"
+java_home_line="$(grep -nF 'JAVA_HOME=' "${initialized}" | cut -d: -f1)"
+cloud_heading_line="$(grep -nF '# === CLOUD / REMOTE RUNTIME SETTINGS ===' "${initialized}" | cut -d: -f1)"
+e2b_line="$(grep -nF 'E2B_API_KEY=' "${initialized}" | cut -d: -f1)"
+portable_heading_line="$(grep -nF '# === PORTABLE RUNTIME SETTINGS ===' "${initialized}" | cut -d: -f1)"
+java_version_line="$(grep -nF 'JAVA_VERSION=' "${initialized}" | cut -d: -f1)"
+(( local_heading_line < java_home_line && java_home_line < cloud_heading_line ))
+(( cloud_heading_line < e2b_line && e2b_line < portable_heading_line ))
+(( portable_heading_line < java_version_line ))
 if grep -Eq '^[A-Z][A-Z0-9_]*=.+$' "${initialized}"; then
   echo 'FAIL: initialized local env contains a value' >&2
   exit 1
@@ -66,6 +78,9 @@ reconcile_output="$(${ROOT}/runtime-env local-env reconcile --env-file "${fixtur
 [[ "$(file_mode "${fixture}")" == '600' ]]
 grep -Fq "E2B_API_KEY=${sentinel}" "${fixture}"
 grep -Fq 'EQUIVALENCE_REQUEST_PATH=' "${fixture}"
+grep -Fq '# === LOCAL-ONLY HOST SETTINGS ===' "${fixture}"
+grep -Fq '# === CLOUD / REMOTE RUNTIME SETTINGS ===' "${fixture}"
+grep -Fq '# === PORTABLE RUNTIME SETTINGS ===' "${fixture}"
 
 config_root="${scratch}/codex-home"
 mkdir -p "${config_root}"
@@ -82,5 +97,13 @@ secret_path_status=$?
 set -e
 [[ ${secret_path_status} -eq 2 && "${secret_path_output}" == *'non-secret path variables'* ]]
 [[ "${secret_path_output}" != *"${sentinel}"* ]]
+
+printf 'JAVA_HOME=\nJAVA_HOME=\n' > "${fixture}"
+chmod 0600 "${fixture}"
+set +e
+duplicate_output="$(${ROOT}/runtime-env local-env reconcile --env-file "${fixture}" 2>&1)"
+duplicate_status=$?
+set -e
+[[ ${duplicate_status} -eq 2 && "${duplicate_output}" == *'duplicate assignment for JAVA_HOME'* ]]
 
 echo 'PASS: local env doctor reports metadata without values'

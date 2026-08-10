@@ -1,0 +1,8 @@
+{
+  "schema": "runtime-env/module/v1",
+  "id": "jdk-cloud",
+  "summary": "Cloud runtime JDK selected independently from any host installation path.",
+  "requires": [],
+  "optional": ["JAVA_VERSION", "CLOUD_JDK_DISTRIBUTION"],
+  "defaults": {"JAVA_VERSION": "21", "CLOUD_JDK_DISTRIBUTION": "temurin"}
+}

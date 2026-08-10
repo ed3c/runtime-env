@@ -1,0 +1,8 @@
+{
+  "schema": "runtime-env/module/v1",
+  "id": "jdk-local",
+  "summary": "Host-installed JDK selected by an explicit JAVA_HOME.",
+  "requires": ["JAVA_HOME"],
+  "optional": ["JAVA_VERSION"],
+  "defaults": {"JAVA_VERSION": "21"}
+}

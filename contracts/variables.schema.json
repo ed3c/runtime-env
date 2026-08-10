@@ -13,10 +13,13 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "secret", "description"],
+        "required": ["name", "secret", "runtime_scope", "description"],
         "properties": {
           "name": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
           "secret": {"type": "boolean"},
+          "runtime_scope": {
+            "enum": ["local-only", "cloud-runtime", "portable"]
+          },
           "description": {"type": "string", "minLength": 1},
           "account_url": {"type": "string", "pattern": "^https://"}
         }

@@ -1,0 +1,20 @@
+{
+  "schema": "runtime-env/workload/v1",
+  "id": "local-jdk-verify",
+  "summary": "Verify that JAVA_HOME supplies matching java and javac feature releases and can compile and run a probe.",
+  "profile": "java-build-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "verify": ["python3", "scripts/verify-jdk-runtime.py"]
+  },
+  "entrypoint_environment": {
+    "verify": ["JAVA_HOME", "JAVA_VERSION"]
+  },
+  "secret_delivery": "none",
+  "agent_secret_access": "denied",
+  "mutation": "read-only",
+  "evidence": {
+    "receipt": "runtime-env private temporary execution receipt",
+    "control": "tests/test_jdk_runtime_scopes.sh"
+  }
+}

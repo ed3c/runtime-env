@@ -4,6 +4,7 @@
     {
       "name": "KNOWN_TOKEN",
       "secret": true,
+      "runtime_scope": "cloud-runtime",
       "description": "Known fixture token."
     }
   ]

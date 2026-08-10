@@ -20,7 +20,7 @@ PY
 }
 
 printf '%s\n' \
-  '{"schema":"runtime-env/variables/v1","variables":[{"name":"FIXTURE_HOME","secret":false,"description":"Fixture config root."},{"name":"OLLAMA_URL","secret":false,"description":"Ollama service root."}]}' \
+  '{"schema":"runtime-env/variables/v1","variables":[{"name":"FIXTURE_HOME","secret":false,"runtime_scope":"local-only","description":"Fixture config root."},{"name":"OLLAMA_URL","secret":false,"runtime_scope":"local-only","description":"Ollama service root."}]}' \
   > "${source_repo}/catalog/variables.json"
 printf '%s\n' \
   '{"schema":"runtime-env/module/v1","id":"ollama-root","summary":"Fixture.","requires":[],"optional":["OLLAMA_URL"],"defaults":{"OLLAMA_URL":"http://localhost:11434"}}' \
@@ -76,6 +76,7 @@ assert document["source"]["repository"] == "https://github.com/ed3c/runtime-env"
 assert document["profile"] == "bettor-arena-local"
 assert document["source"]["commit"] == sys.argv[2]
 assert document["source"]["tree"] == sys.argv[3]
+assert document["variables"][0]["runtime_scope"] == "local-only"
 PY
 python3 - "${workload}" <<'PY'
 import json
@@ -101,6 +102,33 @@ PY
 git -C "${target_repo}" add .runtime-env
 ${ROOT}/runtime-env --catalog-root "${scratch}/absent-catalog" verify-consumer \
   --target-root "${target_repo}" --binding bettor-arena-local --staged >/dev/null
+
+python3 - "${binding}" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+document = json.loads(path.read_text(encoding="utf-8"))
+del document["variables"][0]["runtime_scope"]
+unsigned = dict(document)
+del unsigned["content_sha256"]
+canonical = json.dumps(unsigned, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+document["content_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+git -C "${target_repo}" add "${binding}"
+set +e
+scope_output="$(${ROOT}/runtime-env --catalog-root "${scratch}/absent-catalog" verify-consumer \
+  --target-root "${target_repo}" --binding bettor-arena-local --staged 2>&1)"
+scope_status=$?
+set -e
+[[ ${scope_status} -eq 2 && "${scope_output}" == *'invalid variable runtime_scope'* ]]
+${ROOT}/runtime-env --catalog-root "${source_repo}" sync \
+  --profile bettor-arena-local --binding bettor-arena-local \
+  --workload local-proof --policy fixture-native --target-root "${target_repo}" --apply >/dev/null
+git -C "${target_repo}" add .runtime-env
 
 python3 - "${workload}" <<'PY'
 import hashlib

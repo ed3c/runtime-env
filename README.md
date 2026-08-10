@@ -21,10 +21,11 @@ This prevents an optional cloud backend from making a local workflow demand unre
 ./runtime-env check --profile skill-bettor-e2b --env-file .env
 ./runtime-env local-env init      # first use: blank, untracked, mode 0600
 ./runtime-env local-env doctor    # names and presence only; never values
-./runtime-env local-env reconcile # append newly cataloged names with empty values
+./runtime-env local-env reconcile # preserve values; organize local/cloud/portable sections
 ./runtime-env local-env set-path --name CODEX_HOME --path /absolute/existing/path
 ./runtime-env workload list
 ./runtime-env workload show --id ios-testflight-beta
+./runtime-env workload show --id local-jdk-verify
 ./runtime-env workload run --id bettor-arena-proof --entrypoint prove-harness \
   --target-root /path/to/bettor-arena --env-file /Users/neon/runtime-env/.env --json
 ./runtime-env inventory skills --repo-root /Users/neon/ix-agy
@@ -52,6 +53,14 @@ one host-only dotenv hold both `CLAUDE_CONFIG_DIR` and `CODEX_HOME` while the
 existing macOS Keychain-backed Claude login receives neither override and the
 Codex entrypoint receives only `CODEX_HOME`. Neither receives the other
 carrier's authentication or configuration environment.
+
+The canonical `.env` is mechanically grouped by each variable's required
+`runtime_scope`: `LOCAL-ONLY HOST SETTINGS`, `CLOUD / REMOTE RUNTIME SETTINGS`,
+and `PORTABLE RUNTIME SETTINGS`. `local-env reconcile` preserves assignments,
+adds new empty names, and rewrites those sections without printing any value.
+The cloud section is still stored only in the host-owned dotenv; it identifies
+the intended consumption plane and does not authorize copying the file into a
+cloud runner.
 
 For an OpenShell sandbox, bootstrap the Codex ChatGPT provider once from a
 trusted host terminal. OAuth components travel in the `openshell` child
@@ -169,6 +178,16 @@ Both default `FORGEJO_URL` to `http://localhost:3000`. Exact template, local
 secret-store, Git credential helper, Keychain, legacy plaintext store, repo
 identity, Chrome logical surface, and token UI route are listed in
 [`docs/runtimes/forgejo-localhost.md`](docs/runtimes/forgejo-localhost.md).
+
+## Local and cloud JDK 21
+
+`java-build-local` requires an explicit host `JAVA_HOME`; `java-build-cloud`
+uses the separate `JAVA_VERSION=21` and `CLOUD_JDK_DISTRIBUTION=temurin`
+selectors and contains no host path. The `local-jdk-verify` workload proves
+that both `java` and `javac` match the requested feature release, then compiles
+and executes a temporary probe. Android Studio's bundled JBR is a valid local
+candidate when that probe passes. See [`docs/jdk-runtime.md`](docs/jdk-runtime.md)
+for the exact boundary and license caveat.
 
 ## Where values belong
 
