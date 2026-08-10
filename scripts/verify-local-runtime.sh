@@ -55,6 +55,24 @@ fi
 
 "${ROOT}/runtime-env" validate
 
+if [[ "${credential_helper_only}" == true ]]; then
+  set +e
+  helper_chain="$(git config --get-all credential.http://localhost:3000.helper 2>/dev/null)"
+  helper_chain_status=$?
+  set -e
+  expected_helper_chain=$'\nosxkeychain'
+  if [[ ${helper_chain_status} -ne 0 || "${helper_chain}" != "${expected_helper_chain}" ]]; then
+    helper_chain=""
+    expected_helper_chain=""
+    unset helper_chain expected_helper_chain
+    echo "REFUSED Forgejo helper chain is not URL-scoped osxkeychain" >&2
+    exit 2
+  fi
+  helper_chain=""
+  expected_helper_chain=""
+  unset helper_chain expected_helper_chain
+fi
+
 version_json="$(curl -q --noproxy '*' -fsS --connect-timeout 2 --max-time 5 http://localhost:3000/api/v1/version)" || {
   echo "UNREACHABLE Forgejo at http://localhost:3000" >&2
   exit 4

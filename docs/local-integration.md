@@ -104,7 +104,9 @@ variables: the child receives neither `FORGEJO_PASSWORD` nor `FORGEJO_TOKEN`.
 The live canary inherits only the runner's safe host surface (including `HOME`)
 and executes runtime-env's own versioned verifier, not consumer-repo code. The
 verifier runs in `--credential-helper-only` mode, invokes `git credential fill`,
-and refuses the dotenv fallback. Its child `PATH` is replaced with the fixed
+requires the effective `credential.http://localhost:3000.helper` chain to be
+exactly reset-then-`osxkeychain`, and refuses both dotenv fallback and
+`store`/shell helpers. Its child `PATH` is replaced with the fixed
 system path `/usr/bin:/bin:/usr/sbin:/sbin`; runtime-env records output as hashes
 rather than returning the stream to the Agent. The credential entrypoint refuses
 a dirty or unversioned catalog root, and the receipt binds the runtime-env HEAD,

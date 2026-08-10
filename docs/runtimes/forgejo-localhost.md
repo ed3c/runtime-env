@@ -108,8 +108,10 @@ cd /Users/neon/runtime-env
 
 `broker-selftest` is offline. `credential-canary` uses
 `--credential-helper-only` to check loopback reachability, Git helper resolution,
-and authenticated `/api/v1/user` access; an empty helper fails instead of reading
-a dotenv fallback. The workload declares `secret_delivery=none`, passes no
+and authenticated `/api/v1/user` access. Before `fill`, it requires the effective
+URL-scoped helper chain to be exactly an empty reset followed by `osxkeychain`;
+an empty, `store`, or shell helper fails instead of reading a dotenv fallback.
+The workload declares `secret_delivery=none`, passes no
 `FORGEJO_*` environment variables, replaces child `PATH` with
 `/usr/bin:/bin:/usr/sbin:/sbin`, and returns only child stream hashes in its
 mode-`0600` receipt. Git can still reach Keychain because the fixed runner's
