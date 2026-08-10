@@ -23,4 +23,6 @@ for path in sorted(root.glob("**/*.json")):
 print("PASS: every JSON document parses")
 PY
 
+python3 "${ROOT}/tests/check_schema_consistency.py" "${ROOT}"
+
 echo "PASS: repository safety boundary"

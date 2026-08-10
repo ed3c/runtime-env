@@ -19,7 +19,14 @@ SCHEMAS = {
     "profile": "runtime-env/profile/v1",
 }
 ALLOWED_FIELDS = {
+    "variables": {"schema", "variables"},
     "variable": {"name", "secret", "description", "account_url"},
+    "module": {"schema", "id", "summary", "requires", "optional", "defaults"},
+    "profile": {"schema", "id", "summary", "modules"},
+}
+REQUIRED_FIELDS = {
+    "variables": {"schema", "variables"},
+    "variable": {"name", "secret", "description"},
     "module": {"schema", "id", "summary", "requires", "optional", "defaults"},
     "profile": {"schema", "id", "summary", "modules"},
 }
@@ -67,6 +74,9 @@ def _load_named_documents(directory: Path, kind: str) -> dict[str, dict[str, Any
         unexpected = sorted(set(document) - ALLOWED_FIELDS[kind])
         if unexpected:
             raise ContractError(f"{path}: unexpected fields: {', '.join(unexpected)}")
+        missing = sorted(REQUIRED_FIELDS[kind] - set(document))
+        if missing:
+            raise ContractError(f"{path}: missing required fields: {', '.join(missing)}")
         if document.get("schema") != SCHEMAS[kind]:
             raise ContractError(f"{path}: expected schema {SCHEMAS[kind]}")
         identifier = document.get("id")
@@ -84,6 +94,12 @@ def _load_named_documents(directory: Path, kind: str) -> dict[str, dict[str, Any
 
 def load_catalog(root: Path) -> Catalog:
     variables_document = _load_json(root / "catalog" / "variables.json")
+    unexpected = sorted(set(variables_document) - ALLOWED_FIELDS["variables"])
+    if unexpected:
+        raise ContractError(f"variables catalog: unexpected fields: {', '.join(unexpected)}")
+    missing = sorted(REQUIRED_FIELDS["variables"] - set(variables_document))
+    if missing:
+        raise ContractError(f"variables catalog: missing required fields: {', '.join(missing)}")
     if variables_document.get("schema") != SCHEMAS["variables"]:
         raise ContractError(
             f"{root / 'catalog' / 'variables.json'}: expected schema {SCHEMAS['variables']}"
@@ -104,6 +120,9 @@ def load_catalog(root: Path) -> Catalog:
         unexpected = sorted(set(entry) - ALLOWED_FIELDS["variable"])
         if unexpected:
             raise ContractError(f"unexpected fields on {name}: {', '.join(unexpected)}")
+        missing = sorted(REQUIRED_FIELDS["variable"] - set(entry))
+        if missing:
+            raise ContractError(f"{name}: missing required fields: {', '.join(missing)}")
         if not isinstance(entry.get("secret"), bool):
             raise ContractError(f"{name}: secret must be boolean")
         if not isinstance(entry.get("description"), str) or not entry["description"].strip():
@@ -122,8 +141,12 @@ def load_catalog(root: Path) -> Catalog:
         defaults = module.get("defaults", {})
         if not isinstance(required, list) or not isinstance(optional, list):
             raise ContractError(f"module {module_id}: requires and optional must be arrays")
+        if any(not isinstance(name, str) for name in required + optional):
+            raise ContractError(f"module {module_id}: variable references must be strings")
         if not isinstance(defaults, dict):
             raise ContractError(f"module {module_id}: defaults must be an object")
+        if any(not isinstance(name, str) for name in defaults):
+            raise ContractError(f"module {module_id}: default names must be strings")
         names = required + optional
         if len(names) != len(set(names)):
             raise ContractError(f"module {module_id}: duplicate variable reference")
@@ -143,13 +166,18 @@ def load_catalog(root: Path) -> Catalog:
         module_ids = profile.get("modules")
         if not isinstance(module_ids, list) or not module_ids:
             raise ContractError(f"profile {profile_id}: modules must be a non-empty array")
+        if any(not isinstance(module_id, str) for module_id in module_ids):
+            raise ContractError(f"profile {profile_id}: module references must be strings")
         if len(module_ids) != len(set(module_ids)):
             raise ContractError(f"profile {profile_id}: duplicate module reference")
         for module_id in module_ids:
             if module_id not in modules:
                 raise ContractError(f"profile {profile_id}: unknown module {module_id}")
 
-    return Catalog(variables=variables, modules=modules, profiles=profiles)
+    catalog = Catalog(variables=variables, modules=modules, profiles=profiles)
+    for profile_id in profiles:
+        select_variables(catalog, profile_id=profile_id, include_all=False)
+    return catalog
 
 
 def select_variables(

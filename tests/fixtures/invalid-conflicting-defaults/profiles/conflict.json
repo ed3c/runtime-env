@@ -1,0 +1,1 @@
+{"schema":"runtime-env/profile/v1","id":"conflict","summary":"Conflicting profile.","modules":["first","second"]}

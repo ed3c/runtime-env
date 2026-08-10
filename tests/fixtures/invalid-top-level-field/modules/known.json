@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"known","summary":"Fixture.","requires":["KNOWN_TOKEN"],"optional":[],"defaults":{}}

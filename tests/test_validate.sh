@@ -35,4 +35,20 @@ set -e
   exit 1
 }
 
+for fixture in invalid-top-level-field invalid-module-shape invalid-conflicting-defaults; do
+  set +e
+  contract_output="$(${ROOT}/runtime-env --catalog-root "${ROOT}/tests/fixtures/${fixture}" validate 2>&1)"
+  contract_status=$?
+  set -e
+  [[ ${contract_status} -eq 2 ]] || {
+    echo "FAIL: ${fixture} should exit 2, got ${contract_status}" >&2
+    exit 1
+  }
+done
+
+[[ "${contract_output}" == *"conflicting defaults for RUNTIME_MODE"* ]] || {
+  echo "FAIL: profile default conflict was not diagnosed" >&2
+  exit 1
+}
+
 echo "PASS: catalog validation seam"

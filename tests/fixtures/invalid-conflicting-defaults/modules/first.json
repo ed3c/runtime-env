@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"first","summary":"First default.","requires":[],"optional":["RUNTIME_MODE"],"defaults":{"RUNTIME_MODE":"first"}}
