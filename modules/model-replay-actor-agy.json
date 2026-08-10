@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"model-replay-actor-agy","summary":"agy independent model replay actor; it is not a logged-in Gemini Deep Research browser transport.","requires":[],"optional":["AGY_MODEL","AGY_EFFORT"],"defaults":{"AGY_MODEL":"gemini-3.6-flash-high","AGY_EFFORT":"high"}}

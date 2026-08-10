@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"agent-actor-claude-code","summary":"Claude Code agent actor using its own host login and optional Claude-in-Chrome or MCP transports.","requires":["CLAUDE_CONFIG_DIR"],"optional":[],"defaults":{}}

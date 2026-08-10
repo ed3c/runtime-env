@@ -102,7 +102,7 @@ sections without emitting them.
 | Codex CLI ChatGPT login | OS keyring or `~/.codex/auth.json`, according to Codex configuration | authenticated/not-authenticated receipt only |
 | Claude Code subscription login | macOS Keychain and Claude-owned host state | authenticated/not-authenticated receipt only |
 | Antigravity `agy` login and artifacts | `~/.gemini/antigravity-cli/` | exact model inventory plus file-output canary receipt |
-| Stealth-browser login profiles | `/Users/neon/stealth-browser/profiles/<name>/state.json` | typed browser operation plus metadata-only receipt |
+| Stealth-browser login profiles | `$STEALTH_PROFILE_ROOT/<name>/state.json`; recommended `/Users/neon/.local/share/runtime-env/stealth-browser/profiles`, directories `0700`, files `0600`, outside every Git checkout | typed browser operation plus metadata-only receipt |
 | App Store Connect private key | `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8` or another broker-owned `0600` path | `verify_asc`/upload receipt only |
 
 Do not copy, bind-mount, upload, render, or synchronize any of these stores.

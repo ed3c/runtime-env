@@ -12,6 +12,8 @@
     "agy-model-inventory": ["python3", "scripts/runtime-env/check-carrier-status.py", "agy"],
     "research-browser-health": ["python3", "scripts/runtime-env/check-research-cdp.py"],
     "stealth-browser-control": ["sh", "scripts/runtime-env/check-stealth-browser.sh"],
+    "stealth-profile-hygiene": ["sh", "scripts/runtime-env/check-stealth-profile-hygiene.sh"],
+    "carrier-contract": ["python3", "scripts/runtime-env/check-carrier-contract.py", "--matrix", "loop_wiki/evolve-technical-equivalence-research/carrier-capabilities.json"],
     "equivalence-live": ["python3", "scripts/runtime-env/run-equivalence-live.py"]
   },
   "entrypoint_environment": {
@@ -21,7 +23,9 @@
     "codex-login-status": ["CODEX_HOME"],
     "agy-model-inventory": ["AGY_MODEL", "AGY_EFFORT"],
     "research-browser-health": ["DR_CDP_URL"],
-    "stealth-browser-control": ["STEALTH_BROWSER_ROOT"],
+    "stealth-browser-control": ["STEALTH_BROWSER_ROOT", "STEALTH_PROFILE_ROOT"],
+    "stealth-profile-hygiene": ["STEALTH_BROWSER_ROOT", "STEALTH_PROFILE_ROOT"],
+    "carrier-contract": [],
     "equivalence-live": ["ANTIGRAVITY_PEER", "DR_CDP_URL", "EQUIVALENCE_APPROVAL_RECEIPT_PATH", "EQUIVALENCE_REQUEST_PATH", "EQUIVALENCE_RUN_ROOT", "SKILL_BETTOR_PEER"]
   },
   "secret_delivery": "broker-only",

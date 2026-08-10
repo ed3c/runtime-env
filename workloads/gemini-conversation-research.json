@@ -10,8 +10,8 @@
     "carrier-gate": ["bun", "run", "scripts/test-extract-gemini-conversation-browser-runtime.mjs"]
   },
   "entrypoint_environment": {
-    "extract": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],
-    "guided-edge": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],
+    "extract": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_PROFILE_ROOT", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],
+    "guided-edge": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_PROFILE_ROOT", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],
     "carrier-gate": []
   },
   "secret_delivery": "broker-only",
