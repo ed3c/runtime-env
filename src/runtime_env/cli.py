@@ -1004,9 +1004,10 @@ def migrate_forgejo_keychain(*, catalog: Catalog, env_file: Path) -> int:
             stage="macOS Keychain verification",
         )
     )
-    if not (
-        hmac.compare_digest(keychain.get("username", ""), username)
-        and hmac.compare_digest(keychain.get("password", ""), password)
+    returned_username = keychain.get("username")
+    if not hmac.compare_digest(keychain.get("password", ""), password) or (
+        returned_username is not None
+        and not hmac.compare_digest(returned_username, username)
     ):
         raise ContractError("macOS Keychain verification returned different credentials")
 
