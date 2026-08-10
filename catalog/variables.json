@@ -37,6 +37,7 @@
     {"name": "NL_MODEL", "secret": false, "description": "Model identifier selected by natural-language browser tooling."},
     {"name": "NL_PROVIDER", "secret": false, "description": "Natural-language provider selector such as ollama or gemini."},
     {"name": "OLLAMA_BASE_URL", "secret": false, "description": "OpenAI-compatible Ollama endpoint."},
+    {"name": "OLLAMA_URL", "secret": false, "description": "Ollama service root used by health checks and non-OpenAI-compatible clients."},
     {"name": "OPENAI_API_KEY", "secret": true, "description": "OpenAI Platform API credential.", "account_url": "https://platform.openai.com/api-keys"},
     {"name": "OPENAI_ORG_ID", "secret": false, "description": "Optional OpenAI organization identifier."},
     {"name": "OPENAI_PROJECT_ID", "secret": false, "description": "Optional OpenAI project identifier."},

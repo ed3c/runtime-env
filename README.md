@@ -31,6 +31,46 @@ Exit codes are part of the public contract:
 
 `check` prints variable names and presence states only. It never prints values.
 
+## Explicit consumer synchronization
+
+`sync` exports a profile into a consuming repository without copying this
+repository or any credential value:
+
+```bash
+./runtime-env sync \
+  --profile bettor-arena-local \
+  --binding bettor-arena-local \
+  --target-root /path/to/bettor-arena
+
+# Review the WOULD-CREATE / WOULD-UPDATE receipt, then write explicitly:
+./runtime-env sync \
+  --profile bettor-arena-local \
+  --binding bettor-arena-local \
+  --target-root /path/to/bettor-arena \
+  --apply
+
+# Read-only freshness check against this checked-out runtime-env revision:
+./runtime-env sync \
+  --profile bettor-arena-local \
+  --binding bettor-arena-local \
+  --target-root /path/to/bettor-arena \
+  --check
+```
+
+The default is a dry-run. `--apply` is the only mode that writes. The source
+must be a clean Git checkout with a credential-free `origin`; generated files
+pin its repository URL, commit, and tree:
+
+| Consumer path | Purpose |
+|---|---|
+| `.runtime-env/bindings/<binding>.json` | Portable profile closure and immutable source receipt |
+| `.runtime-env/examples/<binding>.env.example` | Deterministic, secret-free dotenv projection |
+
+A consumer pre-commit hook should validate these two staged files from its own
+Git index. It must not invoke `sync`, access a sibling checkout, or use the
+network: synchronization is an explicit maintenance action, while pre-commit
+only prevents a partially staged or locally corrupted binding from landing.
+
 ## Skill-bettor profiles
 
 | Profile | Requirement |
@@ -39,6 +79,7 @@ Exit codes are part of the public contract:
 | `skill-bettor-e2b` | `E2B_API_KEY` for real E2B acceptance |
 | `skill-bettor-gemini` | `GEMINI_API_KEY` for Gemini-driven local Stagehand |
 | `skill-bettor-sandbox-browser-cloud` | E2B, Gemini, and Browserbase cloud paths |
+| `bettor-arena-local` | `OLLAMA_URL` defaults to the service root used by bettor-arena bootstrap |
 
 The split follows the observed `skill-bettor` behavior: local Ollama is the default, while E2B and Gemini are explicit cloud opt-ins. Browserbase names are cataloged because the upstream environment contract names them, but the currently verified Stagehand path uses local Chromium.
 
