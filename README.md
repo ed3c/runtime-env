@@ -23,6 +23,7 @@ This prevents an optional cloud backend from making a local workflow demand unre
 ./runtime-env local-env doctor    # names and presence only; never values
 ./runtime-env local-env reconcile # preserve values; organize local/cloud/portable sections
 ./runtime-env local-env set-path --name CODEX_HOME --path /absolute/existing/path
+./runtime-env local-env migrate-forgejo-keychain # one-time localhost password migration
 ./runtime-env workload list
 ./runtime-env workload show --id ios-testflight-beta
 ./runtime-env workload show --id local-jdk-verify
@@ -61,6 +62,15 @@ adds new empty names, and rewrites those sections without printing any value.
 The cloud section is still stored only in the host-owned dotenv; it identifies
 the intended consumption plane and does not authorize copying the file into a
 cloud runner.
+
+`local-env migrate-forgejo-keychain` is the broker for the
+`forgejo-local-password` module. It accepts only the local Forgejo endpoints on
+port 3000, writes the credential to macOS Keychain through
+`git credential-osxkeychain`, installs a URL-scoped helper override, verifies
+the configured Git lookup in memory, removes the matching plaintext
+`~/.git-credentials` record, and only then clears `FORGEJO_PASSWORD` in the
+private dotenv. It never prints credential values. `FORGEJO_USERNAME` remains
+as non-secret local configuration.
 
 For an OpenShell sandbox, bootstrap the Codex ChatGPT provider once from a
 trusted host terminal. OAuth components travel in the `openshell` child

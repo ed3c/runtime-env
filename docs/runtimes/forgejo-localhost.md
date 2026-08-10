@@ -25,6 +25,7 @@ do not require or store both merely because both names exist in the catalog.
 | Generated template | `examples/forgejo-delivery-local-password.dotenv.example` or `examples/forgejo-delivery-local-api.dotenv.example` | Blank secret placeholders only |
 | Untracked dotenv fallback | `~/.config/runtime-env/secrets/forgejo-local.env` | Mode `0600`; never copy into a repository |
 | Preferred Git HTTP/browser credential source on macOS | `git credential fill`, backed by `credential.helper=osxkeychain` | Encrypted backing store is `~/Library/Keychains/login.keychain-db`; do not read or edit that database directly |
+| One-time migration broker | `./runtime-env local-env migrate-forgejo-keychain` from `/Users/neon/runtime-env` | Reads the private dotenv in-process, sends values to Git helpers over stdin, and emits status only |
 | Existing legacy credential store on this machine | `~/.git-credentials` | Plaintext historical storage; do not print, copy, commit, or treat it as the recommended destination |
 | Per-repository Forgejo commit identity | `<forgejo-repo>/.git/config` via repo-local `git config user.name` and `user.email` | Identity only, never password or token |
 | Existing Chrome session | Logical surface: the user's current Chrome profile, controlled through the host's Chrome capability | Reuse the session; the profile's filesystem internals are intentionally not a credential API and cookies must never be exported |
@@ -62,12 +63,26 @@ Forgejo Actions variables**. Forgejo reserves the `FORGEJO_`, `GITHUB_`, and
 
 ## Migration away from plaintext Git credentials
 
-This machine currently has a plaintext `~/.git-credentials` entry for
-`localhost:3000`. That is an observed legacy fact, not a value this repository
-creates. Migration means configuring `credential.helper=osxkeychain`, approving
-the credential into the helper, verifying a credential lookup in memory, and
-only then removing the plaintext entry. Removal is a separate destructive
-operation and must not be inferred from adopting this contract.
+After placing `FORGEJO_USERNAME` and `FORGEJO_PASSWORD` in the canonical private
+dotenv, run:
+
+```bash
+cd /Users/neon/runtime-env
+./runtime-env local-env migrate-forgejo-keychain
+```
+
+The broker accepts only `http://localhost:3000` or
+`http://127.0.0.1:3000`. It stores and verifies the credential through
+`git credential-osxkeychain`, resets the URL-specific helper chain before
+selecting `osxkeychain`, removes only the matching localhost record from
+`~/.git-credentials`, verifies `git credential fill`, and then atomically
+replaces `FORGEJO_PASSWORD` with an empty assignment. It preserves
+`FORGEJO_USERNAME`; no credential value enters output or a receipt. If any
+pre-clear verification fails, the dotenv password remains present for recovery.
+
+This is the supported handoff to `forgejo-delivery-loop`: that skill consumes
+`git credential fill` and must not parse the dotenv or implement a second
+password store.
 
 ## Official contract anchors
 

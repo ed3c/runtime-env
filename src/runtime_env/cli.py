@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import hmac
 import json
 from dataclasses import dataclass
 import os
@@ -901,6 +902,165 @@ def set_local_env_path(
     return 0
 
 
+def _credential_payload(values: dict[str, str]) -> str:
+    return "".join(f"{name}={value}\n" for name, value in values.items()) + "\n"
+
+
+def _parse_credential_payload(payload: str) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for line in payload.splitlines():
+        if not line:
+            continue
+        if "=" not in line:
+            raise ContractError("credential helper returned an invalid response")
+        name, value = line.split("=", 1)
+        values[name] = value
+    return values
+
+
+def _run_credential_command(
+    arguments: list[str], *, payload: str, stage: str
+) -> str:
+    environment = dict(os.environ)
+    environment["GIT_TERMINAL_PROMPT"] = "0"
+    try:
+        result = subprocess.run(
+            ["git", *arguments],
+            input=payload,
+            check=False,
+            capture_output=True,
+            text=True,
+            env=environment,
+        )
+    except OSError as exc:
+        raise ContractError(f"{stage} could not execute Git") from exc
+    if result.returncode != 0:
+        raise ContractError(f"{stage} failed with exit {result.returncode}")
+    return result.stdout
+
+
+def _clear_local_env_value(*, env_file: Path, name: str) -> None:
+    raw_lines = env_file.read_text(encoding="utf-8").splitlines()
+    assignment = re.compile(rf"^\s*(?:export\s+)?{re.escape(name)}\s*=")
+    indexes = [index for index, line in enumerate(raw_lines) if assignment.match(line)]
+    if len(indexes) != 1:
+        raise ContractError(f"local env must contain exactly one assignment for {name}")
+    raw_lines[indexes[0]] = f"{name}="
+    _atomic_write(env_file, "\n".join(raw_lines) + "\n")
+    env_file.chmod(0o600)
+
+
+def migrate_forgejo_keychain(*, catalog: Catalog, env_file: Path) -> int:
+    path = env_file.expanduser().absolute()
+    values = _load_private_dotenv(catalog=catalog, env_file=path)
+    url = values.get("FORGEJO_URL") or "http://localhost:3000"
+    username = values.get("FORGEJO_USERNAME")
+    password = values.get("FORGEJO_PASSWORD")
+    if not username or not password:
+        raise ContractError(
+            "FORGEJO_USERNAME and FORGEJO_PASSWORD must both be present for migration"
+        )
+
+    parsed = urlsplit(url)
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ContractError("Forgejo URL has an invalid port") from exc
+    if (
+        parsed.scheme != "http"
+        or parsed.hostname not in {"localhost", "127.0.0.1"}
+        or port != 3000
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ContractError(
+            "migration accepts only http://localhost:3000 or http://127.0.0.1:3000"
+        )
+
+    host = f"{parsed.hostname}:3000"
+    credential = {
+        "protocol": "http",
+        "host": host,
+        "username": username,
+        "password": password,
+    }
+    secret_payload = _credential_payload(credential)
+    lookup_payload = _credential_payload(
+        {"protocol": "http", "host": host, "username": username}
+    )
+
+    _run_credential_command(
+        ["credential-osxkeychain", "store"],
+        payload=secret_payload,
+        stage="macOS Keychain store",
+    )
+    keychain = _parse_credential_payload(
+        _run_credential_command(
+            ["credential-osxkeychain", "get"],
+            payload=lookup_payload,
+            stage="macOS Keychain verification",
+        )
+    )
+    if not (
+        hmac.compare_digest(keychain.get("username", ""), username)
+        and hmac.compare_digest(keychain.get("password", ""), password)
+    ):
+        raise ContractError("macOS Keychain verification returned different credentials")
+
+    helper_key = f"credential.{url}.helper"
+    _run_credential_command(
+        ["config", "--global", "--replace-all", helper_key, ""],
+        payload="",
+        stage="Git credential helper reset",
+    )
+    _run_credential_command(
+        ["config", "--global", "--add", helper_key, "osxkeychain"],
+        payload="",
+        stage="Git credential helper configuration",
+    )
+
+    legacy_store = Path.home() / ".git-credentials"
+    _run_credential_command(
+        ["credential-store", f"--file={legacy_store}", "erase"],
+        payload=lookup_payload,
+        stage="plaintext credential removal",
+    )
+    legacy_result = _parse_credential_payload(
+        _run_credential_command(
+            ["credential-store", f"--file={legacy_store}", "get"],
+            payload=lookup_payload,
+            stage="plaintext credential removal verification",
+        )
+    )
+    if legacy_result.get("password"):
+        raise ContractError("plaintext credential removal verification failed")
+
+    resolved = _parse_credential_payload(
+        _run_credential_command(
+            ["credential", "fill"],
+            payload=_credential_payload({"protocol": "http", "host": host}),
+            stage="configured Git credential verification",
+        )
+    )
+    if not (
+        hmac.compare_digest(resolved.get("username", ""), username)
+        and hmac.compare_digest(resolved.get("password", ""), password)
+    ):
+        raise ContractError(
+            "configured Git credential verification returned different credentials"
+        )
+
+    _clear_local_env_value(env_file=path, name="FORGEJO_PASSWORD")
+    print(
+        "MIGRATED Forgejo localhost credential to macOS Keychain; "
+        "plaintext store removed; FORGEJO_PASSWORD cleared; values suppressed"
+    )
+    return 0
+
+
 def _execution_receipt_path(
     receipt: dict[str, Any], requested_path: Path | None = None
 ) -> Path:
@@ -1400,6 +1560,11 @@ def build_parser() -> argparse.ArgumentParser:
     local_env_set_path.add_argument("--env-file", type=Path)
     local_env_set_path.add_argument("--name", required=True)
     local_env_set_path.add_argument("--path", type=Path, required=True)
+    local_env_migrate_forgejo = local_env_subparsers.add_parser(
+        "migrate-forgejo-keychain",
+        help="move one localhost Forgejo password from private dotenv/plaintext store to macOS Keychain",
+    )
+    local_env_migrate_forgejo.add_argument("--env-file", type=Path)
     workload_parser = subparsers.add_parser(
         "workload", help="inspect typed local workloads"
     )
@@ -1568,6 +1733,11 @@ def main(argv: list[str] | None = None) -> int:
                     env_file=args.env_file or (args.catalog_root / ".env"),
                     name=args.name,
                     value=args.path,
+                )
+            if args.local_env_command == "migrate-forgejo-keychain":
+                return migrate_forgejo_keychain(
+                    catalog=catalog,
+                    env_file=args.env_file or (args.catalog_root / ".env"),
                 )
             return doctor_local_env(
                 catalog=catalog,

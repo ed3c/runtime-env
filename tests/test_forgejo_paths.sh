@@ -21,6 +21,8 @@ for required in \
   'http://localhost:3000/user/settings/applications' \
   'current Chrome profile' \
   'git credential fill' \
+  './runtime-env local-env migrate-forgejo-keychain' \
+  'forgejo-delivery-loop' \
   'FORGEJO_URL' \
   'FORGEJO_USERNAME' \
   'FORGEJO_PASSWORD' \
