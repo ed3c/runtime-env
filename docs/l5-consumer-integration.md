@@ -123,6 +123,13 @@ hook is tracked and executable, the runtime source matches the pin, and the
 consumer HEAD/tree/status are unchanged. Child stdout, stderr, dotenv values,
 cookies, and credential bytes are never stored in the receipt.
 
+The mutation class controls only ignored and untracked workspace evidence.
+`mutation=read-only` requires its fingerprint to remain unchanged;
+`mutation=workspace` permits that fingerprint to change and records both the
+change and the permission in the receipt. Neither class permits a changed HEAD,
+tree, staged index, or non-ignored worktree path. Use a broker-owned run root
+instead when workspace output is not part of the consumer's declared contract.
+
 ## External blockers are not integration passes
 
 - iOS requires a real admitted iOS target, App Store Connect identifiers, and a
