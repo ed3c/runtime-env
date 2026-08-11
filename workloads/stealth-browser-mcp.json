@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "stealth-browser-mcp",
   "summary": "Serve bounded stealth browser tools while persistent cookie state remains outside the agent filesystem.",
   "profile": "gemini-conversation-research-local",
@@ -7,6 +7,10 @@
   "entrypoints": {
     "serve": ["npx", "tsx", "<stealth-browser-root>/src/index.ts"],
     "test": ["npm", "test"]
+  },
+  "acceptance_entrypoints": ["test"],
+  "broker_adapters": {
+    "serve": {"implementation": "npx tsx <stealth-browser-root>/src/index.ts", "private_state": ["STEALTH_PROFILE_ROOT outside every Git checkout"], "receipt": "<file-sink>/stealth-browser/<run-id>.json"}
   },
   "entrypoint_environment": {
     "serve": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_BROWSER_ROOT", "STEALTH_PROFILE_ROOT", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],

@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "agy-gemini36-flash-high-replay",
   "summary": "Run an admitted file-based independent replay with agy Gemini 3.6 Flash High.",
   "profile": "agy-gemini36-flash-high-local",
@@ -7,6 +7,19 @@
   "entrypoints": {
     "inventory": ["agy", "models"],
     "replay": ["python3", "loop_wiki/evolve-unknown-discovery-plan-truth/scripts/execute_agy_replay_requests.py", "--approved-external-call"]
+  },
+  "acceptance_entrypoints": ["inventory", "replay"],
+  "broker_adapters": {
+    "inventory": {
+      "implementation": "host executable agy models",
+      "private_state": ["~/.gemini/antigravity-cli/"],
+      "receipt": "runtime-env execution receipt plus exact model inventory hash"
+    },
+    "replay": {
+      "implementation": "loop_wiki/evolve-unknown-discovery-plan-truth/scripts/execute_agy_replay_requests.py",
+      "private_state": ["~/.gemini/antigravity-cli/"],
+      "receipt": "loop_wiki/evolve-unknown-discovery-plan-truth/data/agy-replay-execution-report.json"
+    }
   },
   "entrypoint_environment": {
     "inventory": ["AGY_MODEL", "AGY_EFFORT"],

@@ -29,7 +29,7 @@ printf '%s\n' \
   '{"schema":"runtime-env/profile/v1","id":"bettor-arena-local","summary":"Fixture.","modules":["ollama-root"]}' \
   > "${source_repo}/profiles/bettor-arena-local.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"local-proof","summary":"Fixture.","profile":"bettor-arena-local","host":"local-macos","entrypoints":{"prove":["sh","proof.sh"]},"entrypoint_environment":{"prove":["OLLAMA_URL"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"receipt.json","control":"control.sh"}}' \
+  '{"schema":"runtime-env/workload/v2","id":"local-proof","summary":"Fixture.","profile":"bettor-arena-local","host":"local-macos","entrypoints":{"prove":["sh","proof.sh"]},"acceptance_entrypoints":["prove"],"entrypoint_environment":{"prove":["OLLAMA_URL"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"receipt.json","control":"control.sh"}}' \
   > "${source_repo}/workloads/local-proof.json"
 printf '%s\n' \
   '{"schema":"runtime-env/carrier-policy/v1","id":"fixture-native","summary":"Fixture.","carrier":"codex-cli","config_home_env":"FIXTURE_HOME","settings_file":"config.toml","required_settings":{"sandbox_mode":"workspace-write"},"forbidden_environment":["FOREIGN_HOME"],"external_requirements":["deny read"],"receipt_commands":["fixture status"]}' \

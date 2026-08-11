@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "repo-wiki-converge",
   "summary": "Create or refine a repository wiki and ingest verified pages into the local knowledge graph.",
   "profile": "repo-wiki-converge-local",
@@ -8,6 +8,10 @@
     "author": ["bash", "kb-ingest/agy-pass.sh"],
     "verify": ["bash", "kb-ingest/verify-claims.sh"],
     "ingest": ["python3", "-m", "indexing.ingest_repodoc_cli"]
+  },
+  "acceptance_entrypoints": ["author", "verify", "ingest"],
+  "broker_adapters": {
+    "author": {"implementation": "kb-ingest/agy-pass.sh", "private_state": ["~/.gemini/antigravity-cli/"], "receipt": "<output-dir>/agy-receipt.jsonl"}
   },
   "entrypoint_environment": {
     "author": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT"],

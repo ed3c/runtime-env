@@ -1,13 +1,19 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "ios-testflight-beta",
   "summary": "Build, sign, and upload an admitted repository revision to TestFlight.",
   "profile": "ios-testflight-ship-local",
   "host": "local-macos",
   "entrypoints": {
+    "preflight": ["bash", ".agents/skills/ios-testflight-ship/scripts/preflight.sh"],
     "upload": ["bash", ".agents/skills/ios-testflight-ship/scripts/ship.sh", "<target-repo>", "beta"]
   },
+  "acceptance_entrypoints": ["preflight"],
+  "broker_adapters": {
+    "upload": {"implementation": ".agents/skills/ios-testflight-ship/scripts/ship.sh", "private_state": ["macOS signing identity and App Store Connect private key outside the target"], "receipt": "broker-receipts/ios-testflight-beta/<run-id>.json"}
+  },
   "entrypoint_environment": {
+    "preflight": ["DEVELOPER_DIR", "JAVA_HOME"],
     "upload": ["APPLE_TEAM_ID", "ASC_ISSUER_ID", "ASC_KEY_ID", "ASC_KEY_PATH", "DEVELOPER_DIR", "IOS_DEVICE_UDID", "JAVA_HOME", "MATCH_PASSWORD"]
   },
   "secret_delivery": "broker-only",

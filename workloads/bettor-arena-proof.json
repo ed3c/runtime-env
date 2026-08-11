@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "bettor-arena-proof",
   "summary": "Generate bettor-arena proof receipts and run independent controls.",
   "profile": "bettor-arena-runtime-local",
@@ -16,6 +16,16 @@
     "stealth-profile-hygiene": ["sh", "scripts/runtime-env/check-stealth-profile-hygiene.sh"],
     "carrier-contract": ["python3", "scripts/runtime-env/check-carrier-contract.py", "--matrix", "loop_wiki/evolve-technical-equivalence-research/carrier-capabilities.json"],
     "equivalence-live": ["python3", "scripts/runtime-env/run-equivalence-live.py"]
+  },
+  "acceptance_entrypoints": ["prove-equivalence", "control-equivalence", "claude-auth-status", "codex-login-status", "forgejo-credential-canary", "agy-model-inventory", "research-browser-health", "stealth-browser-control", "stealth-profile-hygiene", "carrier-contract", "equivalence-live"],
+  "broker_adapters": {
+    "claude-auth-status": {"implementation": "scripts/runtime-env/check-carrier-status.py claude", "private_state": ["macOS Keychain and Claude-owned host state"], "receipt": "bounded authentication-state execution receipt"},
+    "codex-login-status": {"implementation": "scripts/runtime-env/check-carrier-status.py codex", "private_state": ["Codex-owned OS keyring or auth file outside the target"], "receipt": "bounded login-state execution receipt"},
+    "forgejo-credential-canary": {"implementation": "@runtime-env/scripts/verify-local-runtime.sh --credential-helper-only", "private_state": ["URL-scoped macOS Keychain Git credential helper"], "receipt": "authenticated read-only canary execution receipt"},
+    "agy-model-inventory": {"implementation": "scripts/runtime-env/check-carrier-status.py agy", "private_state": ["~/.gemini/antigravity-cli/"], "receipt": "exact model-inventory execution receipt"},
+    "research-browser-health": {"implementation": "scripts/runtime-env/check-research-cdp.py", "private_state": ["dedicated logged-in browser profile behind loopback CDP"], "receipt": "bounded CDP-health execution receipt"},
+    "stealth-browser-control": {"implementation": "scripts/runtime-env/check-stealth-browser.sh", "private_state": ["STEALTH_PROFILE_ROOT outside every Git checkout"], "receipt": "broker-owned file-sink receipt"},
+    "equivalence-live": {"implementation": "scripts/runtime-env/run-equivalence-live.py", "private_state": ["digest-bound approval receipt and broker-owned run root"], "receipt": "digest-bound technical-equivalence live receipt"}
   },
   "entrypoint_environment": {
     "prove-equivalence": ["ANTIGRAVITY_PEER", "SKILL_BETTOR_PEER"],

@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "ios-testflight-verify",
   "summary": "Verify App Store Connect authentication without uploading a build.",
   "profile": "ios-testflight-ship-local",
@@ -7,6 +7,10 @@
   "entrypoints": {
     "preflight": ["bash", ".agents/skills/ios-testflight-ship/scripts/preflight.sh"],
     "verify-asc": ["bash", ".agents/skills/ios-testflight-ship/scripts/ship.sh", "<target-repo>", "verify_asc"]
+  },
+  "acceptance_entrypoints": ["preflight"],
+  "broker_adapters": {
+    "verify-asc": {"implementation": ".agents/skills/ios-testflight-ship/scripts/ship.sh", "private_state": ["App Store Connect private key in a broker-owned 0600 file"], "receipt": "broker-receipts/ios-testflight-verify/<run-id>.json"}
   },
   "entrypoint_environment": {
     "preflight": ["APPLE_TEAM_ID", "ASC_ISSUER_ID", "ASC_KEY_ID", "ASC_KEY_PATH", "DEVELOPER_DIR", "IOS_DEVICE_UDID", "JAVA_HOME", "MATCH_PASSWORD"],

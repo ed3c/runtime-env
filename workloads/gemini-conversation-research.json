@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "gemini-conversation-research",
   "summary": "Extract and guide a Gemini conversation through a logged-in browser with file-only content sinks.",
   "profile": "gemini-conversation-research-local",
@@ -8,6 +8,11 @@
     "extract": ["node", "scripts/extract-gemini-conversation-browser-runtime.mjs"],
     "guided-edge": ["node", "scripts/run-gemini-guided-conversation-browser-runtime.mjs"],
     "carrier-gate": ["bun", "run", "scripts/test-extract-gemini-conversation-browser-runtime.mjs"]
+  },
+  "acceptance_entrypoints": ["carrier-gate", "extract", "guided-edge"],
+  "broker_adapters": {
+    "extract": {"implementation": "scripts/extract-gemini-conversation-browser-runtime.mjs", "private_state": ["dedicated logged-in browser profile behind loopback CDP"], "receipt": "gemini_research/gcr/<run-id>-receipt.json"},
+    "guided-edge": {"implementation": "scripts/run-gemini-guided-conversation-browser-runtime.mjs", "private_state": ["dedicated logged-in browser profile behind loopback CDP"], "receipt": "gemini_research/gcr/<run-id>-receipt.json"}
   },
   "entrypoint_environment": {
     "extract": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_PROFILE_ROOT", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],

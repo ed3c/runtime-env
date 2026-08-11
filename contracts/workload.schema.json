@@ -1,18 +1,33 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ed3c/runtime-env/blob/main/contracts/workload.schema.json",
-  "title": "runtime-env workload v1",
+  "title": "runtime-env workload v2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "id", "summary", "profile", "host", "entrypoints", "entrypoint_environment", "secret_delivery", "agent_secret_access", "mutation", "evidence"],
+  "required": ["schema", "id", "summary", "profile", "host", "entrypoints", "entrypoint_environment", "acceptance_entrypoints", "secret_delivery", "agent_secret_access", "mutation", "evidence"],
   "properties": {
-    "schema": {"const": "runtime-env/workload/v1"},
+    "schema": {"const": "runtime-env/workload/v2"},
     "id": {"type": "string", "minLength": 1},
     "summary": {"type": "string", "minLength": 1},
     "profile": {"type": "string", "minLength": 1},
     "host": {"enum": ["local-macos", "openshell"]},
     "entrypoints": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}},
     "entrypoint_environment": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}}},
+    "acceptance_entrypoints": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "broker_adapters": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["implementation", "private_state", "receipt"],
+        "properties": {
+          "implementation": {"type": "string", "minLength": 1},
+          "private_state": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "receipt": {"type": "string", "minLength": 1}
+        }
+      }
+    },
     "clean_catalog_entrypoints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "secret_delivery": {"enum": ["none", "openshell-provider", "broker-only"]},
     "agent_secret_access": {"const": "denied"},

@@ -34,7 +34,7 @@ SCHEMAS = {
     "variables": "runtime-env/variables/v1",
     "module": "runtime-env/module/v1",
     "profile": "runtime-env/profile/v1",
-    "workload": "runtime-env/workload/v1",
+    "workload": "runtime-env/workload/v2",
     "policy": "runtime-env/carrier-policy/v1",
 }
 ALLOWED_FIELDS = {
@@ -50,6 +50,8 @@ ALLOWED_FIELDS = {
         "host",
         "entrypoints",
         "entrypoint_environment",
+        "acceptance_entrypoints",
+        "broker_adapters",
         "clean_catalog_entrypoints",
         "secret_delivery",
         "agent_secret_access",
@@ -82,6 +84,7 @@ REQUIRED_FIELDS = {
         "host",
         "entrypoints",
         "entrypoint_environment",
+        "acceptance_entrypoints",
         "secret_delivery",
         "agent_secret_access",
         "mutation",
@@ -332,6 +335,83 @@ def load_catalog(root: Path) -> Catalog:
                 raise ContractError(
                     f"workload {workload_id}: entrypoint {entrypoint_id} must be a string array"
                 )
+        acceptance_entrypoints = workload.get("acceptance_entrypoints")
+        if (
+            not isinstance(acceptance_entrypoints, list)
+            or not acceptance_entrypoints
+            or any(
+                not isinstance(entrypoint_id, str) or not entrypoint_id
+                for entrypoint_id in acceptance_entrypoints
+            )
+            or len(acceptance_entrypoints) != len(set(acceptance_entrypoints))
+        ):
+            raise ContractError(
+                f"workload {workload_id}: acceptance_entrypoints must be a "
+                "non-empty unique string array"
+            )
+        unknown_acceptance = sorted(set(acceptance_entrypoints) - set(entrypoints))
+        if unknown_acceptance:
+            raise ContractError(
+                f"workload {workload_id}: acceptance_entrypoints references "
+                f"unknown entrypoints: {', '.join(unknown_acceptance)}"
+            )
+        unresolved_acceptance = sorted(
+            entrypoint_id
+            for entrypoint_id in acceptance_entrypoints
+            if any(
+                re.search(r"<[^>]+>", argument)
+                for argument in entrypoints[entrypoint_id]
+            )
+        )
+        if unresolved_acceptance:
+            raise ContractError(
+                f"workload {workload_id}: acceptance entrypoints contain unresolved "
+                f"placeholders: {', '.join(unresolved_acceptance)}"
+            )
+        broker_adapters = workload.get("broker_adapters")
+        if workload["secret_delivery"] == "broker-only":
+            if not isinstance(broker_adapters, dict) or not broker_adapters:
+                raise ContractError(
+                    f"workload {workload_id}: broker-only delivery requires "
+                    "dedicated broker_adapters"
+                )
+            unknown_adapters = sorted(set(broker_adapters) - set(entrypoints))
+            if unknown_adapters:
+                raise ContractError(
+                    f"workload {workload_id}: broker_adapters references unknown "
+                    f"entrypoints: {', '.join(unknown_adapters)}"
+                )
+            for entrypoint_id, adapter in broker_adapters.items():
+                if not isinstance(adapter, dict) or set(adapter) != {
+                    "implementation",
+                    "private_state",
+                    "receipt",
+                }:
+                    raise ContractError(
+                        f"workload {workload_id}: broker_adapters.{entrypoint_id} "
+                        "must contain implementation, private_state, and receipt"
+                    )
+                if (
+                    not isinstance(adapter["implementation"], str)
+                    or not adapter["implementation"]
+                    or not isinstance(adapter["receipt"], str)
+                    or not adapter["receipt"]
+                    or not isinstance(adapter["private_state"], list)
+                    or not adapter["private_state"]
+                    or any(
+                        not isinstance(item, str) or not item
+                        for item in adapter["private_state"]
+                    )
+                ):
+                    raise ContractError(
+                        f"workload {workload_id}: broker_adapters.{entrypoint_id} "
+                        "has invalid adapter metadata"
+                    )
+        elif broker_adapters is not None:
+            raise ContractError(
+                f"workload {workload_id}: broker_adapters is only valid for "
+                "broker-only delivery"
+            )
         entrypoint_environment = workload.get("entrypoint_environment")
         if not isinstance(entrypoint_environment, dict) or set(
             entrypoint_environment

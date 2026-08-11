@@ -28,13 +28,13 @@ printf '%s\n' \
   '{"schema":"runtime-env/profile/v1","id":"secret","summary":"Secret fixture.","modules":["secret"]}' \
   > "${CATALOG}/profiles/secret.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"runner","summary":"Runner fixture.","profile":"runner","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"],"placeholder":["sh","<script>"],"trusted":["@runtime-env/trusted.sh"]},"entrypoint_environment":{"fixed":["RUNTIME_SENTINEL"],"placeholder":[],"trusted":[]},"clean_catalog_entrypoints":["trusted"],"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
+  '{"schema":"runtime-env/workload/v2","id":"runner","summary":"Runner fixture.","profile":"runner","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"],"placeholder":["sh","<script>"],"trusted":["@runtime-env/trusted.sh"]},"acceptance_entrypoints":["fixed"],"entrypoint_environment":{"fixed":["RUNTIME_SENTINEL"],"placeholder":[],"trusted":[]},"clean_catalog_entrypoints":["trusted"],"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
   > "${CATALOG}/workloads/runner.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"secret","summary":"Secret fixture.","profile":"secret","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"]},"entrypoint_environment":{"fixed":["BROKER_SECRET"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
+  '{"schema":"runtime-env/workload/v2","id":"secret","summary":"Secret fixture.","profile":"secret","host":"local-macos","entrypoints":{"fixed":["sh","scripts/fixed.sh"]},"acceptance_entrypoints":["fixed"],"entrypoint_environment":{"fixed":["BROKER_SECRET"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"artifact.txt","control":"scripts/fixed.sh"}}' \
   > "${CATALOG}/workloads/secret.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"read-only","summary":"Read-only enforcement fixture.","profile":"runner","host":"local-macos","entrypoints":{"mutates":["sh","scripts/mutates.sh"]},"entrypoint_environment":{"mutates":[]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"read-only","evidence":{"receipt":"must-not-write.txt","control":"scripts/mutates.sh"}}' \
+  '{"schema":"runtime-env/workload/v2","id":"read-only","summary":"Read-only enforcement fixture.","profile":"runner","host":"local-macos","entrypoints":{"mutates":["sh","scripts/mutates.sh"]},"acceptance_entrypoints":["mutates"],"entrypoint_environment":{"mutates":[]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"read-only","evidence":{"receipt":"must-not-write.txt","control":"scripts/mutates.sh"}}' \
   > "${CATALOG}/workloads/read-only.json"
 
 printf '%s\n' '#!/bin/sh' 'printf "%s\n" "${RUNTIME_SENTINEL:-missing}" > artifact.txt' '[ -z "${UNRELATED_CONFIG+x}" ]' 'printf "runner emitted ordinary output\n"' \

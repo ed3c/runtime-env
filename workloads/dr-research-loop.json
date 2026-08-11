@@ -1,16 +1,25 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "dr-research-loop",
   "summary": "Run the three-pool proposal research loop with independent receipts and a Human admit boundary.",
   "profile": "dr-research-loop-local",
   "host": "local-macos",
   "entrypoints": {
     "engine": ["sh", "loop_wiki/engine.sh", "<dr-topic>", "--target", "<proposal>", "--driver", "agy"],
-    "verify": ["sh", "loop_wiki/<dr-topic>/verify.sh"]
+    "verify": ["sh", "loop_wiki/<dr-topic>/verify.sh"],
+    "agy-session-canary": ["agy", "models"],
+    "harness-selftest": ["sh", "loop_wiki/_template_dr/selftest.sh"]
+  },
+  "acceptance_entrypoints": ["agy-session-canary", "harness-selftest"],
+  "broker_adapters": {
+    "engine": {"implementation": "loop_wiki/engine.sh through a typed consumer topic/target adapter", "private_state": ["~/.gemini/antigravity-cli/ and browser sessions selected by the DR route"], "receipt": "loop_wiki/<dr-topic>/trajectory.log"},
+    "agy-session-canary": {"implementation": "host executable agy models", "private_state": ["~/.gemini/antigravity-cli/"], "receipt": "exact model-inventory execution receipt"}
   },
   "entrypoint_environment": {
     "engine": ["AGY_MODEL", "AGY_EFFORT"],
-    "verify": []
+    "verify": [],
+    "agy-session-canary": ["AGY_MODEL", "AGY_EFFORT"],
+    "harness-selftest": []
   },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",

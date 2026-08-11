@@ -12,6 +12,32 @@ for workload in bettor-arena-proof repo-wiki-converge ios-testflight-verify ios-
   }
 done
 
+python3 - "${ROOT}" <<'PY'
+import json
+import pathlib
+import re
+import sys
+
+root = pathlib.Path(sys.argv[1])
+for path in sorted((root / "workloads").glob("*.json")):
+    workload = json.loads(path.read_text(encoding="utf-8"))
+    acceptance = workload.get("acceptance_entrypoints")
+    assert isinstance(acceptance, list) and acceptance, (
+        f"{workload['id']} has no required live acceptance entrypoints"
+    )
+    for entrypoint in acceptance:
+        assert entrypoint in workload["entrypoints"]
+        assert not any(
+            re.search(r"<[^>]+>", argument)
+            for argument in workload["entrypoints"][entrypoint]
+        ), f"{workload['id']} acceptance entrypoint {entrypoint} is unresolved"
+    if workload["secret_delivery"] == "broker-only":
+        adapters = workload.get("broker_adapters")
+        assert isinstance(adapters, dict) and adapters, (
+            f"{workload['id']} has no dedicated broker adapter mapping"
+        )
+PY
+
 testflight="$(${ROOT}/runtime-env workload show --id ios-testflight-beta)"
 python3 -c '
 import json, sys
