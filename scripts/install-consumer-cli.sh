@@ -38,15 +38,35 @@ if [ ! -d "$DEST" ]; then
   TMP=$(mktemp -d "$VERSIONS/.install.XXXXXX")
   trap 'rm -rf "$TMP"' EXIT HUP INT TERM
   git -C "$ROOT" archive HEAD | tar -x -C "$TMP"
-  python3 - "$TMP/INSTALL-RECEIPT.json" "$HEAD" "$TREE" <<'PY'
+  python3 - "$TMP" "$TMP/INSTALL-RECEIPT.json" "$HEAD" "$TREE" <<'PY'
+import hashlib
 import json
 import os
+from pathlib import Path
 import sys
 
-path, commit, tree = sys.argv[1:]
-with open(path, "x", encoding="utf-8") as handle:
+root = Path(sys.argv[1])
+path = Path(sys.argv[2])
+commit, tree = sys.argv[3:]
+
+def archive_sha256() -> str:
+    digest = hashlib.sha256()
+    for item in sorted(root.rglob("*")):
+        if item == path or item.is_dir():
+            continue
+        relative = item.relative_to(root).as_posix().encode()
+        content = (
+            os.readlink(item).encode()
+            if item.is_symlink()
+            else item.read_bytes()
+        )
+        digest.update(relative + b"\0" + hashlib.sha256(content).digest())
+    return digest.hexdigest()
+
+with path.open("x", encoding="utf-8") as handle:
     json.dump(
         {
+            "archive_sha256": archive_sha256(),
             "commit": commit,
             "schema": "runtime-env/consumer-cli-install/v1",
             "source": "committed-git-archive",
@@ -59,9 +79,40 @@ with open(path, "x", encoding="utf-8") as handle:
     handle.write("\n")
 os.chmod(path, 0o644)
 PY
+  chmod -R a-w "$TMP"
   mv "$TMP" "$DEST"
   trap - EXIT HUP INT TERM
 fi
+
+python3 - "$DEST" "$HEAD" "$TREE" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+commit, tree = sys.argv[2:]
+receipt_path = root / "INSTALL-RECEIPT.json"
+try:
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError) as exc:
+    raise SystemExit(f"FATAL: invalid installed revision receipt: {exc}")
+digest = hashlib.sha256()
+for item in sorted(root.rglob("*")):
+    if item == receipt_path or item.is_dir():
+        continue
+    relative = item.relative_to(root).as_posix().encode()
+    content = os.readlink(item).encode() if item.is_symlink() else item.read_bytes()
+    digest.update(relative + b"\0" + hashlib.sha256(content).digest())
+if (
+    receipt.get("schema") != "runtime-env/consumer-cli-install/v1"
+    or receipt.get("commit") != commit
+    or receipt.get("tree") != tree
+    or receipt.get("archive_sha256") != digest.hexdigest()
+):
+    raise SystemExit("FATAL: installed revision bytes do not match their receipt")
+PY
 
 LAUNCHER_TMP=$(mktemp "$BIN/.runtime-env.XXXXXX")
 trap 'rm -f "$LAUNCHER_TMP"' EXIT HUP INT TERM

@@ -123,6 +123,20 @@ git -C "${target_repo}" add .runtime-env
 ${ROOT}/runtime-env --catalog-root "${scratch}/absent-catalog" verify-consumer \
   --target-root "${target_repo}" --binding bettor-arena-local --staged >/dev/null
 
+requirements_original="${scratch}/requirements.original"
+cp "${requirements}" "${requirements_original}"
+printf '\n' >> "${requirements}"
+git -C "${target_repo}" add "${requirements}"
+set +e
+requirements_output="$(${ROOT}/runtime-env --catalog-root "${scratch}/absent-catalog" verify-consumer \
+  --target-root "${target_repo}" --binding bettor-arena-local --staged 2>&1)"
+requirements_status=$?
+set -e
+[[ ${requirements_status} -eq 2 ]]
+[[ "${requirements_output}" == *'requirements sha256 mismatch'* ]]
+cp "${requirements_original}" "${requirements}"
+git -C "${target_repo}" add "${requirements}"
+
 python3 - "${binding}" <<'PY'
 import hashlib
 import json

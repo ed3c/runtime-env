@@ -1706,6 +1706,60 @@ def verify_consumer(*, target_root: Path, binding_id: str, staged: bool) -> int:
             r"[0-9a-f]{64}", requirements_sha
         ):
             raise ContractError(f"{binding_path}: invalid requirements digest")
+        if requirements_sha is not None:
+            requirement_paths = (
+                f".runtime-env/requirements/{binding_id}.json",
+                ".runtime-env/requirements.json",
+            )
+            requirement_documents: list[tuple[str, str]] = []
+            for requirement_path in requirement_paths:
+                try:
+                    content = _consumer_content(
+                        target, requirement_path, staged=staged
+                    )
+                except ContractError as exc:
+                    if "missing staged consumer projection" in str(exc) or (
+                        not staged and "cannot read consumer projection" in str(exc)
+                    ):
+                        continue
+                    raise
+                requirement_documents.append((requirement_path, content))
+            if len(requirement_documents) != 1:
+                raise ContractError(
+                    f"{binding_path}: expected exactly one consumer requirements file"
+                )
+            requirement_path, requirement_content = requirement_documents[0]
+            if _sha256(requirement_content) != requirements_sha:
+                raise ContractError(
+                    f"{requirement_path}: requirements sha256 mismatch"
+                )
+            try:
+                requirement_document = json.loads(requirement_content)
+            except json.JSONDecodeError as exc:
+                raise ContractError(
+                    f"{requirement_path}: invalid JSON: {exc}"
+                ) from exc
+            if requirement_document.get("binding") != binding_id:
+                raise ContractError(f"{requirement_path}: binding id mismatch")
+
+        install_receipt_path = _default_catalog_root() / "INSTALL-RECEIPT.json"
+        if install_receipt_path.is_file():
+            try:
+                install_receipt = json.loads(
+                    install_receipt_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ContractError(f"invalid installed CLI receipt: {exc}") from exc
+            source = binding.get("source", {})
+            if (
+                install_receipt.get("schema")
+                != "runtime-env/consumer-cli-install/v1"
+                or install_receipt.get("commit") != source.get("commit")
+                or install_receipt.get("tree") != source.get("tree")
+            ):
+                raise ContractError(
+                    f"{binding_path}: installed CLI source does not match binding source"
+                )
     variables = binding.get("variables")
     if not isinstance(variables, list) or not variables:
         raise ContractError(f"{binding_path}: invalid variable projection")
