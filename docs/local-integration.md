@@ -6,11 +6,6 @@ The intended checkout is `/Users/neon/runtime-env`. Agents should run catalog
 and host verification from that directory; do not copy this repository's files
 into each consuming project.
 
-Before claiming that a workload or consumer repository is integrated, read
-[`docs/integration-requirements.md`](integration-requirements.md). It defines
-the maturity levels, live evidence, consumer acceptance, and blocker receipts
-required for that claim.
-
 `AGENTS.md` is loaded only when a new chat starts. Editing it does not retrofit
 the current chat. The root `AGENTS.md` therefore contains a short routing rule
 to this document, while this file owns the detailed integration requirements.
@@ -147,3 +142,160 @@ OpenShell provider bootstrap receipts live at
 `~/.local/state/runtime-env/receipts/openshell/<provider>.json`, mode `0600`.
 They contain carrier/provider/status metadata only. They do not replace the
 carrier-owned session source and are never synchronized into a repository.
+
+## Integration completion contract
+
+This section defines when an Agent may claim that a `runtime-env` capability is
+integrated. Runtime-env is a secret-free control plane: it catalogs variable
+contracts, projects selected contracts, and runs checked-in workload
+entrypoints. It does not install every provider, start host services, supply
+consumer application code, or turn a connector declaration into compute.
+
+The goal is not a global "everything" profile. Each workload and consumer pair
+must independently prove the capability it selects.
+
+### Terms
+
+| Term | Meaning |
+|---|---|
+| Consumer repository | A target repository that receives a pinned, secret-free `.runtime-env/` projection and supplies target-relative workload scripts. |
+| Execution plane | The named host that runs the command, such as local macOS, GitHub Actions, or Codex cloud. A connector is not an execution plane. |
+| Fixed entrypoint | A command checked into `workloads/*.json`; the runner accepts no arbitrary trailing command. |
+| Live acceptance | A fixed entrypoint run against the real dependency, not a schema check, render, mock, or fixture. |
+| Receipt | A private metadata-only record binding source revisions, the attempted workload, result, and evidence hashes without storing secret values or child streams. |
+
+### Integration maturity levels
+
+Report the exact level for each workload and consumer pair. Do not collapse the
+levels into the ambiguous word "supported."
+
+| Level | Name | Required evidence |
+|---|---|---|
+| L0 | Declared | `./runtime-env validate` succeeds for the catalog, modules, profiles, workloads, and policies. |
+| L1 | Projected | Explicit `sync --apply` created the selected binding, workload, and policies; `sync --check` reports no drift. |
+| L2 | Configured | `check --profile <profile> --env-file /Users/neon/runtime-env/.env` exits `0`. This proves names and defaults only. |
+| L3 | Host-ready | Required binaries, target files, services, sessions, private paths, and routes exist on the named execution plane. |
+| L4 | Live-passed | Every required fixed entrypoint exits successfully against the real dependency and produces the declared receipt/control evidence. |
+| L5 | Consumer-accepted | The consumer's staged projection verifies offline, its public-seam tests pass, and live evidence is bound to the intended consumer revision. |
+
+L0 and L2 are not live-integration claims. A runtime-owned workload with no
+consumer code may stop at L4; a consumer workload is complete only at L5.
+
+### Result states
+
+| State | Meaning |
+|---|---|
+| `NOT_RUN` | No real attempt exists for the current source and target revisions. |
+| `PASSED` | The required command exited `0`, evidence passed, and no forbidden state changed. |
+| `BLOCKED` | A named prerequisite is absent or unreachable. Record the safe command that observed it and the next action. |
+| `FAILED` | Prerequisites existed and the real command ran, but authentication, evidence, or policy validation failed. |
+
+Keep missing input, unreachable service, refused authentication, invalid
+evidence, and unsafe permissions as distinct blockers. Do not turn a blocker
+into a pass by weakening isolation, adding an unscoped secret, substituting a
+mock, or skipping an entrypoint. After three failed attempts at the same
+problem, stop and record the commands, redacted errors, reasons, and a simpler
+route to evaluate.
+
+### Unresolved workload placeholders
+
+`runtime-env workload run` deliberately refuses any command containing an
+unresolved `<placeholder>`. Therefore a placeholder-bearing workload cannot
+reach L4 in its current form. Before running it, make a test-first catalog/CLI
+change that does one of the following:
+
+1. replace the placeholder with one concrete, versioned fixed entrypoint; or
+2. introduce a typed, allowlisted parameter contract with validation and no
+   arbitrary-command surface.
+
+Do not substitute text in a generated consumer projection or invoke the command
+outside the runner and call it accepted. The DR loop, both iOS workloads, and
+the stealth-browser MCP rows below are `BLOCKED` on this contract gap.
+
+### Consumer repository acceptance
+
+A consumer repository must not create its own `.env` to consume runtime-env.
+Local values come from the one canonical host dotenv or the host brokers above;
+remote values belong to their remote execution plane. The consumer receives
+only secret-free projections.
+
+For each consumer and capability:
+
+1. Select the smallest profile plus an explicit workload and all required
+   policies. Omitting `--workload` or `--policy` is not workload support.
+2. Verify that every target-relative entrypoint exists and has a public-seam
+   test in the consumer. Runtime-env does not generate application scripts.
+3. From a clean canonical checkout, review the `sync` dry run, then use
+   `--apply`; follow it with `sync --check`.
+4. Pin a compatible runtime-env CLI in the consumer and make its pre-commit hook
+   run `runtime-env verify-consumer --target-root "$(git rev-parse
+   --show-toplevel)" --binding <binding> --staged` without network or sibling
+   checkout access.
+5. Run every required fixed entrypoint on its execution plane, verify its
+   receipt, control, mutation boundary, and source revisions, then run the
+   consumer's full tests and `git diff --check`.
+
+Synchronization must produce the binding, secret-free dotenv example, workload
+projection, and every selected policy under the consumer's `.runtime-env/`
+directory. A missing mapping in the matrix below is not permission to invent
+one: add and test an explicit mapping in the owning contract first.
+
+### Live acceptance matrix
+
+This is the concrete work queue. Known physical roots come from
+`docs/skill-runtime-inventory.md`; that inventory proves only path existence.
+`UNRESOLVED` means this repository has no authoritative mapping yet. Copy a row
+for each additional consumer rather than replacing evidence from another.
+
+| Workload | Consumer / target root | Binding and policies | Required entrypoints or gap | Current result |
+|---|---|---|---|---|
+| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `inventory`, `replay`; prove the exact admitted agy model and file receipt. | `NOT_RUN` |
+| `bettor-arena-proof` | `/Users/neon/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 entrypoints in `workloads/bettor-arena-proof.json`; independently prove carriers, browser transports, peers, approval, and Forgejo. | `NOT_RUN` |
+| `dr-research-loop` | `/Users/neon/skill-bettor` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `engine` and `verify` contain `<dr-topic>` or `<proposal>`; first implement a typed parameter contract or concrete workload. | `BLOCKED`: unresolved command placeholders. |
+| `forgejo-delivery-loop` | Runtime-owned verifier; target may be any admitted local Git consumer | No consumer binding or carrier policy is required for the runtime-owned canary. | `broker-selftest`, `credential-canary`; must preserve the target Git state. | `BLOCKED`: on 2026-08-11 `localhost:3000` was unreachable. |
+| `gemini-conversation-research` | `/Users/neon/bettor-arena` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `carrier-gate`, `extract`, `guided-edge`; prove the logged-in browser and file-only sink. | `NOT_RUN` |
+| `ios-testflight-beta` | Broker implementation: `/Users/neon/ix-agy`; release target: `UNRESOLVED` per admitted run | Binding: `UNRESOLVED`; policies: none declared | `upload` contains `<target-repo>`; resolve the runner contract first. External release also requires separate human authority. | `BLOCKED`: unresolved command placeholder; release not authorized by this contract. |
+| `ios-testflight-verify` | Broker implementation: `/Users/neon/ix-agy`; verification target: `UNRESOLVED` | Binding: `UNRESOLVED`; policies: none declared | `preflight`; `verify-asc` contains `<target-repo>` and requires a typed target contract. | `BLOCKED`: unresolved command placeholder. |
+| `local-jdk-verify` | `/Users/neon/runtime-env` | No consumer binding or policy for the local verifier. | `verify`; real `JAVA_HOME`, matching `java`/`javac`, and compile/run receipt. | `NOT_RUN`; the fixture selftest is not a current live receipt. |
+| `repo-wiki-converge` | `/Users/neon/ix-agy` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `author`, `verify`, `ingest`; prove agy plus the real knowledge-graph ingest. | `NOT_RUN` |
+| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `serve` contains `<stealth-browser-root>`; first implement a typed root contract. `test` must then prove the bounded broker/profile behavior. | `BLOCKED`: unresolved command placeholder. |
+
+Each row's acceptance record must include runtime-env commit/tree/dirty state;
+consumer path and commit/tree/dirty state when applicable; profile, workload,
+entrypoint, execution host, and mutation class; metadata-only configuration and
+dependency checks; live exit status and private receipt path; control evidence;
+final maturity/result; and a redacted next action for `BLOCKED` or `FAILED`.
+
+### Current measured baseline
+
+On 2026-08-11, before this completion contract was added, commit
+`b8c768d23cf3` produced this baseline:
+
+- `validate` reported 69 variables, 44 modules, 24 profiles, 10 workloads, and
+  3 policies.
+- All 23 `tests/test_*.sh` public-seam test files passed through
+  `bash tests/run-all.sh`.
+- `local-env doctor` found all 69 declared names structurally valid and 10
+  names present without printing values.
+- Profile `check` exited `0` for 12 of 24 profiles. That proves only required
+  names or safe defaults.
+- The canonical local verifier exited `4` because Forgejo at
+  `http://localhost:3000` was unreachable.
+
+Future Agents must rerun the commands and attach current receipts rather than
+copying these numbers into a completion claim.
+
+### Completion definition
+
+Integration is complete only when the catalog and full tests pass from a clean
+revision; every selected consumer has a pinned, drift-free projection; every
+target-relative entrypoint exists and has public-seam coverage; every
+non-release matrix row has current evidence at its required maturity level;
+release rows have current read-only preflight evidence and separate authority
+for mutation; secrets remain in their declared planes; and no row called
+complete is `NOT_RUN`, `BLOCKED`, or `FAILED`.
+
+When the next action requires another repository, credential, service, or
+execution plane outside the authorized scope, stop with the exact target,
+required command, and blocker. Do not broaden filesystem access, copy a secret,
+start a release, or claim completion for that external system.
