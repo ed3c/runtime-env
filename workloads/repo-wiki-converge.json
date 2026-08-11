@@ -8,7 +8,7 @@
     "author": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "author"],
     "verify": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "verify"],
     "ingest": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "ingest"],
-    "consumer-test": ["python3", "-m", "pytest", "-q", "indexing/tests/test_repodoc_ingest.py"],
+    "consumer-test": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "consumer-test"],
     "adapter-test": ["sh", "scripts/test_runtime_env_repo_wiki_acceptance.sh"]
   },
   "acceptance_entrypoints": ["consumer-test", "adapter-test", "author", "verify", "ingest"],
@@ -18,9 +18,9 @@
   },
   "entrypoint_environment": {
     "author": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT", "REPO_WIKI_RUN_ROOT"],
-    "ingest": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT", "REPO_WIKI_RUN_ROOT"],
+    "ingest": ["AGY_TIMEOUT", "ANTIGRAVITY_KB_PYTHON", "ANTIGRAVITY_REPO_ROOT", "REPO_WIKI_RUN_ROOT"],
     "verify": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT", "REPO_WIKI_RUN_ROOT"],
-    "consumer-test": [],
+    "consumer-test": ["ANTIGRAVITY_KB_PYTHON"],
     "adapter-test": []
   },
   "secret_delivery": "broker-only",

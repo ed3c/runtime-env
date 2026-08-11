@@ -73,6 +73,7 @@ import json, sys
 value = json.load(sys.stdin)
 assert value["entrypoints"]["author"] == ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "author"]
 assert "REPO_WIKI_RUN_ROOT" in value["entrypoint_environment"]["author"]
+assert "ANTIGRAVITY_KB_PYTHON" in value["entrypoint_environment"]["consumer-test"]
 assert "adapter-test" in value["public_test_entrypoints"]
 ' <<< "${repo_wiki}"
 

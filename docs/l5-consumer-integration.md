@@ -128,7 +128,8 @@ cookies, and credential bytes are never stored in the receipt.
   loopback CDP endpoint and a broker-owned `GEMINI_RESEARCH_RUN_ROOT` directory
   with mode `0700`.
 - repo-wiki requires a broker-owned `REPO_WIKI_RUN_ROOT` directory with mode
-  `0700` and a working Antigravity session.
+  `0700`, an explicit `ANTIGRAVITY_KB_PYTHON` interpreter, and a working
+  Antigravity session.
 - DR verification requires its real citation endpoints to be reachable. An
   `OFFLINE=1` verification is diagnostic evidence, not L4/L5 evidence.
 

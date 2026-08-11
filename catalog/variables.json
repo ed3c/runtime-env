@@ -14,6 +14,7 @@
     {"name": "ANDROID_SENDER_PORT", "secret": false, "runtime_scope": "local-only", "description": "ADB console port assigned to the sender role."},
     {"name": "ANTIGRAVITY_PEER", "secret": false, "runtime_scope": "local-only", "description": "Explicit local path to the Antigravity source peer used by proof controls."},
     {"name": "ANTIGRAVITY_REPO_ROOT", "secret": false, "runtime_scope": "local-only", "description": "Local parent directory where repo-wiki targets are cloned."},
+    {"name": "ANTIGRAVITY_KB_PYTHON", "secret": false, "runtime_scope": "local-only", "description": "Absolute Python interpreter path for the local repo-wiki indexing environment."},
     {"name": "REPO_WIKI_RUN_ROOT", "secret": false, "runtime_scope": "local-only", "description": "Broker-owned 0700 output root for repo-wiki authoring, verification, and dry-run ingest."},
     {"name": "APPLITOOLS_API_KEY", "secret": true, "runtime_scope": "cloud-runtime", "description": "Applitools visual testing API credential.", "account_url": "https://auth.applitools.com/users/login"},
     {"name": "APPLE_TEAM_ID", "secret": false, "runtime_scope": "cloud-runtime", "description": "Apple Developer Team identifier."},
