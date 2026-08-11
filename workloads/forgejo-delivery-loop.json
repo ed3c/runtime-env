@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "forgejo-delivery-loop",
   "summary": "Verify forgejo-delivery-loop's runtime-owned broker and live Keychain-backed Git helper without executing consumer-repo code.",
   "profile": "forgejo-delivery-keychain-local",
@@ -8,6 +8,7 @@
     "broker-selftest": ["@runtime-env/runtime-env", "validate"],
     "credential-canary": ["/bin/bash", "@runtime-env/scripts/verify-local-runtime.sh", "--credential-helper-only"]
   },
+  "acceptance_entrypoints": ["broker-selftest", "credential-canary"],
   "entrypoint_environment": {
     "broker-selftest": [],
     "credential-canary": []

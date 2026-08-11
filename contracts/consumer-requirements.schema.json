@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ed3c/runtime-env/blob/main/contracts/consumer-requirements.schema.json",
+  "title": "runtime-env consumer requirements v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "binding", "profile", "required_modules", "workload", "policies"],
+  "properties": {
+    "schema": {"const": "runtime-env/consumer-requirements/v1"},
+    "binding": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "profile": {"type": "string", "minLength": 1},
+    "required_modules": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "workload": {"type": ["string", "null"]},
+    "policies": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

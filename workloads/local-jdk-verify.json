@@ -1,5 +1,5 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "local-jdk-verify",
   "summary": "Verify that JAVA_HOME supplies matching java and javac feature releases and can compile and run a probe.",
   "profile": "java-build-local",
@@ -7,6 +7,7 @@
   "entrypoints": {
     "verify": ["python3", "scripts/verify-jdk-runtime.py"]
   },
+  "acceptance_entrypoints": ["verify"],
   "entrypoint_environment": {
     "verify": ["JAVA_HOME", "JAVA_VERSION"]
   },

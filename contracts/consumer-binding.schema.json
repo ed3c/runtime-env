@@ -1,14 +1,29 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ed3c/runtime-env/blob/main/contracts/consumer-binding.schema.json",
-  "title": "runtime-env consumer binding v1",
+  "title": "runtime-env consumer binding v2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "binding", "profile", "source", "variables", "render", "projections", "content_sha256"],
+  "required": ["schema", "binding", "profile", "source", "modules", "requirements_sha256", "variables", "render", "projections", "content_sha256"],
   "properties": {
-    "schema": {"const": "runtime-env/consumer-binding/v1"},
+    "schema": {"const": "runtime-env/consumer-binding/v2"},
     "binding": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "profile": {"type": "string", "minLength": 1},
+    "requirements_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "interface_version", "content_sha256"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "interface_version": {"const": "runtime-env/module/v1"},
+          "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
     "projections": {
       "type": "object",
       "additionalProperties": false,

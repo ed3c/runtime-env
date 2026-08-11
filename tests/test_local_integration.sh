@@ -15,6 +15,20 @@ grep -Fq 'docs/local-integration.md' "${ROOT}/AGENTS.md" || {
 }
 
 for required in \
+  'Integration maturity levels' \
+  'Consumer repository acceptance' \
+  'Live acceptance matrix' \
+  'consumer repository must not create its own `.env`' \
+  'three unsuccessful attempts' \
+  'dedicated broker adapter' \
+  'BLOCKED'; do
+  grep -Fq "${required}" "${DOC}" || {
+    echo "FAIL: integration completion requirements omitted ${required}" >&2
+    exit 1
+  }
+done
+
+for required in \
   '/Users/neon/runtime-env' \
   '/Users/neon/runtime-env/.env' \
   './runtime-env local-env doctor' \

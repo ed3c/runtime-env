@@ -1,0 +1,8 @@
+{
+  "schema": "runtime-env/profile/v1",
+  "id": "stealth-browser-local",
+  "summary": "Standalone local stealth-browser MCP with broker-owned profile state.",
+  "modules": [
+    "stealth-browser"
+  ]
+}

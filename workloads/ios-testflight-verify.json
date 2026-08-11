@@ -1,16 +1,25 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "ios-testflight-verify",
   "summary": "Verify App Store Connect authentication without uploading a build.",
   "profile": "ios-testflight-ship-local",
   "host": "local-macos",
   "entrypoints": {
-    "preflight": ["bash", ".agents/skills/ios-testflight-ship/scripts/preflight.sh"],
-    "verify-asc": ["bash", ".agents/skills/ios-testflight-ship/scripts/ship.sh", "<target-repo>", "verify_asc"]
+    "preflight": ["bash", "scripts/runtime-env/run-ios-acceptance.sh", "preflight"],
+    "verify-asc": ["bash", "scripts/runtime-env/run-ios-acceptance.sh", "verify_asc"],
+    "skill-tests": ["bash", ".agents/skills/ios-testflight-ship/tests/run-all.sh"],
+    "adapter-test": ["sh", "scripts/test_runtime_env_ios_acceptance.sh"]
+  },
+  "acceptance_entrypoints": ["skill-tests", "adapter-test", "preflight", "verify-asc"],
+  "public_test_entrypoints": ["skill-tests", "adapter-test"],
+  "broker_adapters": {
+    "verify-asc": {"implementation": "scripts/runtime-env/run-ios-acceptance.sh verify_asc", "private_state": ["App Store Connect private key in a broker-owned 0600 file"], "receipt": "broker-receipts/ios-testflight-verify/<run-id>.json"}
   },
   "entrypoint_environment": {
-    "preflight": ["APPLE_TEAM_ID", "ASC_ISSUER_ID", "ASC_KEY_ID", "ASC_KEY_PATH", "DEVELOPER_DIR", "IOS_DEVICE_UDID", "JAVA_HOME", "MATCH_PASSWORD"],
-    "verify-asc": ["APPLE_TEAM_ID", "ASC_ISSUER_ID", "ASC_KEY_ID", "ASC_KEY_PATH", "DEVELOPER_DIR", "IOS_DEVICE_UDID", "JAVA_HOME", "MATCH_PASSWORD"]
+    "preflight": ["DEVELOPER_DIR", "IOS_TARGET_ROOT", "JAVA_HOME"],
+    "verify-asc": ["APPLE_TEAM_ID", "ASC_ISSUER_ID", "ASC_KEY_ID", "ASC_KEY_PATH", "DEVELOPER_DIR", "IOS_DEVICE_UDID", "IOS_TARGET_ROOT", "JAVA_HOME", "MATCH_PASSWORD"],
+    "skill-tests": [],
+    "adapter-test": []
   },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",

@@ -1,0 +1,1 @@
+{"schema":"runtime-env/module/v1","id":"gemini-conversation-file-sink","summary":"Broker-owned output root for Gemini conversation extraction and guided decisions.","requires":["GEMINI_RESEARCH_RUN_ROOT"],"optional":[],"defaults":{}}

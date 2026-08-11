@@ -1,24 +1,33 @@
 {
-  "schema": "runtime-env/workload/v1",
+  "schema": "runtime-env/workload/v2",
   "id": "repo-wiki-converge",
   "summary": "Create or refine a repository wiki and ingest verified pages into the local knowledge graph.",
   "profile": "repo-wiki-converge-local",
   "host": "local-macos",
   "entrypoints": {
-    "author": ["bash", "kb-ingest/agy-pass.sh"],
-    "verify": ["bash", "kb-ingest/verify-claims.sh"],
-    "ingest": ["python3", "-m", "indexing.ingest_repodoc_cli"]
+    "author": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "author"],
+    "verify": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "verify"],
+    "ingest": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "ingest"],
+    "consumer-test": ["bash", "scripts/runtime-env/run-repo-wiki-acceptance.sh", "consumer-test"],
+    "adapter-test": ["sh", "scripts/test_runtime_env_repo_wiki_acceptance.sh"]
+  },
+  "acceptance_entrypoints": ["consumer-test", "adapter-test", "author", "verify", "ingest"],
+  "public_test_entrypoints": ["consumer-test", "adapter-test"],
+  "broker_adapters": {
+    "author": {"implementation": "scripts/runtime-env/run-repo-wiki-acceptance.sh author", "private_state": ["~/.gemini/antigravity-cli/"], "receipt": "broker-owned repo-wiki output root"}
   },
   "entrypoint_environment": {
-    "author": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT"],
-    "ingest": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT"],
-    "verify": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT"]
+    "author": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT", "REPO_WIKI_RUN_ROOT"],
+    "ingest": ["AGY_TIMEOUT", "ANTIGRAVITY_KB_PYTHON", "ANTIGRAVITY_REPO_ROOT", "REPO_WIKI_RUN_ROOT"],
+    "verify": ["AGY_TIMEOUT", "ANTIGRAVITY_REPO_ROOT", "REPO_WIKI_RUN_ROOT"],
+    "consumer-test": ["ANTIGRAVITY_KB_PYTHON"],
+    "adapter-test": []
   },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",
   "evidence": {
-    "receipt": "<output-dir>/agy-receipt.jsonl",
-    "control": "kb-ingest/verify-claims.sh"
+    "receipt": "broker-owned repo-wiki output root",
+    "control": "scripts/runtime-env/run-repo-wiki-acceptance.sh verify"
   }
 }

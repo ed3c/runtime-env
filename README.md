@@ -2,6 +2,9 @@
 
 `runtime-env` is a secret-free, modular catalog of environment variable contracts for agent repositories. It records **names, requirements, safe defaults, and account links**—never credential values.
 
+The portable desired-state and resolved-binding lifecycle is specified in
+[`docs/modular-consumer-contract.md`](docs/modular-consumer-contract.md).
+
 The repository separates three concepts that are often mixed together:
 
 1. A **variable** is declared once in `catalog/variables.json`.
@@ -23,6 +26,7 @@ This prevents an optional cloud backend from making a local workflow demand unre
 ./runtime-env local-env doctor    # names and presence only; never values
 ./runtime-env local-env reconcile # preserve values; organize local/cloud/portable sections
 ./runtime-env local-env set-path --name CODEX_HOME --path /absolute/existing/path
+credential-broker-command | ./runtime-env local-env set --name E2B_API_KEY --stdin
 ./runtime-env local-env migrate-forgejo-keychain # one-time localhost password migration
 ./runtime-env workload list
 ./runtime-env workload show --id ios-testflight-beta
@@ -59,6 +63,9 @@ The canonical `.env` is mechanically grouped by each variable's required
 `runtime_scope`: `LOCAL-ONLY HOST SETTINGS`, `CLOUD / REMOTE RUNTIME SETTINGS`,
 and `PORTABLE RUNTIME SETTINGS`. `local-env reconcile` preserves assignments,
 adds new empty names, and rewrites those sections without printing any value.
+`local-env set --stdin` is the only general value-writing seam: the value stays
+off argv and stdout, the destination must already be a user-owned `0600`
+regular file, and the name must exist in the catalog.
 The cloud section is still stored only in the host-owned dotenv; it identifies
 the intended consumption plane and does not authorize copying the file into a
 cloud runner.
@@ -145,8 +152,18 @@ Git index. It must not invoke `sync`, access a sibling checkout, or use the
 network: synchronization is an explicit maintenance action, while pre-commit
 only prevents a partially staged or locally corrupted binding from landing.
 
-Pin an installed `runtime-env` CLI version in the consumer's development
-environment, then make the hook run:
+Install the committed catalog and CLI behind a stable, host-local launcher:
+
+```bash
+bash scripts/install-consumer-cli.sh
+runtime-env validate
+```
+
+The installer archives `HEAD` rather than working-tree bytes, stores it under
+`~/.local/lib/runtime-env/<commit>/`, writes a metadata-only install receipt,
+and atomically updates `~/.local/bin/runtime-env`. It refuses to replace an
+unmanaged launcher. Ensure `~/.local/bin` is on `PATH`, then make the consumer
+hook run:
 
 ```bash
 runtime-env verify-consumer \

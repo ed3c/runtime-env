@@ -29,7 +29,7 @@ printf '%s\n' \
   '{"schema":"runtime-env/profile/v1","id":"bettor-arena-local","summary":"Fixture.","modules":["ollama-root"]}' \
   > "${source_repo}/profiles/bettor-arena-local.json"
 printf '%s\n' \
-  '{"schema":"runtime-env/workload/v1","id":"local-proof","summary":"Fixture.","profile":"bettor-arena-local","host":"local-macos","entrypoints":{"prove":["sh","proof.sh"]},"entrypoint_environment":{"prove":["OLLAMA_URL"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"receipt.json","control":"control.sh"}}' \
+  '{"schema":"runtime-env/workload/v2","id":"local-proof","summary":"Fixture.","profile":"bettor-arena-local","host":"local-macos","entrypoints":{"prove":["sh","proof.sh"]},"acceptance_entrypoints":["prove"],"entrypoint_environment":{"prove":["OLLAMA_URL"]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"workspace","evidence":{"receipt":"receipt.json","control":"control.sh"}}' \
   > "${source_repo}/workloads/local-proof.json"
 printf '%s\n' \
   '{"schema":"runtime-env/carrier-policy/v1","id":"fixture-native","summary":"Fixture.","carrier":"codex-cli","config_home_env":"FIXTURE_HOME","settings_file":"config.toml","required_settings":{"sandbox_mode":"workspace-write"},"forbidden_environment":["FOREIGN_HOME"],"external_requirements":["deny read"],"receipt_commands":["fixture status"]}' \
@@ -74,9 +74,29 @@ import sys
 document = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert document["source"]["repository"] == "https://github.com/ed3c/runtime-env"
 assert document["profile"] == "bettor-arena-local"
+assert document["schema"] == "runtime-env/consumer-binding/v2"
+assert document["modules"][0]["id"] == "ollama-root"
+assert document["modules"][0]["interface_version"] == "runtime-env/module/v1"
 assert document["source"]["commit"] == sys.argv[2]
 assert document["source"]["tree"] == sys.argv[3]
 assert document["variables"][0]["runtime_scope"] == "local-only"
+PY
+
+# Desired-state sync pins the exact module closure. A profile expansion must be
+# admitted by changing requirements rather than arriving as an invisible update.
+requirements="${target_repo}/.runtime-env/requirements.json"
+printf '%s\n' '{"schema":"runtime-env/consumer-requirements/v1","binding":"bettor-arena-local","profile":"bettor-arena-local","required_modules":["ollama-root"],"workload":"local-proof","policies":["fixture-native"]}' > "${requirements}"
+${ROOT}/runtime-env --catalog-root "${source_repo}" sync \
+  --requirements "${requirements}" --target-root "${target_repo}" --apply >/dev/null
+python3 - "${binding}" "${requirements}" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+binding = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert binding["requirements_sha256"] == hashlib.sha256(Path(sys.argv[2]).read_bytes()).hexdigest()
+assert [module["id"] for module in binding["modules"]] == ["ollama-root"]
 PY
 python3 - "${workload}" <<'PY'
 import json
@@ -102,6 +122,20 @@ PY
 git -C "${target_repo}" add .runtime-env
 ${ROOT}/runtime-env --catalog-root "${scratch}/absent-catalog" verify-consumer \
   --target-root "${target_repo}" --binding bettor-arena-local --staged >/dev/null
+
+requirements_original="${scratch}/requirements.original"
+cp "${requirements}" "${requirements_original}"
+printf '\n' >> "${requirements}"
+git -C "${target_repo}" add "${requirements}"
+set +e
+requirements_output="$(${ROOT}/runtime-env --catalog-root "${scratch}/absent-catalog" verify-consumer \
+  --target-root "${target_repo}" --binding bettor-arena-local --staged 2>&1)"
+requirements_status=$?
+set -e
+[[ ${requirements_status} -eq 2 ]]
+[[ "${requirements_output}" == *'requirements sha256 mismatch'* ]]
+cp "${requirements_original}" "${requirements}"
+git -C "${target_repo}" add "${requirements}"
 
 python3 - "${binding}" <<'PY'
 import hashlib

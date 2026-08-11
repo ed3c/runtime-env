@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 from datetime import datetime, timezone
 import hashlib
 import hmac
+import io
 import json
 from dataclasses import dataclass
 import os
@@ -34,7 +36,7 @@ SCHEMAS = {
     "variables": "runtime-env/variables/v1",
     "module": "runtime-env/module/v1",
     "profile": "runtime-env/profile/v1",
-    "workload": "runtime-env/workload/v1",
+    "workload": "runtime-env/workload/v2",
     "policy": "runtime-env/carrier-policy/v1",
 }
 ALLOWED_FIELDS = {
@@ -50,6 +52,9 @@ ALLOWED_FIELDS = {
         "host",
         "entrypoints",
         "entrypoint_environment",
+        "acceptance_entrypoints",
+        "public_test_entrypoints",
+        "broker_adapters",
         "clean_catalog_entrypoints",
         "secret_delivery",
         "agent_secret_access",
@@ -82,6 +87,7 @@ REQUIRED_FIELDS = {
         "host",
         "entrypoints",
         "entrypoint_environment",
+        "acceptance_entrypoints",
         "secret_delivery",
         "agent_secret_access",
         "mutation",
@@ -332,6 +338,107 @@ def load_catalog(root: Path) -> Catalog:
                 raise ContractError(
                     f"workload {workload_id}: entrypoint {entrypoint_id} must be a string array"
                 )
+        acceptance_entrypoints = workload.get("acceptance_entrypoints")
+        if (
+            not isinstance(acceptance_entrypoints, list)
+            or not acceptance_entrypoints
+            or any(
+                not isinstance(entrypoint_id, str) or not entrypoint_id
+                for entrypoint_id in acceptance_entrypoints
+            )
+            or len(acceptance_entrypoints) != len(set(acceptance_entrypoints))
+        ):
+            raise ContractError(
+                f"workload {workload_id}: acceptance_entrypoints must be a "
+                "non-empty unique string array"
+            )
+        unknown_acceptance = sorted(set(acceptance_entrypoints) - set(entrypoints))
+        if unknown_acceptance:
+            raise ContractError(
+                f"workload {workload_id}: acceptance_entrypoints references "
+                f"unknown entrypoints: {', '.join(unknown_acceptance)}"
+            )
+        unresolved_acceptance = sorted(
+            entrypoint_id
+            for entrypoint_id in acceptance_entrypoints
+            if any(
+                re.search(r"<[^>]+>", argument)
+                for argument in entrypoints[entrypoint_id]
+            )
+        )
+        if unresolved_acceptance:
+            raise ContractError(
+                f"workload {workload_id}: acceptance entrypoints contain unresolved "
+                f"placeholders: {', '.join(unresolved_acceptance)}"
+            )
+        public_test_entrypoints = workload.get("public_test_entrypoints")
+        if public_test_entrypoints is not None:
+            if (
+                not isinstance(public_test_entrypoints, list)
+                or not public_test_entrypoints
+                or any(
+                    not isinstance(entrypoint_id, str) or not entrypoint_id
+                    for entrypoint_id in public_test_entrypoints
+                )
+                or len(public_test_entrypoints)
+                != len(set(public_test_entrypoints))
+            ):
+                raise ContractError(
+                    f"workload {workload_id}: public_test_entrypoints must be a "
+                    "non-empty unique string array"
+                )
+            unknown_public_tests = sorted(
+                set(public_test_entrypoints) - set(acceptance_entrypoints)
+            )
+            if unknown_public_tests:
+                raise ContractError(
+                    f"workload {workload_id}: public_test_entrypoints must be "
+                    "acceptance entrypoints: " + ", ".join(unknown_public_tests)
+                )
+        broker_adapters = workload.get("broker_adapters")
+        if workload["secret_delivery"] == "broker-only":
+            if not isinstance(broker_adapters, dict) or not broker_adapters:
+                raise ContractError(
+                    f"workload {workload_id}: broker-only delivery requires "
+                    "dedicated broker_adapters"
+                )
+            unknown_adapters = sorted(set(broker_adapters) - set(entrypoints))
+            if unknown_adapters:
+                raise ContractError(
+                    f"workload {workload_id}: broker_adapters references unknown "
+                    f"entrypoints: {', '.join(unknown_adapters)}"
+                )
+            for entrypoint_id, adapter in broker_adapters.items():
+                if not isinstance(adapter, dict) or set(adapter) != {
+                    "implementation",
+                    "private_state",
+                    "receipt",
+                }:
+                    raise ContractError(
+                        f"workload {workload_id}: broker_adapters.{entrypoint_id} "
+                        "must contain implementation, private_state, and receipt"
+                    )
+                if (
+                    not isinstance(adapter["implementation"], str)
+                    or not adapter["implementation"]
+                    or not isinstance(adapter["receipt"], str)
+                    or not adapter["receipt"]
+                    or not isinstance(adapter["private_state"], list)
+                    or not adapter["private_state"]
+                    or any(
+                        not isinstance(item, str) or not item
+                        for item in adapter["private_state"]
+                    )
+                ):
+                    raise ContractError(
+                        f"workload {workload_id}: broker_adapters.{entrypoint_id} "
+                        "has invalid adapter metadata"
+                    )
+        elif broker_adapters is not None:
+            raise ContractError(
+                f"workload {workload_id}: broker_adapters is only valid for "
+                "broker-only delivery"
+            )
         entrypoint_environment = workload.get("entrypoint_environment")
         if not isinstance(entrypoint_environment, dict) or set(
             entrypoint_environment
@@ -598,6 +705,61 @@ def _git(root: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
+def _ignored_files_fingerprint(root: Path) -> str:
+    """Hash ignored consumer bytes so L5 cannot hide workspace mutations."""
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "ls-files",
+                "--others",
+                "--ignored",
+                "--exclude-standard",
+                "-z",
+            ],
+            check=False,
+            capture_output=True,
+        )
+    except OSError as exc:
+        raise ContractError(f"cannot inventory ignored consumer files: {exc}") from exc
+    if result.returncode != 0:
+        raise ContractError("cannot inventory ignored consumer files")
+
+    digest = hashlib.sha256()
+    for encoded_relative in sorted(part for part in result.stdout.split(b"\0") if part):
+        relative = Path(os.fsdecode(encoded_relative))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ContractError("git returned an unsafe ignored consumer path")
+        path = root / relative
+        try:
+            metadata = path.lstat()
+        except OSError as exc:
+            raise ContractError(
+                "ignored consumer file changed during acceptance inventory"
+            ) from exc
+        digest.update(encoded_relative)
+        digest.update(b"\0")
+        digest.update(str(stat.S_IFMT(metadata.st_mode)).encode("ascii"))
+        digest.update(b"\0")
+        if path.is_symlink():
+            digest.update(os.fsencode(os.readlink(path)))
+        elif path.is_file():
+            try:
+                with path.open("rb") as handle:
+                    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                        digest.update(chunk)
+            except OSError as exc:
+                raise ContractError(
+                    "cannot hash ignored consumer file during acceptance"
+                ) from exc
+        else:
+            digest.update(b"directory")
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def _repository_url(remote: str) -> str:
     if remote.startswith("git@") and ":" in remote:
         host, path = remote[4:].split(":", 1)
@@ -629,6 +791,44 @@ def _canonical_json(document: dict[str, Any]) -> str:
     )
 
 
+def _load_consumer_requirements(path: Path) -> dict[str, Any]:
+    document = _load_json(path)
+    expected = {
+        "schema",
+        "binding",
+        "profile",
+        "required_modules",
+        "workload",
+        "policies",
+    }
+    if set(document) != expected:
+        raise ContractError(
+            "consumer requirements must contain exactly schema, binding, profile, "
+            "required_modules, workload, and policies"
+        )
+    if document.get("schema") != "runtime-env/consumer-requirements/v1":
+        raise ContractError(
+            "consumer requirements schema must be runtime-env/consumer-requirements/v1"
+        )
+    for field in ("binding", "profile"):
+        value = document.get(field)
+        if not isinstance(value, str) or not value:
+            raise ContractError(f"consumer requirements {field} must be non-empty")
+    if not BINDING_ID.fullmatch(document["binding"]):
+        raise ContractError("consumer requirements binding has an invalid id")
+    for field in ("required_modules", "policies"):
+        value = document.get(field)
+        if not isinstance(value, list) or any(
+            not isinstance(item, str) or not item for item in value
+        ):
+            raise ContractError(f"consumer requirements {field} must be a name array")
+        if len(value) != len(set(value)):
+            raise ContractError(f"consumer requirements {field} must be unique")
+    if document["workload"] is not None and not isinstance(document["workload"], str):
+        raise ContractError("consumer requirements workload must be a name or null")
+    return document
+
+
 def _binding_artifacts(
     *,
     root: Path,
@@ -637,6 +837,8 @@ def _binding_artifacts(
     binding_id: str,
     workload_id: str | None,
     policy_ids: list[str],
+    requirements_sha256: str | None = None,
+    required_modules: list[str] | None = None,
 ) -> dict[Path, str]:
     if not BINDING_ID.fullmatch(binding_id):
         raise ContractError(
@@ -651,6 +853,22 @@ def _binding_artifacts(
         raise ContractError("catalog repository must be clean before synchronization")
 
     selected = select_variables(catalog, profile_id=profile_id, include_all=False)
+    profile_modules = catalog.profiles[profile_id]["modules"]
+    if required_modules is not None and profile_modules != required_modules:
+        raise ContractError(
+            f"profile {profile_id} module closure differs from consumer requirements: "
+            f"wanted {required_modules}, resolved {profile_modules}"
+        )
+    modules = []
+    for module_id in profile_modules:
+        module = catalog.modules[module_id]
+        modules.append(
+            {
+                "content_sha256": _sha256(_canonical_json(module)),
+                "id": module_id,
+                "interface_version": module["schema"],
+            }
+        )
     example = render_dotenv(catalog, selected)
     variables: list[dict[str, Any]] = []
     for item in selected:
@@ -672,6 +890,7 @@ def _binding_artifacts(
     example_path = Path(".runtime-env") / "examples" / f"{binding_id}.env.example"
     document: dict[str, Any] = {
         "binding": binding_id,
+        "modules": modules,
         "profile": profile_id,
         "projections": {
             "policies": [
@@ -689,7 +908,8 @@ def _binding_artifacts(
             "path": example_path.as_posix(),
             "sha256": _sha256(example),
         },
-        "schema": "runtime-env/consumer-binding/v1",
+        "requirements_sha256": requirements_sha256,
+        "schema": "runtime-env/consumer-binding/v2",
         "source": {
             "commit": _git(root, "rev-parse", "HEAD"),
             "repository": _repository_url(_git(root, "remote", "get-url", "origin")),
@@ -776,6 +996,8 @@ def sync_consumer(
     target_root: Path,
     apply: bool,
     check: bool,
+    requirements_sha256: str | None = None,
+    required_modules: list[str] | None = None,
 ) -> int:
     target = target_root.resolve()
     target_top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
@@ -788,6 +1010,8 @@ def sync_consumer(
         binding_id=binding_id,
         workload_id=workload_id,
         policy_ids=policy_ids,
+        requirements_sha256=requirements_sha256,
+        required_modules=required_modules,
     )
     drift = False
     for relative_path, expected in artifacts.items():
@@ -921,6 +1145,33 @@ def set_local_env_path(
     _atomic_write(path, "\n".join(raw_lines) + "\n")
     path.chmod(0o600)
     print(f"UPDATED local env path: {name}")
+    return 0
+
+
+def set_local_env_value_from_stdin(
+    *, catalog: Catalog, env_file: Path, name: str, payload: str
+) -> int:
+    path = env_file.expanduser().absolute()
+    _load_private_dotenv(catalog=catalog, env_file=path)
+    if name not in catalog.variables:
+        raise ContractError(f"unknown variable: {name}")
+    lines = payload.splitlines()
+    if len(lines) != 1 or not lines[0] or "\x00" in lines[0]:
+        raise ContractError("local-env set requires one non-empty line on stdin")
+    value = lines[0]
+    raw_lines = path.read_text(encoding="utf-8").splitlines()
+    assignment = re.compile(rf"^\s*(?:export\s+)?{re.escape(name)}\s*=")
+    indexes = [index for index, line in enumerate(raw_lines) if assignment.match(line)]
+    if len(indexes) > 1:
+        raise ContractError(f"local env contains duplicate assignments for {name}")
+    replacement = f"{name}={value}"
+    if indexes:
+        raw_lines[indexes[0]] = replacement
+    else:
+        raw_lines.append(replacement)
+    _atomic_write(path, "\n".join(raw_lines) + "\n")
+    path.chmod(0o600)
+    print(f"UPDATED local env value: {name}")
     return 0
 
 
@@ -1223,6 +1474,7 @@ def run_workload(
         raise ContractError(
             f"workload {workload_id}: entrypoint {entrypoint_id} has an unresolved placeholder"
         )
+    broker_adapter = workload.get("broker_adapters", {}).get(entrypoint_id)
     resolved_command = _resolve_workload_command(catalog, command)
     runtime_source = (
         _require_clean_catalog(catalog)
@@ -1234,6 +1486,10 @@ def run_workload(
     top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
     if top_level != target:
         raise ContractError("target root must be the root of its git repository")
+    before_head = _git(target, "rev-parse", "HEAD")
+    before_status = _git(target, "status", "--porcelain=v1")
+    if broker_adapter is not None and before_status:
+        raise ContractError("broker adapter requires a clean target repository")
 
     profile_variables = select_variables(
         catalog,
@@ -1276,10 +1532,15 @@ def run_workload(
             f"workload {workload_id}: secret_delivery=none refuses configured secret variables: "
             + ", ".join(configured_secrets)
         )
-    if configured_secrets and delivery != "none":
+    if configured_secrets and delivery == "broker-only" and broker_adapter is None:
         raise ContractError(
-            f"workload {workload_id}: {delivery} secrets require a dedicated broker/provider; "
-            "workload run will not inject them into a child environment"
+            f"workload {workload_id}: entrypoint {entrypoint_id} has no dedicated "
+            "broker adapter for configured secrets"
+        )
+    if configured_secrets and delivery == "openshell-provider":
+        raise ContractError(
+            f"workload {workload_id}: openshell-provider secrets require the "
+            "dedicated provider bootstrap"
         )
 
     safe_inherited = {
@@ -1303,8 +1564,6 @@ def run_workload(
     if entrypoint_id in workload.get("clean_catalog_entrypoints", []):
         child_environment["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin"
 
-    before_head = _git(target, "rev-parse", "HEAD")
-    before_status = _git(target, "status", "--porcelain=v1")
     started_at = datetime.now(timezone.utc)
     try:
         result = subprocess.run(
@@ -1343,9 +1602,10 @@ def run_workload(
         ).hexdigest(),
         "environment": {
             "configured_names": sorted(configured),
-            "secret_names": [],
+            "secret_names": configured_secrets,
             "delivery": delivery,
         },
+        "broker_adapter": broker_adapter,
         "stdout": stream_metadata(result.stdout),
         "stderr": stream_metadata(result.stderr),
         "target": {
@@ -1532,11 +1792,92 @@ def verify_consumer(*, target_root: Path, binding_id: str, staged: bool) -> int:
         binding = json.loads(_consumer_content(target, binding_path, staged=staged))
     except json.JSONDecodeError as exc:
         raise ContractError(f"{binding_path}: invalid JSON: {exc}") from exc
-    if binding.get("schema") != "runtime-env/consumer-binding/v1":
+    if binding.get("schema") not in {
+        "runtime-env/consumer-binding/v1",
+        "runtime-env/consumer-binding/v2",
+    }:
         raise ContractError(f"{binding_path}: unexpected schema")
     if binding.get("binding") != binding_id:
         raise ContractError(f"{binding_path}: binding id mismatch")
     _verify_content_hash(binding, binding_path)
+    if binding.get("schema") == "runtime-env/consumer-binding/v2":
+        modules = binding.get("modules")
+        if not isinstance(modules, list) or not modules:
+            raise ContractError(f"{binding_path}: invalid resolved module closure")
+        seen_modules: set[str] = set()
+        for module in modules:
+            if not isinstance(module, dict) or set(module) != {
+                "content_sha256",
+                "id",
+                "interface_version",
+            }:
+                raise ContractError(f"{binding_path}: invalid resolved module entry")
+            if module["id"] in seen_modules:
+                raise ContractError(f"{binding_path}: duplicate resolved module")
+            seen_modules.add(module["id"])
+            if not re.fullmatch(r"[0-9a-f]{64}", module["content_sha256"]):
+                raise ContractError(f"{binding_path}: invalid resolved module digest")
+            if module["interface_version"] != "runtime-env/module/v1":
+                raise ContractError(f"{binding_path}: unsupported module interface")
+        requirements_sha = binding.get("requirements_sha256")
+        if requirements_sha is not None and not re.fullmatch(
+            r"[0-9a-f]{64}", requirements_sha
+        ):
+            raise ContractError(f"{binding_path}: invalid requirements digest")
+        if requirements_sha is not None:
+            requirement_paths = (
+                f".runtime-env/requirements/{binding_id}.json",
+                ".runtime-env/requirements.json",
+            )
+            requirement_documents: list[tuple[str, str]] = []
+            for requirement_path in requirement_paths:
+                try:
+                    content = _consumer_content(
+                        target, requirement_path, staged=staged
+                    )
+                except ContractError as exc:
+                    if "missing staged consumer projection" in str(exc) or (
+                        not staged and "cannot read consumer projection" in str(exc)
+                    ):
+                        continue
+                    raise
+                requirement_documents.append((requirement_path, content))
+            if len(requirement_documents) != 1:
+                raise ContractError(
+                    f"{binding_path}: expected exactly one consumer requirements file"
+                )
+            requirement_path, requirement_content = requirement_documents[0]
+            if _sha256(requirement_content) != requirements_sha:
+                raise ContractError(
+                    f"{requirement_path}: requirements sha256 mismatch"
+                )
+            try:
+                requirement_document = json.loads(requirement_content)
+            except json.JSONDecodeError as exc:
+                raise ContractError(
+                    f"{requirement_path}: invalid JSON: {exc}"
+                ) from exc
+            if requirement_document.get("binding") != binding_id:
+                raise ContractError(f"{requirement_path}: binding id mismatch")
+
+        install_receipt_path = _default_catalog_root() / "INSTALL-RECEIPT.json"
+        if install_receipt_path.is_file():
+            try:
+                install_receipt = json.loads(
+                    install_receipt_path.read_text(encoding="utf-8")
+                )
+            except (OSError, json.JSONDecodeError) as exc:
+                raise ContractError(f"invalid installed CLI receipt: {exc}") from exc
+            source = binding.get("source", {})
+            if (
+                install_receipt.get("schema")
+                != "runtime-env/consumer-cli-install/v1"
+                or install_receipt.get("commit") != source.get("commit")
+                or install_receipt.get("tree") != source.get("tree")
+            ):
+                raise ContractError(
+                    f"{binding_path}: installed CLI source does not match binding source"
+                )
     variables = binding.get("variables")
     if not isinstance(variables, list) or not variables:
         raise ContractError(f"{binding_path}: invalid variable projection")
@@ -1600,6 +1941,267 @@ def verify_consumer(*, target_root: Path, binding_id: str, staged: bool) -> int:
     return 0
 
 
+def accept_consumer(
+    *,
+    catalog: Catalog,
+    target_root: Path,
+    binding_id: str,
+    env_file: Path | None,
+    hook_verifier: Path,
+    receipt_path: Path,
+    json_output: bool,
+) -> int:
+    """Run one consumer's complete, pinned acceptance set and bind the evidence."""
+    target = target_root.expanduser().resolve()
+    top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
+    if top_level != target:
+        raise ContractError("target root must be the root of its git repository")
+    before_head = _git(target, "rev-parse", "HEAD")
+    before_tree = _git(target, "rev-parse", "HEAD^{tree}")
+    before_status = _git(target, "status", "--porcelain=v1")
+    if before_status:
+        raise ContractError("consumer acceptance requires a clean target checkout")
+    before_ignored = _ignored_files_fingerprint(target)
+
+    hooks_path_text = _git(target, "config", "--get", "core.hooksPath")
+    hooks_path = Path(hooks_path_text)
+    if hooks_path.is_absolute() or ".." in hooks_path.parts:
+        raise ContractError("L5 acceptance requires a repo-relative core.hooksPath")
+    verifier_relative = hook_verifier
+    if verifier_relative.is_absolute() or ".." in verifier_relative.parts:
+        raise ContractError("hook verifier must be a safe target-relative path")
+    hook_relative = hooks_path / "pre-commit"
+    hook_path = target / hook_relative
+    verifier_path = target / verifier_relative
+    for label, path, relative in (
+        ("pre-commit hook", hook_path, hook_relative),
+        ("hook verifier", verifier_path, verifier_relative),
+    ):
+        if path.is_symlink() or not path.is_file():
+            raise ContractError(f"L5 {label} must be a regular tracked file: {relative}")
+        _git(target, "ls-files", "--error-unmatch", relative.as_posix())
+        if not os.access(path, os.X_OK):
+            raise ContractError(f"L5 {label} must be executable: {relative}")
+    hook_bytes = hook_path.read_bytes()
+    verifier_bytes = verifier_path.read_bytes()
+    try:
+        hook_text = hook_bytes.decode("utf-8")
+        verifier_text = verifier_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ContractError("L5 hook and verifier must be UTF-8 text") from exc
+    hook_code = "\n".join(
+        line for line in hook_text.splitlines() if not line.lstrip().startswith("#")
+    )
+    verifier_code = "\n".join(
+        line for line in verifier_text.splitlines() if not line.lstrip().startswith("#")
+    )
+    if verifier_relative.as_posix() not in hook_code:
+        raise ContractError("pre-commit hook does not invoke the declared verifier")
+    if "verify-consumer" not in verifier_code or binding_id not in verifier_code:
+        raise ContractError(
+            "declared hook verifier requires an executable verifier line for this binding"
+        )
+    verifier_environment = {
+        name: os.environ[name]
+        for name in ("HOME", "LANG", "LC_ALL", "LOGNAME", "PATH", "SHELL", "TMPDIR", "USER")
+        if name in os.environ
+    }
+    verifier_environment.setdefault("PATH", os.defpath)
+    try:
+        verifier_result = subprocess.run(
+            [str(verifier_path), "--staged"],
+            cwd=target,
+            env=verifier_environment,
+            check=False,
+            capture_output=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ContractError("cannot execute the declared hook verifier") from exc
+    if verifier_result.returncode != 0:
+        raise ContractError(
+            f"declared hook verifier --staged failed with exit {verifier_result.returncode}"
+        )
+    hook_gate = {
+        "status": "passed",
+        "hooks_path": hooks_path.as_posix(),
+        "pre_commit": hook_relative.as_posix(),
+        "pre_commit_sha256": hashlib.sha256(hook_bytes).hexdigest(),
+        "verifier": verifier_relative.as_posix(),
+        "verifier_sha256": hashlib.sha256(verifier_bytes).hexdigest(),
+        "verifier_execution": {
+            "exit_code": verifier_result.returncode,
+            "stdout_sha256": hashlib.sha256(verifier_result.stdout).hexdigest(),
+            "stderr_sha256": hashlib.sha256(verifier_result.stderr).hexdigest(),
+        },
+    }
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        verify_consumer(target_root=target, binding_id=binding_id, staged=False)
+        verify_consumer(target_root=target, binding_id=binding_id, staged=True)
+
+    binding_path = f".runtime-env/bindings/{binding_id}.json"
+    binding = json.loads(_consumer_content(target, binding_path, staged=False))
+    projections = binding["projections"]
+    workload_path = projections.get("workload")
+    if not isinstance(workload_path, str):
+        raise ContractError(f"{binding_path}: L5 acceptance requires a workload")
+    projection = json.loads(_consumer_content(target, workload_path, staged=False))
+    workload = projection.get("workload")
+    if not isinstance(workload, dict):
+        raise ContractError(f"{workload_path}: invalid workload projection")
+    workload_id = workload.get("id")
+    catalog_workload = catalog.workloads.get(workload_id)
+    if catalog_workload is None or workload != catalog_workload:
+        raise ContractError(
+            f"{workload_path}: projected workload does not match the pinned catalog"
+        )
+    public_tests = workload.get("public_test_entrypoints")
+    if not isinstance(public_tests, list) or not public_tests:
+        raise ContractError(
+            f"workload {workload_id}: L5 acceptance requires public_test_entrypoints"
+        )
+
+    runtime_source = _require_clean_catalog(catalog)
+    source = binding.get("source")
+    if not isinstance(source, dict) or (
+        source.get("commit") != runtime_source["head"]
+        or source.get("tree") != runtime_source["tree"]
+    ):
+        raise ContractError(
+            f"{binding_path}: catalog source does not match the consumer pin"
+        )
+
+    requested_receipt = receipt_path.expanduser()
+    if not requested_receipt.is_absolute():
+        raise ContractError("consumer acceptance receipt path must be absolute")
+    if requested_receipt.exists() or requested_receipt.is_symlink():
+        raise ContractError(
+            f"consumer acceptance receipt already exists: {requested_receipt}"
+        )
+    requested_receipt.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    parent_stat = requested_receipt.parent.stat()
+    if (
+        parent_stat.st_uid != os.getuid()
+        or stat.S_IMODE(parent_stat.st_mode) != 0o700
+    ):
+        raise ContractError(
+            "consumer acceptance receipt directory must be user-owned with mode 0700"
+        )
+    execution_directory = requested_receipt.with_suffix("")
+    execution_directory = execution_directory.parent / (
+        execution_directory.name + ".d"
+    )
+    if execution_directory.exists() or execution_directory.is_symlink():
+        raise ContractError(
+            f"consumer acceptance execution directory already exists: {execution_directory}"
+        )
+    execution_directory.mkdir(mode=0o700)
+
+    started_at = datetime.now(timezone.utc)
+    executions: list[dict[str, Any]] = []
+    all_passed = True
+    for entrypoint_id in workload["acceptance_entrypoints"]:
+        entry_receipt_path = execution_directory / f"{entrypoint_id}.json"
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                execution_exit = run_workload(
+                    catalog=catalog,
+                    workload_id=workload_id,
+                    entrypoint_id=entrypoint_id,
+                    target_root=target,
+                    env_file=env_file,
+                    receipt_path=entry_receipt_path,
+                    json_output=False,
+                )
+        except MissingConfiguration as exc:
+            executions.append(
+                {
+                    "entrypoint": entrypoint_id,
+                    "status": "blocked",
+                    "reason": str(exc),
+                }
+            )
+            all_passed = False
+            break
+        except ContractError as exc:
+            executions.append(
+                {
+                    "entrypoint": entrypoint_id,
+                    "status": "failed",
+                    "reason": str(exc),
+                }
+            )
+            all_passed = False
+            break
+        execution_bytes = entry_receipt_path.read_bytes()
+        execution = json.loads(execution_bytes)
+        executions.append(
+            {
+                "child_exit": execution["child_exit"],
+                "command_sha256": execution["command_sha256"],
+                "entrypoint": entrypoint_id,
+                "receipt_path": str(entry_receipt_path),
+                "receipt_sha256": hashlib.sha256(execution_bytes).hexdigest(),
+                "status": execution["status"],
+            }
+        )
+        if execution_exit != 0 or execution["status"] != "passed":
+            all_passed = False
+            break
+
+    after_head = _git(target, "rev-parse", "HEAD")
+    after_tree = _git(target, "rev-parse", "HEAD^{tree}")
+    after_status = _git(target, "status", "--porcelain=v1")
+    after_ignored = _ignored_files_fingerprint(target)
+    target_unchanged = (
+        before_head == after_head
+        and before_tree == after_tree
+        and not after_status
+        and before_ignored == after_ignored
+    )
+    complete_set = [item["entrypoint"] for item in executions] == workload[
+        "acceptance_entrypoints"
+    ]
+    passed = all_passed and complete_set and target_unchanged
+    finished_at = datetime.now(timezone.utc)
+    receipt: dict[str, Any] = {
+        "schema": "runtime-env/consumer-acceptance-receipt/v1",
+        "status": "passed" if passed else "failed",
+        "maturity": "L5" if passed else "below-L5",
+        "binding": binding_id,
+        "workload": workload_id,
+        "public_test_entrypoints": public_tests,
+        "started_at": started_at.isoformat(),
+        "finished_at": finished_at.isoformat(),
+        "runtime_source": runtime_source,
+        "binding_content_sha256": binding["content_sha256"],
+        "workload_content_sha256": projection["content_sha256"],
+        "projection_checks": {"staged": "passed", "worktree": "passed"},
+        "hook_gate": hook_gate,
+        "target": {
+            "root": str(target),
+            "head_before": before_head,
+            "head_after": after_head,
+            "tree_before": before_tree,
+            "tree_after": after_tree,
+            "dirty_before": bool(before_status),
+            "dirty_after": bool(after_status),
+            "ignored_changed_after": before_ignored != after_ignored,
+        },
+        "executions": executions,
+    }
+    _execution_receipt_path(receipt, requested_receipt)
+    if json_output:
+        print(json.dumps(receipt, sort_keys=True, ensure_ascii=False))
+    else:
+        print(
+            f"{receipt['status'].upper()} consumer={binding_id} "
+            f"maturity={receipt['maturity']} receipt={receipt['receipt_path']}"
+        )
+    return 0 if passed else 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="runtime-env")
     parser.add_argument("--catalog-root", type=Path, default=_default_catalog_root())
@@ -1630,8 +2232,9 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser = subparsers.add_parser(
         "sync", help="explicitly synchronize a pinned, secret-free consumer binding"
     )
-    sync_parser.add_argument("--profile", required=True)
-    sync_parser.add_argument("--binding", required=True)
+    sync_parser.add_argument("--requirements", type=Path)
+    sync_parser.add_argument("--profile")
+    sync_parser.add_argument("--binding")
     sync_parser.add_argument("--workload")
     sync_parser.add_argument("--policy", action="append", default=[])
     sync_parser.add_argument("--target-root", type=Path, required=True)
@@ -1659,6 +2262,12 @@ def build_parser() -> argparse.ArgumentParser:
     local_env_set_path.add_argument("--env-file", type=Path)
     local_env_set_path.add_argument("--name", required=True)
     local_env_set_path.add_argument("--path", type=Path, required=True)
+    local_env_set = local_env_subparsers.add_parser(
+        "set", help="set one declared value from stdin without printing it"
+    )
+    local_env_set.add_argument("--env-file", type=Path)
+    local_env_set.add_argument("--name", required=True)
+    local_env_set.add_argument("--stdin", action="store_true", required=True)
     local_env_migrate_forgejo = local_env_subparsers.add_parser(
         "migrate-forgejo-keychain",
         help="move one localhost Forgejo password from private dotenv/plaintext store to macOS Keychain",
@@ -1709,6 +2318,16 @@ def build_parser() -> argparse.ArgumentParser:
     verify_consumer_parser.add_argument("--target-root", type=Path, required=True)
     verify_consumer_parser.add_argument("--binding", required=True)
     verify_consumer_parser.add_argument("--staged", action="store_true")
+    accept_consumer_parser = subparsers.add_parser(
+        "accept-consumer",
+        help="run every fixed acceptance entrypoint and emit one L5 receipt",
+    )
+    accept_consumer_parser.add_argument("--target-root", type=Path, required=True)
+    accept_consumer_parser.add_argument("--binding", required=True)
+    accept_consumer_parser.add_argument("--env-file", type=Path)
+    accept_consumer_parser.add_argument("--hook-verifier", type=Path, required=True)
+    accept_consumer_parser.add_argument("--receipt", type=Path, required=True)
+    accept_consumer_parser.add_argument("--json", action="store_true")
     return parser
 
 
@@ -1736,6 +2355,20 @@ def main(argv: list[str] | None = None) -> int:
             f"{len(catalog.workloads)} workloads, {len(catalog.policies)} policies"
         )
         return 0
+    if args.command == "accept-consumer":
+        try:
+            return accept_consumer(
+                catalog=catalog,
+                target_root=args.target_root,
+                binding_id=args.binding,
+                env_file=args.env_file,
+                hook_verifier=args.hook_verifier,
+                receipt_path=args.receipt,
+                json_output=args.json,
+            )
+        except ContractError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
     if args.command == "render":
         try:
             selected = select_variables(
@@ -1800,6 +2433,26 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "sync":
         try:
+            requirements_sha256 = None
+            required_modules = None
+            if args.requirements is not None:
+                if args.profile or args.binding or args.workload or args.policy:
+                    raise ContractError(
+                        "--requirements cannot be combined with --profile, --binding, --workload, or --policy"
+                    )
+                requirements = _load_consumer_requirements(args.requirements)
+                requirements_sha256 = hashlib.sha256(
+                    args.requirements.read_bytes()
+                ).hexdigest()
+                args.profile = requirements["profile"]
+                args.binding = requirements["binding"]
+                args.workload = requirements["workload"]
+                args.policy = requirements["policies"]
+                required_modules = requirements["required_modules"]
+            elif not args.profile or not args.binding:
+                raise ContractError(
+                    "sync needs --requirements or both --profile and --binding"
+                )
             return sync_consumer(
                 root=args.catalog_root.resolve(),
                 catalog=catalog,
@@ -1810,6 +2463,8 @@ def main(argv: list[str] | None = None) -> int:
                 target_root=args.target_root,
                 apply=args.apply,
                 check=args.check,
+                requirements_sha256=requirements_sha256,
+                required_modules=required_modules,
             )
         except ContractError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
@@ -1832,6 +2487,13 @@ def main(argv: list[str] | None = None) -> int:
                     env_file=args.env_file or (args.catalog_root / ".env"),
                     name=args.name,
                     value=args.path,
+                )
+            if args.local_env_command == "set":
+                return set_local_env_value_from_stdin(
+                    catalog=catalog,
+                    env_file=args.env_file or (args.catalog_root / ".env"),
+                    name=args.name,
+                    payload=sys.stdin.read(),
                 )
             if args.local_env_command == "migrate-forgejo-keychain":
                 return migrate_forgejo_keychain(
