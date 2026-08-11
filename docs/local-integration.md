@@ -83,6 +83,13 @@ chat. A synchronized consumer reads its secret-free binding while the local
 broker resolves values from this one canonical file; the dotenv itself is not
 copied to that consumer.
 
+Install the committed consumer-verification CLI once per selected runtime-env
+revision with `bash scripts/install-consumer-cli.sh`. This installs committed
+bytes under `~/.local/lib/runtime-env/<commit>/` and exposes
+`~/.local/bin/runtime-env`; consumer hooks must not point at a sibling checkout
+or source an application-local dotenv. Re-run the installer after intentionally
+updating and re-synchronizing the catalog revision.
+
 It rejects symlinks, the wrong owner, any mode other than `0600`, unknown
 variable names, and a catalog-local dotenv that Git would track. It reports
 only names and `PRESENT`/`EMPTY`; it never prints values. This is a redaction
