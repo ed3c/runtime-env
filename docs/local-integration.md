@@ -264,7 +264,7 @@ for each additional consumer rather than replacing evidence from another.
 
 | Workload | Consumer / target root | Binding and policies | Required entrypoints or gap | Current result |
 |---|---|---|---|---|
-| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | `skill-bettor-agy-replay`; no carrier policy | `inventory`, `replay`; both map the host-owned agy session and metadata-only receipts. | `PASSED` at L5 on 2026-08-11: staged/worktree projections, consumer gates, host inventory, and approved replay passed at one clean consumer revision. |
+| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | `skill-bettor-agy-replay`; no carrier policy | `inventory`, `replay`; both map the host-owned agy session and metadata-only receipts. | `PASSED` at L4 on 2026-08-11: host inventory and approved replay passed at one clean consumer revision. Staged/worktree gates also pass, but no consolidated L5 acceptance receipt exists yet. |
 | `bettor-arena-proof` | `/Users/neon/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 declared acceptance entrypoints and their separate broker adapters. | `BLOCKED` below L5: the refreshed projection passes its staged gate, but the consumer lineage gate cannot create its nested openwiki worktree from a linked worktree; no accepted consumer revision exists. |
 | `dr-research-loop` | `/Users/neon/skill-bettor` | `skill-bettor-dr-research`; all three carrier policies | The agy session canary and harness selftest pass. `engine` and `verify` still contain `<dr-topic>` or `<proposal>`. | `BLOCKED` for the real DR capability: session/harness evidence is not a live topic execution, so it must not be promoted to full L4/L5. |
 | `forgejo-delivery-loop` | Runtime-owned verifier; target may be any admitted local Git consumer | No consumer binding or carrier policy is required for the runtime-owned canary. | `broker-selftest`, `credential-canary`; must preserve the target Git state. | `PASSED` at L4 on the host execution plane on 2026-08-11; the earlier sandbox-only loopback failure is retained as failed evidence, not the final host result. |
@@ -273,13 +273,17 @@ for each additional consumer rather than replacing evidence from another.
 | `ios-testflight-verify` | Broker implementation: `/Users/neon/ix-agy`; verification target: `UNRESOLVED` | `ix-agy-ios-verify`; no carrier policy | `preflight` omits its required project-directory argument; `verify-asc` contains `<target-repo>`. | `BLOCKED` below L2/L4: required App Store Connect variables and a typed target mapping are absent. |
 | `local-jdk-verify` | `/Users/neon/runtime-env` | No consumer binding or policy for the local verifier. | `verify`; real `JAVA_HOME`, matching `java`/`javac`, and compile/run receipt. | `PASSED` at L4 on 2026-08-11 with a clean runtime-env revision and compile/run receipt. |
 | `repo-wiki-converge` | `/Users/neon/ix-agy` | `ix-agy-repo-wiki`; no carrier policy | `author`, `verify`, and `ingest` are declared, but each underlying CLI requires typed arguments that the fixed commands omit. | `FAILED` at L4: `author` was attempted on the host and exited before a model turn because `create|refine`, target, output, and model arguments were absent. |
-| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | `stealth-browser-local`; no carrier policy | The full `test` entrypoint passes on the host. `serve` still contains `<stealth-browser-root>` and therefore is not live-accepted. | `PASSED` at L5 for the declared test acceptance on 2026-08-11; the MCP serving capability remains `BLOCKED`, so do not generalize this result to live browser serving. |
+| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | `stealth-browser-local`; no carrier policy | The full `test` entrypoint passes on the host. `serve` still contains `<stealth-browser-root>` and therefore is not live-accepted. | `PASSED` at L4 for the declared test acceptance on 2026-08-11. The MCP serving capability and consolidated L5 acceptance receipt remain `BLOCKED`. |
 
 Each row's acceptance record must include runtime-env commit/tree/dirty state;
 consumer path and commit/tree/dirty state when applicable; profile, workload,
 entrypoint, execution host, and mutation class; metadata-only configuration and
 dependency checks; live exit status and private receipt path; control evidence;
 final maturity/result; and a redacted next action for `BLOCKED` or `FAILED`.
+Separate execution receipts plus terminal output are not a consolidated L5
+acceptance record. Until a fail-closed verifier binds those receipts, the
+consumer gate, and the public-seam test result into one current consumer
+revision, report the row as no higher than L4.
 
 ### Current measured baseline
 
