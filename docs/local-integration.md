@@ -204,20 +204,20 @@ mock, or skipping an entrypoint. After three unsuccessful attempts at the same
 problem, including any combination of `BLOCKED` and `FAILED`, stop and record
 the commands, redacted errors, reasons, and a simpler route to evaluate.
 
-### Unresolved workload placeholders
+### Fixed adapters and unresolved workload placeholders
 
 `runtime-env workload run` deliberately refuses any command containing an
-unresolved `<placeholder>`. Therefore a placeholder-bearing workload cannot
-reach L4 in its current form. Before running it, make a test-first catalog/CLI
-change that does one of the following:
+unresolved `<placeholder>`. Before running a placeholder-bearing workload, make
+a test-first catalog/CLI change that does one of the following:
 
 1. replace the placeholder with one concrete, versioned fixed entrypoint; or
 2. introduce a typed, allowlisted parameter contract with validation and no
    arbitrary-command surface.
 
 Do not substitute text in a generated consumer projection or invoke the command
-outside the runner and call it accepted. The DR loop, both iOS workloads, and
-the stealth-browser MCP rows below are `BLOCKED` on this contract gap.
+outside the runner and call it accepted. Current consumer workloads use fixed,
+target-relative adapters; missing external targets, credentials, services, or
+sessions remain separate L2/L3 blockers.
 
 A workload with `secret_delivery=broker-only` has a separate prerequisite. Its
 L3 evidence must name a dedicated broker adapter, its trusted implementation
@@ -249,6 +249,11 @@ For each consumer and capability:
 5. Run every required fixed entrypoint on its execution plane, verify its
    receipt, control, mutation boundary, and source revisions, then run the
    consumer's full tests and `git diff --check`.
+6. Run `accept-consumer` with the consumer's tracked hook verifier and a private
+   receipt path. Only its consolidated `maturity=L5` receipt is an L5 claim.
+
+The exact Agent procedure and current consumer-to-binding map live in
+[`docs/l5-consumer-integration.md`](l5-consumer-integration.md).
 
 Synchronization must produce the binding, secret-free dotenv example, workload
 projection, and every selected policy under the consumer's `.runtime-env/`
@@ -264,16 +269,16 @@ for each additional consumer rather than replacing evidence from another.
 
 | Workload | Consumer / target root | Binding and policies | Required entrypoints or gap | Current result |
 |---|---|---|---|---|
-| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | `skill-bettor-agy-replay`; no carrier policy | `inventory`, `replay`; both map the host-owned agy session and metadata-only receipts. | `PASSED` at L4 on 2026-08-11: host inventory and approved replay passed at one clean consumer revision. Staged/worktree gates also pass, but no consolidated L5 acceptance receipt exists yet. |
-| `bettor-arena-proof` | `/Users/neon/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 declared acceptance entrypoints and their separate broker adapters. | `BLOCKED` below L5: the refreshed projection passes its staged gate, but the consumer lineage gate cannot create its nested openwiki worktree from a linked worktree; no accepted consumer revision exists. |
-| `dr-research-loop` | `/Users/neon/skill-bettor` | `skill-bettor-dr-research`; all three carrier policies | The agy session canary and harness selftest pass. `engine` and `verify` still contain `<dr-topic>` or `<proposal>`. | `BLOCKED` for the real DR capability: session/harness evidence is not a live topic execution, so it must not be promoted to full L4/L5. |
+| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | `skill-bettor-agy-replay`; no carrier policy | Public replay-contract test, model inventory, then the approved file-based replay. | `NOT_RUN` for the pending runtime/consumer revisions; an older clean revision passed L4 but cannot be reused as current L5 evidence. |
+| `bettor-arena-proof` | `/Users/neon/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 declared acceptance entrypoints and their separate broker adapters. | `BLOCKED` below L5: the consumer lineage gate cannot create its nested openwiki worktree from a linked worktree; use the clean canonical main-tree route rather than repeating the linked-worktree attempt. |
+| `dr-research-loop` | `/Users/neon/skill-bettor` | `skill-bettor-dr-research`; all three carrier policies | Fixed `run-dr-acceptance.sh` routes a versioned topic through harness tests, real engine, and verify. | `BLOCKED`: real citation verification received proxy/tunnel refusals in two sandbox attempts. `OFFLINE=1` passes only degraded verification and is not L4/L5 evidence. |
 | `forgejo-delivery-loop` | Runtime-owned verifier; target may be any admitted local Git consumer | No consumer binding or carrier policy is required for the runtime-owned canary. | `broker-selftest`, `credential-canary`; must preserve the target Git state. | `PASSED` at L4 on the host execution plane on 2026-08-11; the earlier sandbox-only loopback failure is retained as failed evidence, not the final host result. |
-| `gemini-conversation-research` | `/Users/neon/bettor-arena` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `carrier-gate`, `extract`, `guided-edge`; map the logged-in browser adapter, private profile store, and file-only receipt. | `BLOCKED`: dedicated broker adapter mapping unresolved. |
-| `ios-testflight-beta` | Broker implementation: `/Users/neon/ix-agy`; release target: `UNRESOLVED` per admitted run | `ix-agy-ios-beta`; no carrier policy | `preflight` omits its required project-directory argument; `upload` still contains `<target-repo>`. External release requires separate human authority. | `BLOCKED` below L2/L4: App Store Connect variables are absent, the ix-agy root is not an iOS project, and no release target is admitted. |
-| `ios-testflight-verify` | Broker implementation: `/Users/neon/ix-agy`; verification target: `UNRESOLVED` | `ix-agy-ios-verify`; no carrier policy | `preflight` omits its required project-directory argument; `verify-asc` contains `<target-repo>`. | `BLOCKED` below L2/L4: required App Store Connect variables and a typed target mapping are absent. |
+| `gemini-conversation-research` | `/Users/neon/ts-skill-bettor` | `ts-skill-bettor-gemini-research`; no carrier policy | Three public adapter tests, fixed live extraction, and a dry-run guided decision edge; content sinks stay under `GEMINI_RESEARCH_RUN_ROOT`. | `BLOCKED` at L3: loopback CDP was reachable on 2026-08-11 but exposed zero pages and no logged-in Gemini conversation tab. |
+| `ios-testflight-beta` | Broker implementation: `/Users/neon/ix-agy`; release target selected by `IOS_TARGET_ROOT` | `ix-agy-ios-beta`; no carrier policy | Fixed adapter tests and read-only preflight. Upload remains a separately authorized external mutation and is not part of ordinary acceptance. | `BLOCKED` below L2/L4: no iOS project was found on the host, `IOS_TARGET_ROOT` and App Store Connect inputs are absent, and no release is authorized. |
+| `ios-testflight-verify` | Broker implementation: `/Users/neon/ix-agy`; target selected by `IOS_TARGET_ROOT` | `ix-agy-ios-verify`; no carrier policy | Fixed adapter tests, target preflight, and read-only App Store Connect authentication verification. | `BLOCKED` below L2/L4: no iOS project was found on the host and required target/App Store Connect inputs are absent. |
 | `local-jdk-verify` | `/Users/neon/runtime-env` | No consumer binding or policy for the local verifier. | `verify`; real `JAVA_HOME`, matching `java`/`javac`, and compile/run receipt. | `PASSED` at L4 on 2026-08-11 with a clean runtime-env revision and compile/run receipt. |
-| `repo-wiki-converge` | `/Users/neon/ix-agy` | `ix-agy-repo-wiki`; no carrier policy | `author`, `verify`, and `ingest` are declared, but each underlying CLI requires typed arguments that the fixed commands omit. | `FAILED` at L4: `author` was attempted on the host and exited before a model turn because `create|refine`, target, output, and model arguments were absent. |
-| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | `stealth-browser-local`; no carrier policy | The full `test` entrypoint passes on the host. `serve` still contains `<stealth-browser-root>` and therefore is not live-accepted. | `PASSED` at L4 for the declared test acceptance on 2026-08-11. The MCP serving capability and consolidated L5 acceptance receipt remain `BLOCKED`. |
+| `repo-wiki-converge` | `/Users/neon/ix-agy` | `ix-agy-repo-wiki`; no carrier policy | Fixed author/verify/ingest adapter plus consumer and adapter public tests; mutable output is broker-owned. | `BLOCKED` below L2 until `REPO_WIKI_RUN_ROOT` identifies a user-owned `0700` directory; current adapter revision has not yet received a consolidated acceptance run. |
+| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | `stealth-browser-local`; no carrier policy | Isolated full tests plus a real stdio MCP handshake, tool listing, and `stealth_health` call. | `PASSED` public seam on the host on 2026-08-11: 41 files, 380 tests passed and 2 skipped; consumer adapter/projection still needs its final pinned commit and consolidated L5 receipt. |
 
 Each row's acceptance record must include runtime-env commit/tree/dirty state;
 consumer path and commit/tree/dirty state when applicable; profile, workload,

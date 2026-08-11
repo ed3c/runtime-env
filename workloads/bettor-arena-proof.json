@@ -18,6 +18,7 @@
     "equivalence-live": ["python3", "scripts/runtime-env/run-equivalence-live.py"]
   },
   "acceptance_entrypoints": ["prove-equivalence", "control-equivalence", "claude-auth-status", "codex-login-status", "forgejo-credential-canary", "agy-model-inventory", "research-browser-health", "stealth-browser-control", "stealth-profile-hygiene", "carrier-contract", "equivalence-live"],
+  "public_test_entrypoints": ["control-equivalence", "carrier-contract"],
   "broker_adapters": {
     "claude-auth-status": {"implementation": "scripts/runtime-env/check-carrier-status.py claude", "private_state": ["macOS Keychain and Claude-owned host state"], "receipt": "bounded authentication-state execution receipt"},
     "codex-login-status": {"implementation": "scripts/runtime-env/check-carrier-status.py codex", "private_state": ["Codex-owned OS keyring or auth file outside the target"], "receipt": "bounded login-state execution receipt"},

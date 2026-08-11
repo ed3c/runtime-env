@@ -1392,6 +1392,7 @@ def run_workload(
         raise ContractError(
             f"workload {workload_id}: entrypoint {entrypoint_id} has an unresolved placeholder"
         )
+    broker_adapter = workload.get("broker_adapters", {}).get(entrypoint_id)
     resolved_command = _resolve_workload_command(catalog, command)
     runtime_source = (
         _require_clean_catalog(catalog)
@@ -1403,6 +1404,10 @@ def run_workload(
     top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
     if top_level != target:
         raise ContractError("target root must be the root of its git repository")
+    before_head = _git(target, "rev-parse", "HEAD")
+    before_status = _git(target, "status", "--porcelain=v1")
+    if broker_adapter is not None and before_status:
+        raise ContractError("broker adapter requires a clean target repository")
 
     profile_variables = select_variables(
         catalog,
@@ -1445,10 +1450,15 @@ def run_workload(
             f"workload {workload_id}: secret_delivery=none refuses configured secret variables: "
             + ", ".join(configured_secrets)
         )
-    if configured_secrets and delivery != "none":
+    if configured_secrets and delivery == "broker-only" and broker_adapter is None:
         raise ContractError(
-            f"workload {workload_id}: {delivery} secrets require a dedicated broker/provider; "
-            "workload run will not inject them into a child environment"
+            f"workload {workload_id}: entrypoint {entrypoint_id} has no dedicated "
+            "broker adapter for configured secrets"
+        )
+    if configured_secrets and delivery == "openshell-provider":
+        raise ContractError(
+            f"workload {workload_id}: openshell-provider secrets require the "
+            "dedicated provider bootstrap"
         )
 
     safe_inherited = {
@@ -1472,8 +1482,6 @@ def run_workload(
     if entrypoint_id in workload.get("clean_catalog_entrypoints", []):
         child_environment["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin"
 
-    before_head = _git(target, "rev-parse", "HEAD")
-    before_status = _git(target, "status", "--porcelain=v1")
     started_at = datetime.now(timezone.utc)
     try:
         result = subprocess.run(
@@ -1512,9 +1520,10 @@ def run_workload(
         ).hexdigest(),
         "environment": {
             "configured_names": sorted(configured),
-            "secret_names": [],
+            "secret_names": configured_secrets,
             "delivery": delivery,
         },
+        "broker_adapter": broker_adapter,
         "stdout": stream_metadata(result.stdout),
         "stderr": stream_metadata(result.stderr),
         "target": {
@@ -1856,6 +1865,7 @@ def accept_consumer(
     target_root: Path,
     binding_id: str,
     env_file: Path | None,
+    hook_verifier: Path,
     receipt_path: Path,
     json_output: bool,
 ) -> int:
@@ -1869,6 +1879,41 @@ def accept_consumer(
     before_status = _git(target, "status", "--porcelain=v1")
     if before_status:
         raise ContractError("consumer acceptance requires a clean target checkout")
+
+    hooks_path_text = _git(target, "config", "--get", "core.hooksPath")
+    hooks_path = Path(hooks_path_text)
+    if hooks_path.is_absolute() or ".." in hooks_path.parts:
+        raise ContractError("L5 acceptance requires a repo-relative core.hooksPath")
+    verifier_relative = hook_verifier
+    if verifier_relative.is_absolute() or ".." in verifier_relative.parts:
+        raise ContractError("hook verifier must be a safe target-relative path")
+    hook_relative = hooks_path / "pre-commit"
+    hook_path = target / hook_relative
+    verifier_path = target / verifier_relative
+    for label, path, relative in (
+        ("pre-commit hook", hook_path, hook_relative),
+        ("hook verifier", verifier_path, verifier_relative),
+    ):
+        if path.is_symlink() or not path.is_file():
+            raise ContractError(f"L5 {label} must be a regular tracked file: {relative}")
+        _git(target, "ls-files", "--error-unmatch", relative.as_posix())
+        if not os.access(path, os.X_OK):
+            raise ContractError(f"L5 {label} must be executable: {relative}")
+    hook_bytes = hook_path.read_bytes()
+    verifier_bytes = verifier_path.read_bytes()
+    if verifier_relative.as_posix().encode() not in hook_bytes:
+        raise ContractError("pre-commit hook does not invoke the declared verifier")
+    verifier_text = verifier_bytes.decode("utf-8")
+    if "verify-consumer" not in verifier_text or binding_id not in verifier_text:
+        raise ContractError("declared hook verifier does not enforce this binding")
+    hook_gate = {
+        "status": "passed",
+        "hooks_path": hooks_path.as_posix(),
+        "pre_commit": hook_relative.as_posix(),
+        "pre_commit_sha256": hashlib.sha256(hook_bytes).hexdigest(),
+        "verifier": verifier_relative.as_posix(),
+        "verifier_sha256": hashlib.sha256(verifier_bytes).hexdigest(),
+    }
 
     with contextlib.redirect_stdout(io.StringIO()):
         verify_consumer(target_root=target, binding_id=binding_id, staged=False)
@@ -2010,6 +2055,7 @@ def accept_consumer(
         "binding_content_sha256": binding["content_sha256"],
         "workload_content_sha256": projection["content_sha256"],
         "projection_checks": {"staged": "passed", "worktree": "passed"},
+        "hook_gate": hook_gate,
         "target": {
             "root": str(target),
             "head_before": before_head,
@@ -2149,6 +2195,7 @@ def build_parser() -> argparse.ArgumentParser:
     accept_consumer_parser.add_argument("--target-root", type=Path, required=True)
     accept_consumer_parser.add_argument("--binding", required=True)
     accept_consumer_parser.add_argument("--env-file", type=Path)
+    accept_consumer_parser.add_argument("--hook-verifier", type=Path, required=True)
     accept_consumer_parser.add_argument("--receipt", type=Path, required=True)
     accept_consumer_parser.add_argument("--json", action="store_true")
     return parser
@@ -2185,6 +2232,7 @@ def main(argv: list[str] | None = None) -> int:
                 target_root=args.target_root,
                 binding_id=args.binding,
                 env_file=args.env_file,
+                hook_verifier=args.hook_verifier,
                 receipt_path=args.receipt,
                 json_output=args.json,
             )

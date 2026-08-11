@@ -5,27 +5,30 @@
   "profile": "dr-research-loop-local",
   "host": "local-macos",
   "entrypoints": {
-    "engine": ["sh", "loop_wiki/engine.sh", "<dr-topic>", "--target", "<proposal>", "--driver", "agy"],
-    "verify": ["sh", "loop_wiki/<dr-topic>/verify.sh"],
+    "engine": ["sh", "scripts/runtime-env/run-dr-acceptance.sh", "engine"],
+    "verify": ["sh", "scripts/runtime-env/run-dr-acceptance.sh", "verify"],
     "agy-session-canary": ["agy", "models"],
-    "harness-selftest": ["sh", "loop_wiki/_template_dr/selftest.sh"]
+    "harness-selftest": ["sh", "loop_wiki/_template_dr/selftest.sh"],
+    "adapter-test": ["sh", "scripts/test_runtime_env_dr_acceptance.sh"]
   },
-  "acceptance_entrypoints": ["agy-session-canary", "harness-selftest"],
+  "acceptance_entrypoints": ["harness-selftest", "adapter-test", "agy-session-canary", "engine", "verify"],
+  "public_test_entrypoints": ["harness-selftest", "adapter-test"],
   "broker_adapters": {
-    "engine": {"implementation": "loop_wiki/engine.sh through a typed consumer topic/target adapter", "private_state": ["~/.gemini/antigravity-cli/ and browser sessions selected by the DR route"], "receipt": "loop_wiki/<dr-topic>/trajectory.log"},
+    "engine": {"implementation": "scripts/runtime-env/run-dr-acceptance.sh engine", "private_state": ["~/.gemini/antigravity-cli/ and browser sessions selected by the DR route"], "receipt": "loop_wiki/dr-mcp-conformance-receipt/_engine-run/trajectory.log"},
     "agy-session-canary": {"implementation": "host executable agy models", "private_state": ["~/.gemini/antigravity-cli/"], "receipt": "exact model-inventory execution receipt"}
   },
   "entrypoint_environment": {
     "engine": ["AGY_MODEL", "AGY_EFFORT"],
     "verify": [],
     "agy-session-canary": ["AGY_MODEL", "AGY_EFFORT"],
-    "harness-selftest": []
+    "harness-selftest": [],
+    "adapter-test": []
   },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",
   "evidence": {
-    "receipt": "loop_wiki/<dr-topic>/trajectory.log",
-    "control": "loop_wiki/<dr-topic>/selftest.sh"
+    "receipt": "loop_wiki/dr-mcp-conformance-receipt/_engine-run/trajectory.log",
+    "control": "scripts/runtime-env/run-dr-acceptance.sh verify"
   }
 }

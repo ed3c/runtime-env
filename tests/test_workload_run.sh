@@ -36,6 +36,9 @@ printf '%s\n' \
 printf '%s\n' \
   '{"schema":"runtime-env/workload/v2","id":"read-only","summary":"Read-only enforcement fixture.","profile":"runner","host":"local-macos","entrypoints":{"mutates":["sh","scripts/mutates.sh"]},"acceptance_entrypoints":["mutates"],"entrypoint_environment":{"mutates":[]},"secret_delivery":"none","agent_secret_access":"denied","mutation":"read-only","evidence":{"receipt":"must-not-write.txt","control":"scripts/mutates.sh"}}' \
   > "${CATALOG}/workloads/read-only.json"
+printf '%s\n' \
+  '{"schema":"runtime-env/workload/v2","id":"broker","summary":"Broker adapter fixture.","profile":"secret","host":"local-macos","entrypoints":{"adapter":["sh","scripts/broker.sh"],"untrusted":["sh","scripts/broker.sh"]},"acceptance_entrypoints":["adapter"],"entrypoint_environment":{"adapter":["BROKER_SECRET"],"untrusted":["BROKER_SECRET"]},"broker_adapters":{"adapter":{"implementation":"scripts/broker.sh","private_state":["test-only private dotenv"],"receipt":"hashed execution receipt"}},"secret_delivery":"broker-only","agent_secret_access":"denied","mutation":"read-only","evidence":{"receipt":"hashed execution receipt","control":"scripts/broker.sh"}}' \
+  > "${CATALOG}/workloads/broker.json"
 
 printf '%s\n' '#!/bin/sh' 'printf "%s\n" "${RUNTIME_SENTINEL:-missing}" > artifact.txt' '[ -z "${UNRELATED_CONFIG+x}" ]' 'printf "runner emitted ordinary output\n"' \
   > "${TARGET}/scripts/fixed.sh"
@@ -43,6 +46,9 @@ chmod +x "${TARGET}/scripts/fixed.sh"
 printf '%s\n' '#!/bin/sh' 'printf "unexpected write\n" > must-not-write.txt' \
   > "${TARGET}/scripts/mutates.sh"
 chmod +x "${TARGET}/scripts/mutates.sh"
+printf '%s\n' '#!/bin/sh' 'test "${BROKER_SECRET}" = broker-value' 'printf "%s\n" "${BROKER_SECRET}"' \
+  > "${TARGET}/scripts/broker.sh"
+chmod +x "${TARGET}/scripts/broker.sh"
 printf '%s\n' '#!/bin/sh' 'test "${PATH}" = "/usr/bin:/bin:/usr/sbin:/sbin"' \
   > "${CATALOG}/trusted.sh"
 chmod +x "${CATALOG}/trusted.sh"
@@ -141,6 +147,41 @@ set -e
   echo 'FAIL: none-delivery workload did not refuse configured secret' >&2
   exit 1
 }
+
+BROKER_FILE="${SCRATCH}/broker.env"
+printf '%s\n' 'BROKER_SECRET=broker-value' > "${BROKER_FILE}"
+chmod 0600 "${BROKER_FILE}"
+rm -f "${TARGET}/artifact.txt"
+broker_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
+  --id broker --entrypoint adapter --target-root "${TARGET}" --env-file "${BROKER_FILE}" \
+  --receipt "${SCRATCH}/receipts/broker.json" --json)"
+[[ "${broker_output}" != *'broker-value'* ]]
+python3 -c '
+import json, sys
+d=json.load(sys.stdin)
+assert d["status"] == "passed"
+assert d["environment"]["secret_names"] == ["BROKER_SECRET"]
+assert d["broker_adapter"]["implementation"] == "scripts/broker.sh"
+assert d["stdout"]["bytes"] > 0
+' <<< "${broker_output}"
+
+printf '%s\n' '# uncommitted broker mutation' >> "${TARGET}/scripts/broker.sh"
+set +e
+dirty_broker_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
+  --id broker --entrypoint adapter --target-root "${TARGET}" \
+  --env-file "${BROKER_FILE}" --json 2>&1)"
+dirty_broker_status=$?
+set -e
+[[ ${dirty_broker_status} -eq 2 && "${dirty_broker_output}" == *'broker adapter requires a clean target repository'* ]]
+git -C "${TARGET}" restore scripts/broker.sh
+
+set +e
+untrusted_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \
+  --id broker --entrypoint untrusted --target-root "${TARGET}" \
+  --env-file "${BROKER_FILE}" --json 2>&1)"
+untrusted_status=$?
+set -e
+[[ ${untrusted_status} -eq 2 && "${untrusted_output}" == *'has no dedicated broker adapter'* ]]
 
 set +e
 missing_output="$(${ROOT}/runtime-env --catalog-root "${CATALOG}" workload run \

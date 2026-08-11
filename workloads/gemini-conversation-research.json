@@ -5,25 +5,30 @@
   "profile": "gemini-conversation-research-local",
   "host": "local-macos",
   "entrypoints": {
-    "extract": ["node", "scripts/extract-gemini-conversation-browser-runtime.mjs"],
-    "guided-edge": ["node", "scripts/run-gemini-guided-conversation-browser-runtime.mjs"],
-    "carrier-gate": ["bun", "run", "scripts/test-extract-gemini-conversation-browser-runtime.mjs"]
+    "extract": ["node", "scripts/runtime-env/run-gemini-acceptance.mjs", "extract"],
+    "guided-edge": ["node", "scripts/runtime-env/run-gemini-acceptance.mjs", "guided"],
+    "carrier-gate": ["node", "scripts/test-extract-gemini-conversation-browser-runtime.mjs"],
+    "guided-contract": ["node", "scripts/test-run-gemini-guided-conversation-browser-runtime.mjs"],
+    "adapter-test": ["node", "scripts/test-runtime-env-gemini-acceptance.mjs"]
   },
-  "acceptance_entrypoints": ["carrier-gate", "extract", "guided-edge"],
+  "acceptance_entrypoints": ["carrier-gate", "guided-contract", "adapter-test", "extract", "guided-edge"],
+  "public_test_entrypoints": ["carrier-gate", "guided-contract", "adapter-test"],
   "broker_adapters": {
-    "extract": {"implementation": "scripts/extract-gemini-conversation-browser-runtime.mjs", "private_state": ["dedicated logged-in browser profile behind loopback CDP"], "receipt": "gemini_research/gcr/<run-id>-receipt.json"},
-    "guided-edge": {"implementation": "scripts/run-gemini-guided-conversation-browser-runtime.mjs", "private_state": ["dedicated logged-in browser profile behind loopback CDP"], "receipt": "gemini_research/gcr/<run-id>-receipt.json"}
+    "extract": {"implementation": "scripts/runtime-env/run-gemini-acceptance.mjs extract", "private_state": ["dedicated logged-in browser profile behind loopback CDP", "GEMINI_RESEARCH_RUN_ROOT outside every Git checkout"], "receipt": "broker-owned Gemini run root plus runtime-env execution receipt"},
+    "guided-edge": {"implementation": "scripts/runtime-env/run-gemini-acceptance.mjs guided", "private_state": ["dedicated logged-in browser profile behind loopback CDP", "GEMINI_RESEARCH_RUN_ROOT outside every Git checkout"], "receipt": "broker-owned Gemini run root plus runtime-env execution receipt"}
   },
   "entrypoint_environment": {
-    "extract": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_PROFILE_ROOT", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],
-    "guided-edge": ["DR_CDP_URL", "DR_HEADED", "STEALTH_BROWSER_EXTRA_ALLOW", "STEALTH_PROFILE_ROOT", "STEALTH_DEBUG_LOG", "STEALTH_LANGUAGES", "STEALTH_USER_AGENT"],
-    "carrier-gate": []
+    "extract": ["DR_CDP_URL", "GEMINI_RESEARCH_RUN_ROOT"],
+    "guided-edge": ["DR_CDP_URL", "GEMINI_RESEARCH_RUN_ROOT"],
+    "carrier-gate": [],
+    "guided-contract": [],
+    "adapter-test": []
   },
   "secret_delivery": "broker-only",
   "agent_secret_access": "denied",
   "mutation": "workspace",
   "evidence": {
-    "receipt": "gemini_research/gcr/<run-id>-receipt.json",
-    "control": "scripts/test-run-gemini-guided-conversation-browser-runtime.mjs"
+    "receipt": "broker-owned Gemini run root plus runtime-env execution receipt",
+    "control": "scripts/test-runtime-env-gemini-acceptance.mjs"
   }
 }

@@ -1,1 +1,1 @@
-{"schema":"runtime-env/module/v1","id":"apple-signing","summary":"Apple signing and App Store Connect upload.","requires":["APPLE_TEAM_ID","ASC_KEY_ID","ASC_ISSUER_ID","ASC_KEY_PATH"],"optional":["MATCH_PASSWORD","DEVELOPER_DIR","IOS_DEVICE_UDID","JAVA_HOME"],"defaults":{}}
+{"schema":"runtime-env/module/v1","id":"apple-signing","summary":"Apple signing and App Store Connect upload.","requires":["APPLE_TEAM_ID","ASC_KEY_ID","ASC_ISSUER_ID","ASC_KEY_PATH","IOS_TARGET_ROOT"],"optional":["MATCH_PASSWORD","DEVELOPER_DIR","IOS_DEVICE_UDID","JAVA_HOME"],"defaults":{}}

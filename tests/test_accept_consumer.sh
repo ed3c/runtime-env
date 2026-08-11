@@ -9,7 +9,7 @@ CATALOG="${SCRATCH}/catalog"
 TARGET="${SCRATCH}/consumer"
 RECEIPTS="${SCRATCH}/receipts"
 mkdir -p "${CATALOG}"/{catalog,modules,profiles,workloads} \
-  "${TARGET}/scripts" "${RECEIPTS}"
+  "${TARGET}/scripts" "${TARGET}/.githooks" "${RECEIPTS}"
 chmod 0700 "${RECEIPTS}"
 
 printf '%s\n' \
@@ -29,6 +29,11 @@ printf '%s\n' '#!/bin/sh' 'test -f .runtime-env/bindings/fixture.json' \
 printf '%s\n' '#!/bin/sh' 'test "${FIXTURE_NAME}" = accepted' \
   > "${TARGET}/scripts/live-canary.sh"
 chmod +x "${TARGET}/scripts/public-test.sh" "${TARGET}/scripts/live-canary.sh"
+printf '%s\n' '#!/bin/sh' 'set -eu' 'sh scripts/check-runtime-env-consumer.sh --staged' \
+  > "${TARGET}/.githooks/pre-commit"
+printf '%s\n' '#!/bin/sh' 'set -eu' 'runtime-env verify-consumer --target-root "$(git rev-parse --show-toplevel)" --binding fixture "$@"' \
+  > "${TARGET}/scripts/check-runtime-env-consumer.sh"
+chmod +x "${TARGET}/.githooks/pre-commit" "${TARGET}/scripts/check-runtime-env-consumer.sh"
 
 git -C "${CATALOG}" init -q
 git -C "${CATALOG}" config user.email runtime-env@test
@@ -47,9 +52,11 @@ git -C "${TARGET}" commit -qm 'fixture consumer'
   --target-root "${TARGET}" --apply >/dev/null
 git -C "${TARGET}" add .runtime-env
 git -C "${TARGET}" commit -qm 'bind runtime contract'
+git -C "${TARGET}" config core.hooksPath .githooks
 
 output="$("${ROOT}/runtime-env" --catalog-root "${CATALOG}" accept-consumer \
   --target-root "${TARGET}" --binding fixture \
+  --hook-verifier scripts/check-runtime-env-consumer.sh \
   --receipt "${RECEIPTS}/acceptance.json" --json)"
 
 python3 -c '
@@ -60,6 +67,8 @@ assert d["status"] == "passed"
 assert d["maturity"] == "L5"
 assert d["binding"] == "fixture"
 assert d["projection_checks"] == {"staged": "passed", "worktree": "passed"}
+assert d["hook_gate"]["status"] == "passed"
+assert d["hook_gate"]["hooks_path"] == ".githooks"
 assert d["target"]["dirty_before"] is False
 assert d["target"]["dirty_after"] is False
 assert d["target"]["head_before"] == d["target"]["head_after"]
@@ -79,6 +88,7 @@ chmod 0600 "${BAD_ENV}"
 set +e
 failed_output="$("${ROOT}/runtime-env" --catalog-root "${CATALOG}" accept-consumer \
   --target-root "${TARGET}" --binding fixture --env-file "${BAD_ENV}" \
+  --hook-verifier scripts/check-runtime-env-consumer.sh \
   --receipt "${RECEIPTS}/failed.json" --json)"
 failed_status=$?
 set -e
@@ -95,6 +105,7 @@ printf '%s\n' dirty > "${TARGET}/untracked.txt"
 set +e
 dirty_output="$("${ROOT}/runtime-env" --catalog-root "${CATALOG}" accept-consumer \
   --target-root "${TARGET}" --binding fixture \
+  --hook-verifier scripts/check-runtime-env-consumer.sh \
   --receipt "${RECEIPTS}/dirty.json" --json 2>&1)"
 dirty_status=$?
 set -e
@@ -107,6 +118,7 @@ git -C "${CATALOG}" commit -qm 'advance catalog fixture'
 set +e
 stale_output="$("${ROOT}/runtime-env" --catalog-root "${CATALOG}" accept-consumer \
   --target-root "${TARGET}" --binding fixture \
+  --hook-verifier scripts/check-runtime-env-consumer.sh \
   --receipt "${RECEIPTS}/stale.json" --json 2>&1)"
 stale_status=$?
 set -e
