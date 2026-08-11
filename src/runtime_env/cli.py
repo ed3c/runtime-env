@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 from datetime import datetime, timezone
 import hashlib
 import hmac
+import io
 import json
 from dataclasses import dataclass
 import os
@@ -51,6 +53,7 @@ ALLOWED_FIELDS = {
         "entrypoints",
         "entrypoint_environment",
         "acceptance_entrypoints",
+        "public_test_entrypoints",
         "broker_adapters",
         "clean_catalog_entrypoints",
         "secret_delivery",
@@ -368,6 +371,30 @@ def load_catalog(root: Path) -> Catalog:
                 f"workload {workload_id}: acceptance entrypoints contain unresolved "
                 f"placeholders: {', '.join(unresolved_acceptance)}"
             )
+        public_test_entrypoints = workload.get("public_test_entrypoints")
+        if public_test_entrypoints is not None:
+            if (
+                not isinstance(public_test_entrypoints, list)
+                or not public_test_entrypoints
+                or any(
+                    not isinstance(entrypoint_id, str) or not entrypoint_id
+                    for entrypoint_id in public_test_entrypoints
+                )
+                or len(public_test_entrypoints)
+                != len(set(public_test_entrypoints))
+            ):
+                raise ContractError(
+                    f"workload {workload_id}: public_test_entrypoints must be a "
+                    "non-empty unique string array"
+                )
+            unknown_public_tests = sorted(
+                set(public_test_entrypoints) - set(acceptance_entrypoints)
+            )
+            if unknown_public_tests:
+                raise ContractError(
+                    f"workload {workload_id}: public_test_entrypoints must be "
+                    "acceptance entrypoints: " + ", ".join(unknown_public_tests)
+                )
         broker_adapters = workload.get("broker_adapters")
         if workload["secret_delivery"] == "broker-only":
             if not isinstance(broker_adapters, dict) or not broker_adapters:
@@ -1823,6 +1850,188 @@ def verify_consumer(*, target_root: Path, binding_id: str, staged: bool) -> int:
     return 0
 
 
+def accept_consumer(
+    *,
+    catalog: Catalog,
+    target_root: Path,
+    binding_id: str,
+    env_file: Path | None,
+    receipt_path: Path,
+    json_output: bool,
+) -> int:
+    """Run one consumer's complete, pinned acceptance set and bind the evidence."""
+    target = target_root.expanduser().resolve()
+    top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
+    if top_level != target:
+        raise ContractError("target root must be the root of its git repository")
+    before_head = _git(target, "rev-parse", "HEAD")
+    before_tree = _git(target, "rev-parse", "HEAD^{tree}")
+    before_status = _git(target, "status", "--porcelain=v1")
+    if before_status:
+        raise ContractError("consumer acceptance requires a clean target checkout")
+
+    with contextlib.redirect_stdout(io.StringIO()):
+        verify_consumer(target_root=target, binding_id=binding_id, staged=False)
+        verify_consumer(target_root=target, binding_id=binding_id, staged=True)
+
+    binding_path = f".runtime-env/bindings/{binding_id}.json"
+    binding = json.loads(_consumer_content(target, binding_path, staged=False))
+    projections = binding["projections"]
+    workload_path = projections.get("workload")
+    if not isinstance(workload_path, str):
+        raise ContractError(f"{binding_path}: L5 acceptance requires a workload")
+    projection = json.loads(_consumer_content(target, workload_path, staged=False))
+    workload = projection.get("workload")
+    if not isinstance(workload, dict):
+        raise ContractError(f"{workload_path}: invalid workload projection")
+    workload_id = workload.get("id")
+    catalog_workload = catalog.workloads.get(workload_id)
+    if catalog_workload is None or workload != catalog_workload:
+        raise ContractError(
+            f"{workload_path}: projected workload does not match the pinned catalog"
+        )
+    public_tests = workload.get("public_test_entrypoints")
+    if not isinstance(public_tests, list) or not public_tests:
+        raise ContractError(
+            f"workload {workload_id}: L5 acceptance requires public_test_entrypoints"
+        )
+
+    runtime_source = _require_clean_catalog(catalog)
+    source = binding.get("source")
+    if not isinstance(source, dict) or (
+        source.get("commit") != runtime_source["head"]
+        or source.get("tree") != runtime_source["tree"]
+    ):
+        raise ContractError(
+            f"{binding_path}: catalog source does not match the consumer pin"
+        )
+
+    requested_receipt = receipt_path.expanduser()
+    if not requested_receipt.is_absolute():
+        raise ContractError("consumer acceptance receipt path must be absolute")
+    if requested_receipt.exists() or requested_receipt.is_symlink():
+        raise ContractError(
+            f"consumer acceptance receipt already exists: {requested_receipt}"
+        )
+    requested_receipt.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    parent_stat = requested_receipt.parent.stat()
+    if (
+        parent_stat.st_uid != os.getuid()
+        or stat.S_IMODE(parent_stat.st_mode) != 0o700
+    ):
+        raise ContractError(
+            "consumer acceptance receipt directory must be user-owned with mode 0700"
+        )
+    execution_directory = requested_receipt.with_suffix("")
+    execution_directory = execution_directory.parent / (
+        execution_directory.name + ".d"
+    )
+    if execution_directory.exists() or execution_directory.is_symlink():
+        raise ContractError(
+            f"consumer acceptance execution directory already exists: {execution_directory}"
+        )
+    execution_directory.mkdir(mode=0o700)
+
+    started_at = datetime.now(timezone.utc)
+    executions: list[dict[str, Any]] = []
+    all_passed = True
+    for entrypoint_id in workload["acceptance_entrypoints"]:
+        entry_receipt_path = execution_directory / f"{entrypoint_id}.json"
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                execution_exit = run_workload(
+                    catalog=catalog,
+                    workload_id=workload_id,
+                    entrypoint_id=entrypoint_id,
+                    target_root=target,
+                    env_file=env_file,
+                    receipt_path=entry_receipt_path,
+                    json_output=False,
+                )
+        except MissingConfiguration as exc:
+            executions.append(
+                {
+                    "entrypoint": entrypoint_id,
+                    "status": "blocked",
+                    "reason": str(exc),
+                }
+            )
+            all_passed = False
+            break
+        except ContractError as exc:
+            executions.append(
+                {
+                    "entrypoint": entrypoint_id,
+                    "status": "failed",
+                    "reason": str(exc),
+                }
+            )
+            all_passed = False
+            break
+        execution_bytes = entry_receipt_path.read_bytes()
+        execution = json.loads(execution_bytes)
+        executions.append(
+            {
+                "child_exit": execution["child_exit"],
+                "command_sha256": execution["command_sha256"],
+                "entrypoint": entrypoint_id,
+                "receipt_path": str(entry_receipt_path),
+                "receipt_sha256": hashlib.sha256(execution_bytes).hexdigest(),
+                "status": execution["status"],
+            }
+        )
+        if execution_exit != 0 or execution["status"] != "passed":
+            all_passed = False
+            break
+
+    after_head = _git(target, "rev-parse", "HEAD")
+    after_tree = _git(target, "rev-parse", "HEAD^{tree}")
+    after_status = _git(target, "status", "--porcelain=v1")
+    target_unchanged = (
+        before_head == after_head
+        and before_tree == after_tree
+        and not after_status
+    )
+    complete_set = [item["entrypoint"] for item in executions] == workload[
+        "acceptance_entrypoints"
+    ]
+    passed = all_passed and complete_set and target_unchanged
+    finished_at = datetime.now(timezone.utc)
+    receipt: dict[str, Any] = {
+        "schema": "runtime-env/consumer-acceptance-receipt/v1",
+        "status": "passed" if passed else "failed",
+        "maturity": "L5" if passed else "below-L5",
+        "binding": binding_id,
+        "workload": workload_id,
+        "public_test_entrypoints": public_tests,
+        "started_at": started_at.isoformat(),
+        "finished_at": finished_at.isoformat(),
+        "runtime_source": runtime_source,
+        "binding_content_sha256": binding["content_sha256"],
+        "workload_content_sha256": projection["content_sha256"],
+        "projection_checks": {"staged": "passed", "worktree": "passed"},
+        "target": {
+            "root": str(target),
+            "head_before": before_head,
+            "head_after": after_head,
+            "tree_before": before_tree,
+            "tree_after": after_tree,
+            "dirty_before": bool(before_status),
+            "dirty_after": bool(after_status),
+        },
+        "executions": executions,
+    }
+    _execution_receipt_path(receipt, requested_receipt)
+    if json_output:
+        print(json.dumps(receipt, sort_keys=True, ensure_ascii=False))
+    else:
+        print(
+            f"{receipt['status'].upper()} consumer={binding_id} "
+            f"maturity={receipt['maturity']} receipt={receipt['receipt_path']}"
+        )
+    return 0 if passed else 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="runtime-env")
     parser.add_argument("--catalog-root", type=Path, default=_default_catalog_root())
@@ -1933,6 +2142,15 @@ def build_parser() -> argparse.ArgumentParser:
     verify_consumer_parser.add_argument("--target-root", type=Path, required=True)
     verify_consumer_parser.add_argument("--binding", required=True)
     verify_consumer_parser.add_argument("--staged", action="store_true")
+    accept_consumer_parser = subparsers.add_parser(
+        "accept-consumer",
+        help="run every fixed acceptance entrypoint and emit one L5 receipt",
+    )
+    accept_consumer_parser.add_argument("--target-root", type=Path, required=True)
+    accept_consumer_parser.add_argument("--binding", required=True)
+    accept_consumer_parser.add_argument("--env-file", type=Path)
+    accept_consumer_parser.add_argument("--receipt", type=Path, required=True)
+    accept_consumer_parser.add_argument("--json", action="store_true")
     return parser
 
 
@@ -1960,6 +2178,19 @@ def main(argv: list[str] | None = None) -> int:
             f"{len(catalog.workloads)} workloads, {len(catalog.policies)} policies"
         )
         return 0
+    if args.command == "accept-consumer":
+        try:
+            return accept_consumer(
+                catalog=catalog,
+                target_root=args.target_root,
+                binding_id=args.binding,
+                env_file=args.env_file,
+                receipt_path=args.receipt,
+                json_output=args.json,
+            )
+        except ContractError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
     if args.command == "render":
         try:
             selected = select_variables(
