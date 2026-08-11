@@ -2,6 +2,9 @@
 
 `runtime-env` is a secret-free, modular catalog of environment variable contracts for agent repositories. It records **names, requirements, safe defaults, and account links**—never credential values.
 
+The portable desired-state and resolved-binding lifecycle is specified in
+[`docs/modular-consumer-contract.md`](docs/modular-consumer-contract.md).
+
 The repository separates three concepts that are often mixed together:
 
 1. A **variable** is declared once in `catalog/variables.json`.

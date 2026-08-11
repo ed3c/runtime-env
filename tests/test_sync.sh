@@ -74,9 +74,29 @@ import sys
 document = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 assert document["source"]["repository"] == "https://github.com/ed3c/runtime-env"
 assert document["profile"] == "bettor-arena-local"
+assert document["schema"] == "runtime-env/consumer-binding/v2"
+assert document["modules"][0]["id"] == "ollama-root"
+assert document["modules"][0]["interface_version"] == "runtime-env/module/v1"
 assert document["source"]["commit"] == sys.argv[2]
 assert document["source"]["tree"] == sys.argv[3]
 assert document["variables"][0]["runtime_scope"] == "local-only"
+PY
+
+# Desired-state sync pins the exact module closure. A profile expansion must be
+# admitted by changing requirements rather than arriving as an invisible update.
+requirements="${target_repo}/.runtime-env/requirements.json"
+printf '%s\n' '{"schema":"runtime-env/consumer-requirements/v1","binding":"bettor-arena-local","profile":"bettor-arena-local","required_modules":["ollama-root"],"workload":"local-proof","policies":["fixture-native"]}' > "${requirements}"
+${ROOT}/runtime-env --catalog-root "${source_repo}" sync \
+  --requirements "${requirements}" --target-root "${target_repo}" --apply >/dev/null
+python3 - "${binding}" "${requirements}" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+binding = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+assert binding["requirements_sha256"] == hashlib.sha256(Path(sys.argv[2]).read_bytes()).hexdigest()
+assert [module["id"] for module in binding["modules"]] == ["ollama-root"]
 PY
 python3 - "${workload}" <<'PY'
 import json

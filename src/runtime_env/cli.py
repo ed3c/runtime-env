@@ -629,6 +629,44 @@ def _canonical_json(document: dict[str, Any]) -> str:
     )
 
 
+def _load_consumer_requirements(path: Path) -> dict[str, Any]:
+    document = _load_json(path)
+    expected = {
+        "schema",
+        "binding",
+        "profile",
+        "required_modules",
+        "workload",
+        "policies",
+    }
+    if set(document) != expected:
+        raise ContractError(
+            "consumer requirements must contain exactly schema, binding, profile, "
+            "required_modules, workload, and policies"
+        )
+    if document.get("schema") != "runtime-env/consumer-requirements/v1":
+        raise ContractError(
+            "consumer requirements schema must be runtime-env/consumer-requirements/v1"
+        )
+    for field in ("binding", "profile"):
+        value = document.get(field)
+        if not isinstance(value, str) or not value:
+            raise ContractError(f"consumer requirements {field} must be non-empty")
+    if not BINDING_ID.fullmatch(document["binding"]):
+        raise ContractError("consumer requirements binding has an invalid id")
+    for field in ("required_modules", "policies"):
+        value = document.get(field)
+        if not isinstance(value, list) or any(
+            not isinstance(item, str) or not item for item in value
+        ):
+            raise ContractError(f"consumer requirements {field} must be a name array")
+        if len(value) != len(set(value)):
+            raise ContractError(f"consumer requirements {field} must be unique")
+    if document["workload"] is not None and not isinstance(document["workload"], str):
+        raise ContractError("consumer requirements workload must be a name or null")
+    return document
+
+
 def _binding_artifacts(
     *,
     root: Path,
@@ -637,6 +675,8 @@ def _binding_artifacts(
     binding_id: str,
     workload_id: str | None,
     policy_ids: list[str],
+    requirements_sha256: str | None = None,
+    required_modules: list[str] | None = None,
 ) -> dict[Path, str]:
     if not BINDING_ID.fullmatch(binding_id):
         raise ContractError(
@@ -651,6 +691,22 @@ def _binding_artifacts(
         raise ContractError("catalog repository must be clean before synchronization")
 
     selected = select_variables(catalog, profile_id=profile_id, include_all=False)
+    profile_modules = catalog.profiles[profile_id]["modules"]
+    if required_modules is not None and profile_modules != required_modules:
+        raise ContractError(
+            f"profile {profile_id} module closure differs from consumer requirements: "
+            f"wanted {required_modules}, resolved {profile_modules}"
+        )
+    modules = []
+    for module_id in profile_modules:
+        module = catalog.modules[module_id]
+        modules.append(
+            {
+                "content_sha256": _sha256(_canonical_json(module)),
+                "id": module_id,
+                "interface_version": module["schema"],
+            }
+        )
     example = render_dotenv(catalog, selected)
     variables: list[dict[str, Any]] = []
     for item in selected:
@@ -672,6 +728,7 @@ def _binding_artifacts(
     example_path = Path(".runtime-env") / "examples" / f"{binding_id}.env.example"
     document: dict[str, Any] = {
         "binding": binding_id,
+        "modules": modules,
         "profile": profile_id,
         "projections": {
             "policies": [
@@ -689,7 +746,8 @@ def _binding_artifacts(
             "path": example_path.as_posix(),
             "sha256": _sha256(example),
         },
-        "schema": "runtime-env/consumer-binding/v1",
+        "requirements_sha256": requirements_sha256,
+        "schema": "runtime-env/consumer-binding/v2",
         "source": {
             "commit": _git(root, "rev-parse", "HEAD"),
             "repository": _repository_url(_git(root, "remote", "get-url", "origin")),
@@ -776,6 +834,8 @@ def sync_consumer(
     target_root: Path,
     apply: bool,
     check: bool,
+    requirements_sha256: str | None = None,
+    required_modules: list[str] | None = None,
 ) -> int:
     target = target_root.resolve()
     target_top_level = Path(_git(target, "rev-parse", "--show-toplevel")).resolve()
@@ -788,6 +848,8 @@ def sync_consumer(
         binding_id=binding_id,
         workload_id=workload_id,
         policy_ids=policy_ids,
+        requirements_sha256=requirements_sha256,
+        required_modules=required_modules,
     )
     drift = False
     for relative_path, expected in artifacts.items():
@@ -1532,11 +1594,38 @@ def verify_consumer(*, target_root: Path, binding_id: str, staged: bool) -> int:
         binding = json.loads(_consumer_content(target, binding_path, staged=staged))
     except json.JSONDecodeError as exc:
         raise ContractError(f"{binding_path}: invalid JSON: {exc}") from exc
-    if binding.get("schema") != "runtime-env/consumer-binding/v1":
+    if binding.get("schema") not in {
+        "runtime-env/consumer-binding/v1",
+        "runtime-env/consumer-binding/v2",
+    }:
         raise ContractError(f"{binding_path}: unexpected schema")
     if binding.get("binding") != binding_id:
         raise ContractError(f"{binding_path}: binding id mismatch")
     _verify_content_hash(binding, binding_path)
+    if binding.get("schema") == "runtime-env/consumer-binding/v2":
+        modules = binding.get("modules")
+        if not isinstance(modules, list) or not modules:
+            raise ContractError(f"{binding_path}: invalid resolved module closure")
+        seen_modules: set[str] = set()
+        for module in modules:
+            if not isinstance(module, dict) or set(module) != {
+                "content_sha256",
+                "id",
+                "interface_version",
+            }:
+                raise ContractError(f"{binding_path}: invalid resolved module entry")
+            if module["id"] in seen_modules:
+                raise ContractError(f"{binding_path}: duplicate resolved module")
+            seen_modules.add(module["id"])
+            if not re.fullmatch(r"[0-9a-f]{64}", module["content_sha256"]):
+                raise ContractError(f"{binding_path}: invalid resolved module digest")
+            if module["interface_version"] != "runtime-env/module/v1":
+                raise ContractError(f"{binding_path}: unsupported module interface")
+        requirements_sha = binding.get("requirements_sha256")
+        if requirements_sha is not None and not re.fullmatch(
+            r"[0-9a-f]{64}", requirements_sha
+        ):
+            raise ContractError(f"{binding_path}: invalid requirements digest")
     variables = binding.get("variables")
     if not isinstance(variables, list) or not variables:
         raise ContractError(f"{binding_path}: invalid variable projection")
@@ -1630,8 +1719,9 @@ def build_parser() -> argparse.ArgumentParser:
     sync_parser = subparsers.add_parser(
         "sync", help="explicitly synchronize a pinned, secret-free consumer binding"
     )
-    sync_parser.add_argument("--profile", required=True)
-    sync_parser.add_argument("--binding", required=True)
+    sync_parser.add_argument("--requirements", type=Path)
+    sync_parser.add_argument("--profile")
+    sync_parser.add_argument("--binding")
     sync_parser.add_argument("--workload")
     sync_parser.add_argument("--policy", action="append", default=[])
     sync_parser.add_argument("--target-root", type=Path, required=True)
@@ -1800,6 +1890,26 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "sync":
         try:
+            requirements_sha256 = None
+            required_modules = None
+            if args.requirements is not None:
+                if args.profile or args.binding or args.workload or args.policy:
+                    raise ContractError(
+                        "--requirements cannot be combined with --profile, --binding, --workload, or --policy"
+                    )
+                requirements = _load_consumer_requirements(args.requirements)
+                requirements_sha256 = hashlib.sha256(
+                    args.requirements.read_bytes()
+                ).hexdigest()
+                args.profile = requirements["profile"]
+                args.binding = requirements["binding"]
+                args.workload = requirements["workload"]
+                args.policy = requirements["policies"]
+                required_modules = requirements["required_modules"]
+            elif not args.profile or not args.binding:
+                raise ContractError(
+                    "sync needs --requirements or both --profile and --binding"
+                )
             return sync_consumer(
                 root=args.catalog_root.resolve(),
                 catalog=catalog,
@@ -1810,6 +1920,8 @@ def main(argv: list[str] | None = None) -> int:
                 target_root=args.target_root,
                 apply=args.apply,
                 check=args.check,
+                requirements_sha256=requirements_sha256,
+                required_modules=required_modules,
             )
         except ContractError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)

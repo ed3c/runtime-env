@@ -2,6 +2,10 @@
 
 This repository is a secret-free contract catalog. These rules apply to the entire tree.
 
+跨 repo 的 requirements → resolved binding、carrier adapter、更新與 rollback 契約，先讀
+[`docs/modular-consumer-contract.md`](docs/modular-consumer-contract.md)。本檔只在新 chat 啟動時載入；
+修改後不能用既有 chat 是否採用來驗收。
+
 ## Local integration routing
 
 When a task concerns the canonical checkout at `/Users/neon/runtime-env`, local
