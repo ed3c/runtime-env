@@ -193,9 +193,9 @@ consumer code may stop at L4; a consumer workload is complete only at L5.
 Keep missing input, unreachable service, refused authentication, invalid
 evidence, and unsafe permissions as distinct blockers. Do not turn a blocker
 into a pass by weakening isolation, adding an unscoped secret, substituting a
-mock, or skipping an entrypoint. After three failed attempts at the same
-problem, stop and record the commands, redacted errors, reasons, and a simpler
-route to evaluate.
+mock, or skipping an entrypoint. After three unsuccessful attempts at the same
+problem, including any combination of `BLOCKED` and `FAILED`, stop and record
+the commands, redacted errors, reasons, and a simpler route to evaluate.
 
 ### Unresolved workload placeholders
 
@@ -211,6 +211,14 @@ change that does one of the following:
 Do not substitute text in a generated consumer projection or invoke the command
 outside the runner and call it accepted. The DR loop, both iOS workloads, and
 the stealth-browser MCP rows below are `BLOCKED` on this contract gap.
+
+A workload with `secret_delivery=broker-only` has a separate prerequisite. Its
+L3 evidence must name a dedicated broker adapter, its trusted implementation
+path, the fixed adapter entrypoint, the store or session that remains outside
+the Agent, and the metadata-only receipt. The generic workload runner is an
+orchestrator, not that adapter. If the catalog does not map these facts, the row
+is `BLOCKED`; an Agent must not infer an adapter from an executable name or run
+the child directly and claim secret isolation.
 
 ### Consumer repository acceptance
 
@@ -249,16 +257,16 @@ for each additional consumer rather than replacing evidence from another.
 
 | Workload | Consumer / target root | Binding and policies | Required entrypoints or gap | Current result |
 |---|---|---|---|---|
-| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `inventory`, `replay`; prove the exact admitted agy model and file receipt. | `NOT_RUN` |
-| `bettor-arena-proof` | `/Users/neon/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 entrypoints in `workloads/bettor-arena-proof.json`; independently prove carriers, browser transports, peers, approval, and Forgejo. | `NOT_RUN` |
-| `dr-research-loop` | `/Users/neon/skill-bettor` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `engine` and `verify` contain `<dr-topic>` or `<proposal>`; first implement a typed parameter contract or concrete workload. | `BLOCKED`: unresolved command placeholders. |
+| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `inventory`, `replay`; also map the agy session broker, trusted adapter entrypoint, and receipt. | `BLOCKED`: dedicated broker adapter mapping unresolved. |
+| `bettor-arena-proof` | `/Users/neon/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 entrypoints in `workloads/bettor-arena-proof.json`; map separate adapters for every session/private store as well as peers, approval, and Forgejo. | `BLOCKED`: dedicated broker adapter mappings unresolved. |
+| `dr-research-loop` | `/Users/neon/skill-bettor` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `engine` and `verify` contain `<dr-topic>` or `<proposal>`; a dedicated browser/agent broker adapter mapping is also required. | `BLOCKED`: unresolved command placeholders and broker adapter mapping. |
 | `forgejo-delivery-loop` | Runtime-owned verifier; target may be any admitted local Git consumer | No consumer binding or carrier policy is required for the runtime-owned canary. | `broker-selftest`, `credential-canary`; must preserve the target Git state. | `BLOCKED`: on 2026-08-11 `localhost:3000` was unreachable. |
-| `gemini-conversation-research` | `/Users/neon/bettor-arena` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `carrier-gate`, `extract`, `guided-edge`; prove the logged-in browser and file-only sink. | `NOT_RUN` |
-| `ios-testflight-beta` | Broker implementation: `/Users/neon/ix-agy`; release target: `UNRESOLVED` per admitted run | Binding: `UNRESOLVED`; policies: none declared | `upload` contains `<target-repo>`; resolve the runner contract first. External release also requires separate human authority. | `BLOCKED`: unresolved command placeholder; release not authorized by this contract. |
-| `ios-testflight-verify` | Broker implementation: `/Users/neon/ix-agy`; verification target: `UNRESOLVED` | Binding: `UNRESOLVED`; policies: none declared | `preflight`; `verify-asc` contains `<target-repo>` and requires a typed target contract. | `BLOCKED`: unresolved command placeholder. |
+| `gemini-conversation-research` | `/Users/neon/bettor-arena` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `carrier-gate`, `extract`, `guided-edge`; map the logged-in browser adapter, private profile store, and file-only receipt. | `BLOCKED`: dedicated broker adapter mapping unresolved. |
+| `ios-testflight-beta` | Broker implementation: `/Users/neon/ix-agy`; release target: `UNRESOLVED` per admitted run | Binding: `UNRESOLVED`; policies: none declared | `upload` contains `<target-repo>`; map the signing/App Store Connect broker adapter. External release requires separate human authority. | `BLOCKED`: command placeholder and broker adapter mapping unresolved; release not authorized here. |
+| `ios-testflight-verify` | Broker implementation: `/Users/neon/ix-agy`; verification target: `UNRESOLVED` | Binding: `UNRESOLVED`; policies: none declared | `verify-asc` contains `<target-repo>`; `preflight` and `verify-asc` require a mapped signing/App Store Connect broker adapter. | `BLOCKED`: command placeholder and broker adapter mapping unresolved. |
 | `local-jdk-verify` | `/Users/neon/runtime-env` | No consumer binding or policy for the local verifier. | `verify`; real `JAVA_HOME`, matching `java`/`javac`, and compile/run receipt. | `NOT_RUN`; the fixture selftest is not a current live receipt. |
-| `repo-wiki-converge` | `/Users/neon/ix-agy` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `author`, `verify`, `ingest`; prove agy plus the real knowledge-graph ingest. | `NOT_RUN` |
-| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `serve` contains `<stealth-browser-root>`; first implement a typed root contract. `test` must then prove the bounded broker/profile behavior. | `BLOCKED`: unresolved command placeholder. |
+| `repo-wiki-converge` | `/Users/neon/ix-agy` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `author`, `verify`, `ingest`; map the agy session adapter and receipt before proving the real knowledge-graph ingest. | `BLOCKED`: dedicated broker adapter mapping unresolved. |
+| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | Binding: `UNRESOLVED`; policies: `UNRESOLVED` | `serve` contains `<stealth-browser-root>`; map the profile broker, bounded file sink, adapter entrypoint, and receipt. | `BLOCKED`: command placeholder and broker adapter mapping unresolved. |
 
 Each row's acceptance record must include runtime-env commit/tree/dirty state;
 consumer path and commit/tree/dirty state when applicable; profile, workload,

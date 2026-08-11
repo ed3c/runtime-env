@@ -19,6 +19,8 @@ for required in \
   'Consumer repository acceptance' \
   'Live acceptance matrix' \
   'consumer repository must not create its own `.env`' \
+  'three unsuccessful attempts' \
+  'dedicated broker adapter' \
   'BLOCKED'; do
   grep -Fq "${required}" "${DOC}" || {
     echo "FAIL: integration completion requirements omitted ${required}" >&2
