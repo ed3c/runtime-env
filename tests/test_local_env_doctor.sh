@@ -90,6 +90,34 @@ set_path_output="$(${ROOT}/runtime-env local-env set-path --env-file "${fixture}
 [[ "${set_path_output}" != *"${config_root}"* ]]
 grep -Fq "CODEX_HOME=${config_root}" "${fixture}"
 
+set_value_output="$(printf '%s\n' "${sentinel}" | \
+  ${ROOT}/runtime-env local-env set --env-file "${fixture}" \
+    --name E2B_API_KEY --stdin)"
+[[ "${set_value_output}" == 'UPDATED local env value: E2B_API_KEY' ]]
+[[ "${set_value_output}" != *"${sentinel}"* ]]
+[[ "$(file_mode "${fixture}")" == '600' ]]
+grep -Fq "E2B_API_KEY=${sentinel}" "${fixture}"
+
+set +e
+unknown_value_output="$(printf '%s\n' "${sentinel}" | \
+  ${ROOT}/runtime-env local-env set --env-file "${fixture}" \
+    --name NOT_IN_CATALOG --stdin 2>&1)"
+unknown_value_status=$?
+set -e
+[[ ${unknown_value_status} -eq 2 ]]
+[[ "${unknown_value_output}" == *'unknown variable: NOT_IN_CATALOG'* ]]
+[[ "${unknown_value_output}" != *"${sentinel}"* ]]
+
+set +e
+empty_value_output="$(printf '' | \
+  ${ROOT}/runtime-env local-env set --env-file "${fixture}" \
+    --name GEMINI_API_KEY --stdin 2>&1)"
+empty_value_status=$?
+set -e
+[[ ${empty_value_status} -eq 2 ]]
+[[ "${empty_value_output}" == *'requires one non-empty line on stdin'* ]]
+[[ "${empty_value_output}" != *"${sentinel}"* ]]
+
 set +e
 secret_path_output="$(${ROOT}/runtime-env local-env set-path --env-file "${fixture}" \
   --name E2B_API_KEY --path "${config_root}" 2>&1)"

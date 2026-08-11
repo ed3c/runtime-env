@@ -16,6 +16,10 @@ that a particular consumer has passed.
 - A consumer repository must not create its own `.env`. Generated
   `.runtime-env/examples/*.env.example` files contain names and safe defaults
   only.
+- Host values enter the canonical dotenv through `local-env set-path` for
+  declared non-secret paths or `local-env set --stdin` for other declared
+  values. Credential literals must never appear in argv, logs, receipts, or
+  Agent prompts.
 - L5 is per `(consumer, binding, workload, consumer commit, runtime commit)`.
   One passing repository never promotes another repository or workload.
 

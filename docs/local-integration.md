@@ -75,11 +75,17 @@ cd /Users/neon/runtime-env
 ./runtime-env local-env init   # first use only; creates blank 0600 file
 ./runtime-env local-env doctor
 ./runtime-env local-env reconcile # preserve values and organize scope sections
+credential-broker-command | ./runtime-env local-env set --name NAME --stdin
 ./runtime-env local-env migrate-forgejo-keychain # after filling Forgejo username/password
 ```
 
-Fill the resulting file outside an agent session. Do not paste its values into
-chat. A synchronized consumer reads its secret-free binding while the local
+Never place a credential literal on the command line. `local-env set --stdin`
+accepts exactly one non-empty line, validates the catalog name and destination
+metadata, preserves mode `0600`, and reports only the updated name. A legacy
+consumer dotenv must first be made user-owned mode `0600`; after its declared
+values have been brokered into this canonical file, the consumer must stop
+depending on that legacy dotenv. Do not paste values into chat. A synchronized
+consumer reads its secret-free binding while the local
 broker resolves values from this one canonical file; the dotenv itself is not
 copied to that consumer.
 

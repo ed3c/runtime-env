@@ -1148,6 +1148,33 @@ def set_local_env_path(
     return 0
 
 
+def set_local_env_value_from_stdin(
+    *, catalog: Catalog, env_file: Path, name: str, payload: str
+) -> int:
+    path = env_file.expanduser().absolute()
+    _load_private_dotenv(catalog=catalog, env_file=path)
+    if name not in catalog.variables:
+        raise ContractError(f"unknown variable: {name}")
+    lines = payload.splitlines()
+    if len(lines) != 1 or not lines[0] or "\x00" in lines[0]:
+        raise ContractError("local-env set requires one non-empty line on stdin")
+    value = lines[0]
+    raw_lines = path.read_text(encoding="utf-8").splitlines()
+    assignment = re.compile(rf"^\s*(?:export\s+)?{re.escape(name)}\s*=")
+    indexes = [index for index, line in enumerate(raw_lines) if assignment.match(line)]
+    if len(indexes) > 1:
+        raise ContractError(f"local env contains duplicate assignments for {name}")
+    replacement = f"{name}={value}"
+    if indexes:
+        raw_lines[indexes[0]] = replacement
+    else:
+        raw_lines.append(replacement)
+    _atomic_write(path, "\n".join(raw_lines) + "\n")
+    path.chmod(0o600)
+    print(f"UPDATED local env value: {name}")
+    return 0
+
+
 def _credential_payload(values: dict[str, str]) -> str:
     return "".join(f"{name}={value}\n" for name, value in values.items()) + "\n"
 
@@ -2235,6 +2262,12 @@ def build_parser() -> argparse.ArgumentParser:
     local_env_set_path.add_argument("--env-file", type=Path)
     local_env_set_path.add_argument("--name", required=True)
     local_env_set_path.add_argument("--path", type=Path, required=True)
+    local_env_set = local_env_subparsers.add_parser(
+        "set", help="set one declared value from stdin without printing it"
+    )
+    local_env_set.add_argument("--env-file", type=Path)
+    local_env_set.add_argument("--name", required=True)
+    local_env_set.add_argument("--stdin", action="store_true", required=True)
     local_env_migrate_forgejo = local_env_subparsers.add_parser(
         "migrate-forgejo-keychain",
         help="move one localhost Forgejo password from private dotenv/plaintext store to macOS Keychain",
@@ -2454,6 +2487,13 @@ def main(argv: list[str] | None = None) -> int:
                     env_file=args.env_file or (args.catalog_root / ".env"),
                     name=args.name,
                     value=args.path,
+                )
+            if args.local_env_command == "set":
+                return set_local_env_value_from_stdin(
+                    catalog=catalog,
+                    env_file=args.env_file or (args.catalog_root / ".env"),
+                    name=args.name,
+                    payload=sys.stdin.read(),
                 )
             if args.local_env_command == "migrate-forgejo-keychain":
                 return migrate_forgejo_keychain(

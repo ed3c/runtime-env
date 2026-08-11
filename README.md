@@ -26,6 +26,7 @@ This prevents an optional cloud backend from making a local workflow demand unre
 ./runtime-env local-env doctor    # names and presence only; never values
 ./runtime-env local-env reconcile # preserve values; organize local/cloud/portable sections
 ./runtime-env local-env set-path --name CODEX_HOME --path /absolute/existing/path
+credential-broker-command | ./runtime-env local-env set --name E2B_API_KEY --stdin
 ./runtime-env local-env migrate-forgejo-keychain # one-time localhost password migration
 ./runtime-env workload list
 ./runtime-env workload show --id ios-testflight-beta
@@ -62,6 +63,9 @@ The canonical `.env` is mechanically grouped by each variable's required
 `runtime_scope`: `LOCAL-ONLY HOST SETTINGS`, `CLOUD / REMOTE RUNTIME SETTINGS`,
 and `PORTABLE RUNTIME SETTINGS`. `local-env reconcile` preserves assignments,
 adds new empty names, and rewrites those sections without printing any value.
+`local-env set --stdin` is the only general value-writing seam: the value stays
+off argv and stdout, the destination must already be a user-owned `0600`
+regular file, and the name must exist in the catalog.
 The cloud section is still stored only in the host-owned dotenv; it identifies
 the intended consumption plane and does not authorize copying the file into a
 cloud runner.
