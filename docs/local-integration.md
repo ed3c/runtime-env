@@ -6,6 +6,11 @@ The intended checkout is `/Users/neon/runtime-env`. Agents should run catalog
 and host verification from that directory; do not copy this repository's files
 into each consuming project.
 
+Before claiming that a workload or consumer repository is integrated, read
+[`docs/integration-requirements.md`](integration-requirements.md). It defines
+the maturity levels, live evidence, consumer acceptance, and blocker receipts
+required for that claim.
+
 `AGENTS.md` is loaded only when a new chat starts. Editing it does not retrofit
 the current chat. The root `AGENTS.md` therefore contains a short routing rule
 to this document, while this file owns the detailed integration requirements.

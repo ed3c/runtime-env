@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DOC="${ROOT}/docs/local-integration.md"
+REQUIREMENTS="${ROOT}/docs/integration-requirements.md"
 
 grep -Fq 'docs/local-integration.md' "${ROOT}/AGENTS.md" || {
   echo "FAIL: AGENTS.md does not route agents to the local integration contract" >&2
@@ -13,6 +14,28 @@ grep -Fq 'docs/local-integration.md' "${ROOT}/AGENTS.md" || {
   echo "FAIL: local integration contract is absent" >&2
   exit 1
 }
+
+grep -Fq 'docs/integration-requirements.md' "${DOC}" || {
+  echo "FAIL: local integration contract does not route agents to completion requirements" >&2
+  exit 1
+}
+
+[[ -f "${REQUIREMENTS}" ]] || {
+  echo "FAIL: integration completion requirements are absent" >&2
+  exit 1
+}
+
+for required in \
+  'Integration maturity levels' \
+  'Consumer repository acceptance' \
+  'Live acceptance matrix' \
+  'consumer repository must not create its own `.env`' \
+  'BLOCKED'; do
+  grep -Fq "${required}" "${REQUIREMENTS}" || {
+    echo "FAIL: integration completion requirements omitted ${required}" >&2
+    exit 1
+  }
+done
 
 for required in \
   '/Users/neon/runtime-env' \
