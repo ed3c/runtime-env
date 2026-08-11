@@ -7,7 +7,7 @@
   "entrypoints": {
     "inventory": ["agy", "models"],
     "replay": ["python3", "loop_wiki/evolve-unknown-discovery-plan-truth/scripts/execute_agy_replay_requests.py", "--approved-external-call"],
-    "replay-contract-test": ["bun", "--cwd", "loop_wiki/evolve-unknown-discovery-plan-truth/adapters/typescript", "run", "test:agy-replay-execution"]
+    "replay-contract-test": ["bun", "run", "--cwd", "loop_wiki/evolve-unknown-discovery-plan-truth/adapters/typescript", "test:agy-replay-execution"]
   },
   "acceptance_entrypoints": ["replay-contract-test", "inventory", "replay"],
   "public_test_entrypoints": ["replay-contract-test"],

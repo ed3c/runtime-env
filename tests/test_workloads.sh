@@ -87,6 +87,17 @@ assert set(value["public_test_entrypoints"]) == {"carrier-gate", "guided-contrac
 assert "GEMINI_RESEARCH_RUN_ROOT" in value["entrypoint_environment"]["extract"]
 ' <<< "${gemini}"
 
+agy_replay="$(${ROOT}/runtime-env workload show --id agy-gemini36-flash-high-replay)"
+python3 -c '
+import json, sys
+value = json.load(sys.stdin)
+assert value["entrypoints"]["replay-contract-test"] == [
+    "bun", "run", "--cwd",
+    "loop_wiki/evolve-unknown-discovery-plan-truth/adapters/typescript",
+    "test:agy-replay-execution",
+]
+' <<< "${agy_replay}"
+
 proof="$(${ROOT}/runtime-env workload show --id bettor-arena-proof)"
 python3 -c '
 import json, sys
