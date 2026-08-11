@@ -23,7 +23,7 @@ that a particular consumer has passed.
 
 | Consumer | Binding | Workload | Consumer verifier |
 |---|---|---|---|
-| `/Users/neon/bettor-arena` | `bettor-arena-local` | `bettor-arena-proof` | `scripts/runtime-env/check_runtime_env_binding.py` must be replaced or wrapped by the installed `runtime-env verify-consumer` seam |
+| `/Users/neon/bettor-arena` | `bettor-arena-local` | `bettor-arena-proof` | `scripts/gates/check_runtime_env_binding.py` delegates to the installed `runtime-env verify-consumer` seam |
 | `/Users/neon/skill-bettor` | `skill-bettor-agy-replay` | `agy-gemini36-flash-high-replay` | `scripts/check_runtime_env_consumer.sh` |
 | `/Users/neon/skill-bettor` | `skill-bettor-dr-research` | `dr-research-loop` | `scripts/check_runtime_env_consumer.sh` |
 | `/Users/neon/ix-agy` | `ix-agy-repo-wiki` | `repo-wiki-converge` | `scripts/check_runtime_env_consumer.sh` |

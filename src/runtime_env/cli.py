@@ -705,6 +705,61 @@ def _git(root: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
+def _ignored_files_fingerprint(root: Path) -> str:
+    """Hash ignored consumer bytes so L5 cannot hide workspace mutations."""
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "ls-files",
+                "--others",
+                "--ignored",
+                "--exclude-standard",
+                "-z",
+            ],
+            check=False,
+            capture_output=True,
+        )
+    except OSError as exc:
+        raise ContractError(f"cannot inventory ignored consumer files: {exc}") from exc
+    if result.returncode != 0:
+        raise ContractError("cannot inventory ignored consumer files")
+
+    digest = hashlib.sha256()
+    for encoded_relative in sorted(part for part in result.stdout.split(b"\0") if part):
+        relative = Path(os.fsdecode(encoded_relative))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ContractError("git returned an unsafe ignored consumer path")
+        path = root / relative
+        try:
+            metadata = path.lstat()
+        except OSError as exc:
+            raise ContractError(
+                "ignored consumer file changed during acceptance inventory"
+            ) from exc
+        digest.update(encoded_relative)
+        digest.update(b"\0")
+        digest.update(str(stat.S_IFMT(metadata.st_mode)).encode("ascii"))
+        digest.update(b"\0")
+        if path.is_symlink():
+            digest.update(os.fsencode(os.readlink(path)))
+        elif path.is_file():
+            try:
+                with path.open("rb") as handle:
+                    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                        digest.update(chunk)
+            except OSError as exc:
+                raise ContractError(
+                    "cannot hash ignored consumer file during acceptance"
+                ) from exc
+        else:
+            digest.update(b"directory")
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def _repository_url(remote: str) -> str:
     if remote.startswith("git@") and ":" in remote:
         host, path = remote[4:].split(":", 1)
@@ -1879,6 +1934,7 @@ def accept_consumer(
     before_status = _git(target, "status", "--porcelain=v1")
     if before_status:
         raise ContractError("consumer acceptance requires a clean target checkout")
+    before_ignored = _ignored_files_fingerprint(target)
 
     hooks_path_text = _git(target, "config", "--get", "core.hooksPath")
     hooks_path = Path(hooks_path_text)
@@ -1901,11 +1957,44 @@ def accept_consumer(
             raise ContractError(f"L5 {label} must be executable: {relative}")
     hook_bytes = hook_path.read_bytes()
     verifier_bytes = verifier_path.read_bytes()
-    if verifier_relative.as_posix().encode() not in hook_bytes:
+    try:
+        hook_text = hook_bytes.decode("utf-8")
+        verifier_text = verifier_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ContractError("L5 hook and verifier must be UTF-8 text") from exc
+    hook_code = "\n".join(
+        line for line in hook_text.splitlines() if not line.lstrip().startswith("#")
+    )
+    verifier_code = "\n".join(
+        line for line in verifier_text.splitlines() if not line.lstrip().startswith("#")
+    )
+    if verifier_relative.as_posix() not in hook_code:
         raise ContractError("pre-commit hook does not invoke the declared verifier")
-    verifier_text = verifier_bytes.decode("utf-8")
-    if "verify-consumer" not in verifier_text or binding_id not in verifier_text:
-        raise ContractError("declared hook verifier does not enforce this binding")
+    if "verify-consumer" not in verifier_code or binding_id not in verifier_code:
+        raise ContractError(
+            "declared hook verifier requires an executable verifier line for this binding"
+        )
+    verifier_environment = {
+        name: os.environ[name]
+        for name in ("HOME", "LANG", "LC_ALL", "LOGNAME", "PATH", "SHELL", "TMPDIR", "USER")
+        if name in os.environ
+    }
+    verifier_environment.setdefault("PATH", os.defpath)
+    try:
+        verifier_result = subprocess.run(
+            [str(verifier_path), "--staged"],
+            cwd=target,
+            env=verifier_environment,
+            check=False,
+            capture_output=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ContractError("cannot execute the declared hook verifier") from exc
+    if verifier_result.returncode != 0:
+        raise ContractError(
+            f"declared hook verifier --staged failed with exit {verifier_result.returncode}"
+        )
     hook_gate = {
         "status": "passed",
         "hooks_path": hooks_path.as_posix(),
@@ -1913,6 +2002,11 @@ def accept_consumer(
         "pre_commit_sha256": hashlib.sha256(hook_bytes).hexdigest(),
         "verifier": verifier_relative.as_posix(),
         "verifier_sha256": hashlib.sha256(verifier_bytes).hexdigest(),
+        "verifier_execution": {
+            "exit_code": verifier_result.returncode,
+            "stdout_sha256": hashlib.sha256(verifier_result.stdout).hexdigest(),
+            "stderr_sha256": hashlib.sha256(verifier_result.stderr).hexdigest(),
+        },
     }
 
     with contextlib.redirect_stdout(io.StringIO()):
@@ -2032,10 +2126,12 @@ def accept_consumer(
     after_head = _git(target, "rev-parse", "HEAD")
     after_tree = _git(target, "rev-parse", "HEAD^{tree}")
     after_status = _git(target, "status", "--porcelain=v1")
+    after_ignored = _ignored_files_fingerprint(target)
     target_unchanged = (
         before_head == after_head
         and before_tree == after_tree
         and not after_status
+        and before_ignored == after_ignored
     )
     complete_set = [item["entrypoint"] for item in executions] == workload[
         "acceptance_entrypoints"
@@ -2064,6 +2160,7 @@ def accept_consumer(
             "tree_after": after_tree,
             "dirty_before": bool(before_status),
             "dirty_after": bool(after_status),
+            "ignored_changed_after": before_ignored != after_ignored,
         },
         "executions": executions,
     }
