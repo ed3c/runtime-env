@@ -1948,6 +1948,7 @@ def accept_consumer(
     binding_id: str,
     env_file: Path | None,
     hook_verifier: Path,
+    execution_receipts: list[str],
     receipt_path: Path,
     json_output: bool,
 ) -> int:
@@ -2072,6 +2073,96 @@ def accept_consumer(
             f"{binding_path}: catalog source does not match the consumer pin"
         )
 
+    reusable_receipts: dict[str, tuple[Path, bytes, dict[str, Any]]] = {}
+    acceptance_entrypoints = workload["acceptance_entrypoints"]
+    for specification in execution_receipts:
+        entrypoint_id, separator, raw_path = specification.partition("=")
+        if not separator or not entrypoint_id or not raw_path:
+            raise ContractError(
+                "execution receipt must use ENTRYPOINT=/absolute/path syntax"
+            )
+        if entrypoint_id not in acceptance_entrypoints:
+            raise ContractError(
+                f"execution receipt names a non-acceptance entrypoint: {entrypoint_id}"
+            )
+        if entrypoint_id in reusable_receipts:
+            raise ContractError(f"duplicate execution receipt: {entrypoint_id}")
+        path = Path(raw_path).expanduser()
+        if not path.is_absolute():
+            raise ContractError("execution receipt path must be absolute")
+        if path.is_symlink() or not path.is_file():
+            raise ContractError(
+                f"execution receipt must be a regular file: {entrypoint_id}"
+            )
+        path_stat = path.stat()
+        if path_stat.st_uid != os.getuid() or stat.S_IMODE(path_stat.st_mode) != 0o600:
+            raise ContractError(
+                f"execution receipt must be user-owned with mode 0600: {entrypoint_id}"
+            )
+        encoded = path.read_bytes()
+        try:
+            execution = json.loads(encoded)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ContractError(
+                f"execution receipt is not valid UTF-8 JSON: {entrypoint_id}"
+            ) from exc
+        if execution.get("schema") != "runtime-env/execution-receipt/v1":
+            raise ContractError(f"execution receipt schema mismatch: {entrypoint_id}")
+        if execution.get("workload") != workload_id:
+            raise ContractError(f"execution receipt workload mismatch: {entrypoint_id}")
+        if execution.get("entrypoint") != entrypoint_id:
+            raise ContractError(f"execution receipt entrypoint mismatch: {entrypoint_id}")
+        if execution.get("status") != "passed" or execution.get("child_exit") != 0:
+            raise ContractError(f"execution receipt is not passed: {entrypoint_id}")
+        expected_command_sha = hashlib.sha256(
+            json.dumps(
+                workload["entrypoints"][entrypoint_id],
+                separators=(",", ":"),
+                ensure_ascii=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        if execution.get("command_sha256") != expected_command_sha:
+            raise ContractError(f"execution receipt command mismatch: {entrypoint_id}")
+        if execution.get("runtime_source") != runtime_source:
+            raise ContractError(
+                f"execution receipt runtime source mismatch: {entrypoint_id}"
+            )
+        execution_target = execution.get("target")
+        if not isinstance(execution_target, dict) or any(
+            (
+                execution_target.get("root") != str(target),
+                execution_target.get("head_before") != before_head,
+                execution_target.get("head_after") != before_head,
+                execution_target.get("dirty_before") is not False,
+                execution_target.get("dirty_after") is not False,
+            )
+        ):
+            raise ContractError(f"execution receipt target mismatch: {entrypoint_id}")
+        if execution.get("declared_evidence") != workload["evidence"]:
+            raise ContractError(
+                f"execution receipt evidence contract mismatch: {entrypoint_id}"
+            )
+        if execution.get("broker_adapter") != workload.get("broker_adapters", {}).get(
+            entrypoint_id
+        ):
+            raise ContractError(
+                f"execution receipt broker adapter mismatch: {entrypoint_id}"
+            )
+        if (
+            workload["mutation"] == "read-only"
+            and execution.get("policy", {}).get("read_only_unchanged") is not True
+        ):
+            raise ContractError(
+                f"execution receipt violates read-only policy: {entrypoint_id}"
+            )
+        declared_path = execution.get("receipt_path")
+        if (
+            not isinstance(declared_path, str)
+            or Path(declared_path).expanduser().absolute() != path.absolute()
+        ):
+            raise ContractError(f"execution receipt path mismatch: {entrypoint_id}")
+        reusable_receipts[entrypoint_id] = (path, encoded, execution)
+
     requested_receipt = receipt_path.expanduser()
     if not requested_receipt.is_absolute():
         raise ContractError("consumer acceptance receipt path must be absolute")
@@ -2101,7 +2192,22 @@ def accept_consumer(
     started_at = datetime.now(timezone.utc)
     executions: list[dict[str, Any]] = []
     all_passed = True
-    for entrypoint_id in workload["acceptance_entrypoints"]:
+    for entrypoint_id in acceptance_entrypoints:
+        reusable = reusable_receipts.get(entrypoint_id)
+        if reusable is not None:
+            entry_receipt_path, execution_bytes, execution = reusable
+            executions.append(
+                {
+                    "child_exit": execution["child_exit"],
+                    "command_sha256": execution["command_sha256"],
+                    "entrypoint": entrypoint_id,
+                    "evidence_source": "reused",
+                    "receipt_path": str(entry_receipt_path),
+                    "receipt_sha256": hashlib.sha256(execution_bytes).hexdigest(),
+                    "status": execution["status"],
+                }
+            )
+            continue
         entry_receipt_path = execution_directory / f"{entrypoint_id}.json"
         try:
             with contextlib.redirect_stdout(io.StringIO()):
@@ -2141,6 +2247,7 @@ def accept_consumer(
                 "child_exit": execution["child_exit"],
                 "command_sha256": execution["command_sha256"],
                 "entrypoint": entrypoint_id,
+                "evidence_source": "executed",
                 "receipt_path": str(entry_receipt_path),
                 "receipt_sha256": hashlib.sha256(execution_bytes).hexdigest(),
                 "status": execution["status"],
@@ -2164,9 +2271,7 @@ def accept_consumer(
     target_unchanged = tracked_target_unchanged and (
         not ignored_changed or ignored_change_permitted
     )
-    complete_set = [item["entrypoint"] for item in executions] == workload[
-        "acceptance_entrypoints"
-    ]
+    complete_set = [item["entrypoint"] for item in executions] == acceptance_entrypoints
     passed = all_passed and complete_set and target_unchanged
     finished_at = datetime.now(timezone.utc)
     receipt: dict[str, Any] = {
@@ -2332,6 +2437,13 @@ def build_parser() -> argparse.ArgumentParser:
     accept_consumer_parser.add_argument("--binding", required=True)
     accept_consumer_parser.add_argument("--env-file", type=Path)
     accept_consumer_parser.add_argument("--hook-verifier", type=Path, required=True)
+    accept_consumer_parser.add_argument(
+        "--execution-receipt",
+        action="append",
+        default=[],
+        metavar="ENTRYPOINT=/ABSOLUTE/PATH",
+        help="reuse one passed, exact-revision workload receipt without rerunning it",
+    )
     accept_consumer_parser.add_argument("--receipt", type=Path, required=True)
     accept_consumer_parser.add_argument("--json", action="store_true")
     return parser
@@ -2369,6 +2481,7 @@ def main(argv: list[str] | None = None) -> int:
                 binding_id=args.binding,
                 env_file=args.env_file,
                 hook_verifier=args.hook_verifier,
+                execution_receipts=args.execution_receipt,
                 receipt_path=args.receipt,
                 json_output=args.json,
             )

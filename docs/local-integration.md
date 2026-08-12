@@ -256,7 +256,10 @@ For each consumer and capability:
    receipt, control, mutation boundary, and source revisions, then run the
    consumer's full tests and `git diff --check`.
 6. Run `accept-consumer` with the consumer's tracked hook verifier and a private
-   receipt path. Only its consolidated `maturity=L5` receipt is an L5 claim.
+   receipt path. For an entrypoint whose external authority is single-use, pass
+   its exact workload receipt with repeatable `--execution-receipt
+   <entrypoint>=<absolute-path>`; do not retransmit merely to consolidate. Only
+   the resulting `maturity=L5` receipt is an L5 claim.
 
 The exact Agent procedure and current consumer-to-binding map live in
 [`docs/l5-consumer-integration.md`](l5-consumer-integration.md).
