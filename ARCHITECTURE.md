@@ -1,32 +1,85 @@
-# Architecture
+# Architecture — runtime-env
+
+## Role
+
+`runtime-env` is the secret-free Runtime Contract Plane. It owns vocabulary and portable runtime selection, not credential values or product behavior.
+
+## Contract topology
 
 ```text
 catalog/variables.json        one declaration per name
-          │
-          ▼
+          |
+          v
 modules/*.json                provider/runtime requirements
-          │
-          ▼
+          |
+          v
 profiles/*.json               workload composition
-          │
-          ▼
-runtime-env                   validate / list / render / check / sync
-          │
-          ├── dotenv example output
-          ├── GitHub Actions env mapping
-          ├── presence-only readiness receipt
-          └── explicit consumer projection
-                    │
-                    ├── .runtime-env/bindings/<id>.json
-                    └── .runtime-env/examples/<id>.env.example
+          |
+          +--> workloads/*.json   fixed entrypoints and exact env allowlists
+          +--> policies/*.json    carrier-native isolation projections
+          |
+          v
+runtime-env CLI               validate / list / render / check / workload / sync
+          |
+          +--> deterministic examples
+          +--> presence/readiness metadata
+          +--> explicit consumer projection
+                     |
+                     +--> bindings
+                     +--> workloads
+                     +--> policies
+                     +--> examples
 ```
 
-The catalog is the security and vocabulary SSOT. Modules own requirement semantics. Profiles own workload composition. Generated examples and workflow fragments are projections, not additional sources of truth.
+The catalog is vocabulary/security SSOT. Modules own requirement semantics. Profiles own composition. Workloads own fixed execution shape. Policies own carrier projection. The CLI owns cross-document invariants. Generated examples and consumer files are projections, not parallel truth.
 
-Validation is dependency-free Python so a repository can run it before installing its own toolchain. JSON Schema describes individual documents; the CLI owns cross-document invariants that JSON Schema alone cannot express, such as reference existence and profile default conflicts.
+## State machines
 
-Consumer projection is one-way and explicit. A clean source Git revision is
-the provenance boundary; the consumer receives only the selected variable
-metadata, safe defaults, hashes, and source commit/tree. It never receives
-credential values. Consumer hooks validate their staged local projection and
-therefore remain offline and independent of checkout layout.
+### Contract resolution
+
+```text
+UNDECLARED
+→ VARIABLE_DECLARED
+→ MODULE_VALID
+→ PROFILE_RESOLVED
+→ WORKLOAD/POLICY_SELECTED
+→ PORTABLE_CLOSURE_READY
+```
+
+### Consumer projection
+
+```text
+REQUIREMENTS_RECEIVED
+→ SOURCE_CLEAN_AND_IDENTIFIED
+→ SYNC_PLANNED
+→ APPLY_EXPLICIT
+→ PROJECTION_WRITTEN
+→ STAGED_VERIFY
+→ CANARY/RECEIPT
+→ HUMAN PROMOTION OR ROLLBACK
+```
+
+### Secret materialization
+
+```text
+PORTABLE_NAME_DECLARED
+→ EXECUTION_PLANE_SELECTED
+→ HOST/PROVIDER SECRET BROKER
+→ FIXED ENTRYPOINT RECEIVES MINIMAL ENV OR OPAQUE BROKER HANDLE
+→ VALUE NEVER ENTERS PORTABLE RECEIPT
+```
+
+Detailed transitions are in [`docs/architecture/STATE_MACHINES.md`](docs/architecture/STATE_MACHINES.md).
+
+## Security invariants
+
+- Secret values never enter Git or deterministic projections.
+- Secret variables have no committed defaults.
+- Entry-point environment allowlists are exact.
+- No generic shell-over-MCP or trailing arbitrary command surface.
+- A consumer hook validates local staged projection without network or sibling checkout.
+- GitHub/ChatGPT connectors provide authorization/tools, not compute.
+
+## Cross-repository plane
+
+`skills-shared` supplies procedures, `runtime-env` supplies secret-free runtime closure, `bettor-arena` supplies integration/proof/execution acceptance, and Agent Shield supplies domain consumer state. See [`docs/integration/CROSS_REPO_INTEGRATION.md`](docs/integration/CROSS_REPO_INTEGRATION.md).
