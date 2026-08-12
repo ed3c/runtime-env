@@ -122,7 +122,31 @@ cd /Users/neon/runtime-env
   --json
 ```
 
-The receipt is L5 only when all acceptance entrypoints pass, the public tests are
+By default, `accept-consumer` executes every acceptance entrypoint. For an
+external transmission, release operation, or another entrypoint whose authority
+is intentionally single-use, execute it once with `workload run`, then bind that
+exact receipt into the consolidated run instead of transmitting again:
+
+```bash
+./runtime-env accept-consumer \
+  --target-root /absolute/consumer \
+  --binding <binding> \
+  --hook-verifier scripts/<consumer-verifier>.sh \
+  --execution-receipt <entrypoint>=/absolute/private/receipt.json \
+  --receipt /absolute/private/0700/receipts/<binding>.json \
+  --json
+```
+
+`--execution-receipt` is repeatable. A reused receipt must be a user-owned
+`0600` regular file and must bind the same runtime commit/tree, workload,
+entrypoint command, broker adapter, evidence contract, target root and clean
+target HEAD. A stale, failed, renamed, edited, cross-target, or policy-violating
+receipt whose contract fields no longer match is rejected; acceptance never
+silently falls back to rerunning that entrypoint. The consolidated receipt also
+records the exact SHA-256 of the reused receipt bytes it accepted.
+
+The receipt is L5 only when every acceptance entrypoint has either passed in the
+current run or supplied one valid exact-revision receipt, the public tests are
 part of that set, the worktree and staged projection both verify, the configured
 hook is tracked and executable, the runtime source matches the pin, and the
 consumer HEAD/tree/status are unchanged. Child stdout, stderr, dotenv values,

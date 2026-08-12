@@ -8,6 +8,7 @@ trap 'rm -rf "${SCRATCH}"' EXIT
 CATALOG="${SCRATCH}/catalog"
 TARGET="${SCRATCH}/consumer"
 RECEIPTS="${SCRATCH}/receipts"
+LIVE_RUN_LOG="${SCRATCH}/live-canary.log"
 mkdir -p "${CATALOG}"/{catalog,modules,profiles,workloads} \
   "${TARGET}/scripts" "${TARGET}/.githooks" "${RECEIPTS}" "${SCRATCH}/bin"
 chmod 0700 "${RECEIPTS}"
@@ -30,7 +31,8 @@ printf '%s\n' \
   > "${CATALOG}/workloads/fixture.json"
 printf '%s\n' '#!/bin/sh' 'test -f .runtime-env/bindings/fixture.json' \
   > "${TARGET}/scripts/public-test.sh"
-printf '%s\n' '#!/bin/sh' 'test "${FIXTURE_NAME}" = accepted' \
+printf '%s\n' '#!/bin/sh' "printf '%s\\n' run >> '${LIVE_RUN_LOG}'" \
+  'test "${FIXTURE_NAME}" = accepted' \
   > "${TARGET}/scripts/live-canary.sh"
 chmod +x "${TARGET}/scripts/public-test.sh" "${TARGET}/scripts/live-canary.sh"
 printf '%s\n' '#!/bin/sh' 'set -eu' 'sh scripts/check-runtime-env-consumer.sh --staged' \
@@ -87,6 +89,43 @@ assert os.stat(d["receipt_path"]).st_mode & 0o777 == 0o600
 [[ -f "${RECEIPTS}/acceptance.d/public-test.json" ]]
 [[ -f "${RECEIPTS}/acceptance.d/live-canary.json" ]]
 [[ -z "$(git -C "${TARGET}" status --porcelain=v1)" ]]
+[[ "$(wc -l < "${LIVE_RUN_LOG}" | tr -d ' ')" == 1 ]]
+
+"${ROOT}/runtime-env" --catalog-root "${CATALOG}" workload run \
+  --id fixture --entrypoint live-canary --target-root "${TARGET}" \
+  --receipt "${RECEIPTS}/standalone-live.json" --json >/dev/null
+[[ "$(wc -l < "${LIVE_RUN_LOG}" | tr -d ' ')" == 2 ]]
+
+reuse_output="$("${ROOT}/runtime-env" --catalog-root "${CATALOG}" accept-consumer \
+  --target-root "${TARGET}" --binding fixture \
+  --hook-verifier scripts/check-runtime-env-consumer.sh \
+  --execution-receipt "live-canary=${RECEIPTS}/standalone-live.json" \
+  --receipt "${RECEIPTS}/reuse.json" --json)"
+python3 -c '
+import json, sys
+d=json.load(sys.stdin)
+assert d["status"] == "passed" and d["maturity"] == "L5"
+assert [item["evidence_source"] for item in d["executions"]] == ["executed", "reused"]
+assert d["executions"][1]["entrypoint"] == "live-canary"
+' <<< "${reuse_output}"
+[[ -f "${RECEIPTS}/reuse.d/public-test.json" ]]
+[[ ! -e "${RECEIPTS}/reuse.d/live-canary.json" ]]
+[[ "$(wc -l < "${LIVE_RUN_LOG}" | tr -d ' ')" == 2 ]]
+
+jq '.entrypoint = "public-test"' "${RECEIPTS}/standalone-live.json" \
+  > "${RECEIPTS}/wrong-entrypoint.json"
+chmod 0600 "${RECEIPTS}/wrong-entrypoint.json"
+set +e
+wrong_entrypoint_output="$("${ROOT}/runtime-env" --catalog-root "${CATALOG}" accept-consumer \
+  --target-root "${TARGET}" --binding fixture \
+  --hook-verifier scripts/check-runtime-env-consumer.sh \
+  --execution-receipt "live-canary=${RECEIPTS}/wrong-entrypoint.json" \
+  --receipt "${RECEIPTS}/wrong-entrypoint-acceptance.json" --json 2>&1)"
+wrong_entrypoint_status=$?
+set -e
+[[ ${wrong_entrypoint_status} -eq 2 ]]
+[[ "${wrong_entrypoint_output}" == *'execution receipt entrypoint mismatch'* ]]
+[[ "$(wc -l < "${LIVE_RUN_LOG}" | tr -d ' ')" == 2 ]]
 
 BAD_ENV="${SCRATCH}/bad.env"
 printf '%s\n' 'FIXTURE_NAME=rejected' > "${BAD_ENV}"
