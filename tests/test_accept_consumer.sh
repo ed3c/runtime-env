@@ -157,6 +157,34 @@ assert d["target"]["ignored_changed_after"] is True
 ' <<< "${ignored_output}"
 printf '%s\n' 'stable' > "${TARGET}/ignored-state"
 
+python3 -c '
+import json, pathlib
+path = pathlib.Path("'"${CATALOG}"'/workloads/fixture.json")
+document = json.loads(path.read_text())
+document["mutation"] = "workspace"
+path.write_text(json.dumps(document, sort_keys=True) + "\n")
+'
+git -C "${CATALOG}" add workloads/fixture.json
+git -C "${CATALOG}" commit -qm 'declare workspace mutation fixture'
+"${ROOT}/runtime-env" --catalog-root "${CATALOG}" sync \
+  --profile fixture --binding fixture --workload fixture \
+  --target-root "${TARGET}" --apply >/dev/null
+git -C "${TARGET}" add .runtime-env
+git -C "${TARGET}" commit -qm 'project workspace mutation contract'
+
+workspace_output="$("${ROOT}/runtime-env" --catalog-root "${CATALOG}" accept-consumer \
+  --target-root "${TARGET}" --binding fixture \
+  --hook-verifier scripts/check-runtime-env-consumer.sh \
+  --receipt "${RECEIPTS}/workspace-mutation.json" --json)"
+python3 -c '
+import json, sys
+d=json.load(sys.stdin)
+assert d["status"] == "passed" and d["maturity"] == "L5"
+assert d["target"]["ignored_changed_after"] is True
+assert d["target"]["ignored_change_permitted"] is True
+assert d["target"]["mutation"] == "workspace"
+' <<< "${workspace_output}"
+
 printf '%s\n' advance > "${CATALOG}/catalog-advance.txt"
 git -C "${CATALOG}" add catalog-advance.txt
 git -C "${CATALOG}" commit -qm 'advance catalog fixture'

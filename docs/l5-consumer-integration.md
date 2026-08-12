@@ -5,6 +5,11 @@ Read `docs/local-integration.md` first for security boundaries and maturity
 definitions. This runbook defines the repeatable mechanics; it is not evidence
 that a particular consumer has passed.
 
+For the current host rollout, read
+[`l5-rollout-2026-08-11.md`](l5-rollout-2026-08-11.md) before running an
+external entrypoint. It records completed transmissions, exhausted retry
+budgets, revision changes, and the explicit prohibition on iOS build/upload.
+
 ## Non-negotiable model
 
 - runtime-env owns variable names, security metadata, profiles, workload
@@ -122,6 +127,13 @@ part of that set, the worktree and staged projection both verify, the configured
 hook is tracked and executable, the runtime source matches the pin, and the
 consumer HEAD/tree/status are unchanged. Child stdout, stderr, dotenv values,
 cookies, and credential bytes are never stored in the receipt.
+
+The mutation class controls only ignored and untracked workspace evidence.
+`mutation=read-only` requires its fingerprint to remain unchanged;
+`mutation=workspace` permits that fingerprint to change and records both the
+change and the permission in the receipt. Neither class permits a changed HEAD,
+tree, staged index, or non-ignored worktree path. Use a broker-owned run root
+instead when workspace output is not part of the consumer's declared contract.
 
 ## External blockers are not integration passes
 

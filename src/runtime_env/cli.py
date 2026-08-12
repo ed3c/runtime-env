@@ -2154,11 +2154,15 @@ def accept_consumer(
     after_tree = _git(target, "rev-parse", "HEAD^{tree}")
     after_status = _git(target, "status", "--porcelain=v1")
     after_ignored = _ignored_files_fingerprint(target)
-    target_unchanged = (
+    ignored_changed = before_ignored != after_ignored
+    ignored_change_permitted = workload["mutation"] == "workspace"
+    tracked_target_unchanged = (
         before_head == after_head
         and before_tree == after_tree
         and not after_status
-        and before_ignored == after_ignored
+    )
+    target_unchanged = tracked_target_unchanged and (
+        not ignored_changed or ignored_change_permitted
     )
     complete_set = [item["entrypoint"] for item in executions] == workload[
         "acceptance_entrypoints"
@@ -2187,7 +2191,9 @@ def accept_consumer(
             "tree_after": after_tree,
             "dirty_before": bool(before_status),
             "dirty_after": bool(after_status),
-            "ignored_changed_after": before_ignored != after_ignored,
+            "mutation": workload["mutation"],
+            "ignored_changed_after": ignored_changed,
+            "ignored_change_permitted": ignored_change_permitted,
         },
         "executions": executions,
     }
