@@ -20,7 +20,7 @@ source / requirement
 | Instruction/Method binding | `ed3c/skills-shared#84` | `ed3c/skills-shared#85` | independent sibling | **MERGED** at `e3b327ad49c088f1962c33167ecd5ac9d28125fb` |
 | Agent Shield product binding | `ed3c/agent-shield-monorepo#77` | `ed3c/agent-shield-monorepo#78` | independent terminal sibling | **MERGED** at `1af04c1ef5cb68eab198987feba008c93d3ec22f` |
 | Bettor integration binding | `ed3c/bettor-arena#36` | `ed3c/bettor-arena#37` | independent sibling | **MERGED** at `1f94d3d77992a1396959a15b2ada7836c07bf300` |
-| Exact merged/cold-start convergence | `ed3c/bettor-arena#38` | pending convergence PR | convergence leaf | **UNBLOCKED**; Claude/Codex cold-start remains `NOT_EXERCISED` |
+| Exact merged/cold-start convergence | `ed3c/bettor-arena#38` | Bettor PR `#58` contributes the PDF/Stack audit; final cold-start convergence remains pending | convergence workstream | **UNBLOCKED**; Claude/Codex cold-start remains `NOT_EXERCISED` |
 
 The old `Draft`/blocked descriptions are historical and must not be reused as current truth.
 
@@ -29,8 +29,8 @@ The old `Draft`/blocked descriptions are historical and must not be reused as cu
 | Hop | Exact subject | Finding | Next owner |
 |---|---|---|---|
 | PDF source | `科技巨頭開源授權與AI框架v2.pdf`, pages 25–41 | proposes Agent Shield product/runtime/mobile/security topology; prose claim of full integration is not evidence | repository decision + exact implementation |
-| Runtime source | `runtime-env/main` `4a333ccf106ef60bc6942b922b7f5efffb3876f5`, tree `68cda3d0ce7f1df26475a5d7322968194e794046` | intended current audit source | this repository |
-| Bettor runtime projection | `.runtime-env/bindings/bettor-arena-local.json` pins `142e1ed278bf18f9c5c09186e28db16b623cdaee`, tree `1bd5c97e6f5519182d151055cf5f83fccb7ff5fa` | `STALE_SOURCE_PIN` relative to current runtime main | explicit dry-run sync and review |
+| Runtime implementation baseline | commit `4a333ccf106ef60bc6942b922b7f5efffb3876f5`, tree `68cda3d0ce7f1df26475a5d7322968194e794046` | immutable contract baseline evaluated before later docs-only audit commits | this repository |
+| Bettor runtime projection | `.runtime-env/bindings/bettor-arena-local.json` pins `142e1ed278bf18f9c5c09186e28db16b623cdaee`, tree `1bd5c97e6f5519182d151055cf5f83fccb7ff5fa` | `STALE_SOURCE_PIN` relative to the evaluated baseline | explicit dry-run sync and review |
 | Bettor Integration / Acceptance | deterministic catalog, proof, Context Capsules, MCP and bootstrap | implemented for named deterministic contracts | Bettor exact-subject gates |
 | Agent Shield runtime foundation | issue `#38`, PR `#79`, merge `7d28a8cada03726b2b8966d9a229500f285d1b2b` | provider-neutral SPI implemented; no native provider PASS | Phase 3 leaves `#39–#43`, convergence `#44` |
 | Agent Shield product/mobile | issues `#45–#53` | current live product routes remain incomplete/not exercised | product leaves and convergence |
@@ -42,8 +42,9 @@ Canonical audit documents:
 - [`../integration/README.md`](../integration/README.md)
 - [`../integration/BETTOR_PDF_MODULAR_INTEGRATION_AUDIT.md`](../integration/BETTOR_PDF_MODULAR_INTEGRATION_AUDIT.md)
 - [`../integration/AGENTS.md`](../integration/AGENTS.md)
+- Bettor PR `#58`, a true child of Bettor PR `#57`
 
-Current runtime audit branch: `docs/bettor-agent-shield-pdf-audit-2026-08-14`.
+The repository branch `docs/bettor-agent-shield-pdf-audit-2026-08-14` currently points at the default-branch audit state. The connector writes landed directly on `main`; there is no separate runtime-env PR for these documentation commits.
 
 ## Git Town ownership
 
