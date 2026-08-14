@@ -2,7 +2,7 @@
 
 ## Canonical local entrypoint
 
-The intended checkout is `/Users/neon/runtime-env`. Agents should run catalog
+The intended checkout is `~/runtime-env`. Agents should run catalog
 and host verification from that directory; do not copy this repository's files
 into each consuming project.
 
@@ -15,9 +15,9 @@ to this document, while this file owns the detailed integration requirements.
 Run:
 
 ```bash
-cd /Users/neon/runtime-env
+cd ~/runtime-env
 bash scripts/verify-local-runtime.sh \
-  --canonical-path /Users/neon/runtime-env
+  --canonical-path ~/runtime-env
 ```
 
 The verifier checks the following independent facts:
@@ -36,10 +36,10 @@ typed MCP server.
 
 ## Values and exact storage locations
 
-- Contract names and empty templates: `/Users/neon/runtime-env/catalog/`,
-  `/Users/neon/runtime-env/modules/`, `/Users/neon/runtime-env/profiles/`, and
-  `/Users/neon/runtime-env/examples/`.
-- Canonical host-only dotenv entry: `/Users/neon/runtime-env/.env`, mode
+- Contract names and empty templates: `~/runtime-env/catalog/`,
+  `~/runtime-env/modules/`, `~/runtime-env/profiles/`, and
+  `~/runtime-env/examples/`.
+- Canonical host-only dotenv entry: `~/runtime-env/.env`, mode
   `0600`, owned by the local user, untracked, and ignored by Git. It is an
   import/staging surface for the host broker, not a file that is copied into
   consumer repositories or mounted into an agent sandbox.
@@ -59,7 +59,7 @@ The fallback can be selected explicitly without sourcing it into the shell:
 
 ```bash
 bash scripts/verify-local-runtime.sh \
-  --canonical-path /Users/neon/runtime-env \
+  --canonical-path ~/runtime-env \
   --env-file ~/.config/runtime-env/secrets/forgejo-local.env
 ```
 
@@ -71,7 +71,7 @@ widening another plane's permissions.
 The canonical dotenv metadata check is:
 
 ```bash
-cd /Users/neon/runtime-env
+cd ~/runtime-env
 ./runtime-env local-env init   # first use only; creates blank 0600 file
 ./runtime-env local-env doctor
 ./runtime-env local-env reconcile # preserve values and organize scope sections
@@ -100,7 +100,7 @@ It rejects symlinks, the wrong owner, any mode other than `0600`, unknown
 variable names, and a catalog-local dotenv that Git would track. It reports
 only names and `PRESENT`/`EMPTY`; it never prints values. This is a redaction
 control, not a filesystem sandbox: the agent process must also be unable to
-open `/Users/neon/runtime-env/.env` directly.
+open `~/runtime-env/.env` directly.
 
 The Forgejo migration command is the only component allowed to bridge the
 `forgejo-local-password` module into Git credentials. It reads the private
@@ -140,7 +140,7 @@ sections without emitting them.
 | Codex CLI ChatGPT login | OS keyring or `~/.codex/auth.json`, according to Codex configuration | authenticated/not-authenticated receipt only |
 | Claude Code subscription login | macOS Keychain and Claude-owned host state | authenticated/not-authenticated receipt only |
 | Antigravity `agy` login and artifacts | `~/.gemini/antigravity-cli/` | exact model inventory plus file-output canary receipt |
-| Stealth-browser login profiles | `$STEALTH_PROFILE_ROOT/<name>/state.json`; recommended `/Users/neon/.local/share/runtime-env/stealth-browser/profiles`, directories `0700`, files `0600`, outside every Git checkout | typed browser operation plus metadata-only receipt |
+| Stealth-browser login profiles | `$STEALTH_PROFILE_ROOT/<name>/state.json`; recommended `~/.local/share/runtime-env/stealth-browser/profiles`, directories `0700`, files `0600`, outside every Git checkout | typed browser operation plus metadata-only receipt |
 | App Store Connect private key | `~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8` or another broker-owned `0600` path | `verify_asc`/upload receipt only |
 
 Do not copy, bind-mount, upload, render, or synchronize any of these stores.
@@ -186,7 +186,7 @@ levels into the ambiguous word "supported."
 |---|---|---|
 | L0 | Declared | `./runtime-env validate` succeeds for the catalog, modules, profiles, workloads, and policies. |
 | L1 | Projected | Explicit `sync --apply` created the selected binding, workload, and policies; `sync --check` reports no drift. |
-| L2 | Configured | `check --profile <profile> --env-file /Users/neon/runtime-env/.env` exits `0`. This proves names and defaults only. |
+| L2 | Configured | `check --profile <profile> --env-file ~/runtime-env/.env` exits `0`. This proves names and defaults only. |
 | L3 | Host-ready | Required binaries, target files, services, sessions, private paths, and routes exist on the named execution plane. |
 | L4 | Live-passed | Every required fixed entrypoint exits successfully against the real dependency and produces the declared receipt/control evidence. |
 | L5 | Consumer-accepted | The consumer's staged projection verifies offline, its public-seam tests pass, and live evidence is bound to the intended consumer revision. |
@@ -278,16 +278,16 @@ for each additional consumer rather than replacing evidence from another.
 
 | Workload | Consumer / target root | Binding and policies | Required entrypoints or gap | Current result |
 |---|---|---|---|---|
-| `agy-gemini36-flash-high-replay` | `/Users/neon/skill-bettor` | `skill-bettor-agy-replay`; no carrier policy | Public replay-contract test, model inventory, then the approved file-based replay. | `BLOCKED` above L3: the public replay test passes and the current `agy models` execution-plane canary passed on 2026-08-11. Sending the versioned replay payload to the external model still requires explicit data-transmission authority; no consolidated L5 receipt exists. |
-| `bettor-arena-proof` | `/Users/neon/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 declared acceptance entrypoints and their separate broker adapters. | `BLOCKED` below L2/L5: the canonical main-tree binding and installed verifier gate are committed, but `EQUIVALENCE_APPROVAL_RECEIPT_PATH` is absent and the current equivalence proof records `live=NOT_EXERCISED` plus admitted-mirror drift. |
-| `dr-research-loop` | `/Users/neon/skill-bettor` | `skill-bettor-dr-research`; all three carrier policies | Fixed `run-dr-acceptance.sh` routes a versioned topic through harness tests, real engine, and verify. | `BLOCKED` above L3: the current `agy models` canary and live public-citation verifier both passed on the host on 2026-08-11. The remaining engine entrypoint transmits the versioned proposal to an external model and requires explicit data-transmission authority. |
+| `agy-gemini36-flash-high-replay` | `~/skill-bettor` | `skill-bettor-agy-replay`; no carrier policy | Public replay-contract test, model inventory, then the approved file-based replay. | `BLOCKED` above L3: the public replay test passes and the current `agy models` execution-plane canary passed on 2026-08-11. Sending the versioned replay payload to the external model still requires explicit data-transmission authority; no consolidated L5 receipt exists. |
+| `bettor-arena-proof` | `~/bettor-arena` | `bettor-arena-local`; `claude-code-native-isolation`, `codex-cli-native-isolation`, `codex-openshell-chatgpt-placeholder` | All 11 declared acceptance entrypoints and their separate broker adapters. | `BLOCKED` below L2/L5: the canonical main-tree binding and installed verifier gate are committed, but `EQUIVALENCE_APPROVAL_RECEIPT_PATH` is absent and the current equivalence proof records `live=NOT_EXERCISED` plus admitted-mirror drift. |
+| `dr-research-loop` | `~/skill-bettor` | `skill-bettor-dr-research`; all three carrier policies | Fixed `run-dr-acceptance.sh` routes a versioned topic through harness tests, real engine, and verify. | `BLOCKED` above L3: the current `agy models` canary and live public-citation verifier both passed on the host on 2026-08-11. The remaining engine entrypoint transmits the versioned proposal to an external model and requires explicit data-transmission authority. |
 | `forgejo-delivery-loop` | Runtime-owned verifier; target may be any admitted local Git consumer | No consumer binding or carrier policy is required for the runtime-owned canary. | `broker-selftest`, `credential-canary`; must preserve the target Git state. | `PASSED` at L4 on the host execution plane on 2026-08-11; the earlier sandbox-only loopback failure is retained as failed evidence, not the final host result. |
-| `gemini-conversation-research` | `/Users/neon/ts-skill-bettor` | `ts-skill-bettor-gemini-research`; no carrier policy | Three public adapter tests, fixed live extraction, and a dry-run guided decision edge; content sinks stay under `GEMINI_RESEARCH_RUN_ROOT`. | `BLOCKED` at L3: loopback CDP was reachable on 2026-08-11 but exposed zero pages and no logged-in Gemini conversation tab. |
-| `ios-testflight-beta` | Broker implementation: `/Users/neon/ix-agy`; release target selected by `IOS_TARGET_ROOT` | `ix-agy-ios-beta`; no carrier policy | Fixed adapter tests and read-only preflight. Upload remains a separately authorized external mutation and is not part of ordinary acceptance. | `PASSED` at L5 readiness on 2026-08-11: skill tests, adapter test and the real target preflight passed against the configured iOS sample. This does **not** claim that a build was uploaded; release mutation remains separately authorized. Receipt: `/Users/neon/.local/state/runtime-env/receipts/l5-20260811/ix-agy-ios-beta-current.json`. |
-| `ios-testflight-verify` | Broker implementation: `/Users/neon/ix-agy`; target selected by `IOS_TARGET_ROOT` | `ix-agy-ios-verify`; no carrier policy | Fixed adapter tests, target preflight, and read-only App Store Connect authentication verification. | `PASSED` at L5 on 2026-08-11: skill tests, adapter test, target preflight and real read-only App Store Connect authentication all passed. Receipt: `/Users/neon/.local/state/runtime-env/receipts/l5-20260811/ix-agy-ios-verify-current.json`. |
-| `local-jdk-verify` | `/Users/neon/runtime-env` | No consumer binding or policy for the local verifier. | `verify`; real `JAVA_HOME`, matching `java`/`javac`, and compile/run receipt. | `PASSED` at L4 on 2026-08-11 with a clean runtime-env revision and compile/run receipt. |
-| `repo-wiki-converge` | `/Users/neon/ix-agy` | `ix-agy-repo-wiki`; no carrier policy | Fixed author/verify/ingest adapter plus consumer and adapter public tests; mutable output is broker-owned. | `BLOCKED` above L3: `REPO_WIKI_RUN_ROOT` is user-owned mode `0700`, the explicit Python runtime is configured, and the adapter and 14 consumer tests pass. The broker output is empty, so verify correctly fails until author runs; author would transmit repository content to an external model and requires explicit authority. |
-| `stealth-browser-mcp` | `/Users/neon/stealth-browser` | `stealth-browser-local`; no carrier policy | Isolated full tests plus a real stdio MCP handshake, tool listing, and `stealth_health` call. | `PASSED` at L5 on the local host: the isolated suite and real MCP stdio smoke passed with consumer HEAD/tree/status and ignored-file fingerprint unchanged. The current private receipt is `/Users/neon/.local/state/runtime-env/receipts/l5-20260811/stealth-browser-current.json`; inspect its `runtime_source` rather than copying this claim. |
+| `gemini-conversation-research` | `~/ts-skill-bettor` | `ts-skill-bettor-gemini-research`; no carrier policy | Three public adapter tests, fixed live extraction, and a dry-run guided decision edge; content sinks stay under `GEMINI_RESEARCH_RUN_ROOT`. | `BLOCKED` at L3: loopback CDP was reachable on 2026-08-11 but exposed zero pages and no logged-in Gemini conversation tab. |
+| `ios-testflight-beta` | Broker implementation: `~/ix-agy`; release target selected by `IOS_TARGET_ROOT` | `ix-agy-ios-beta`; no carrier policy | Fixed adapter tests and read-only preflight. Upload remains a separately authorized external mutation and is not part of ordinary acceptance. | `PASSED` at L5 readiness on 2026-08-11: skill tests, adapter test and the real target preflight passed against the configured iOS sample. This does **not** claim that a build was uploaded; release mutation remains separately authorized. Receipt: `~/.local/state/runtime-env/receipts/l5-20260811/ix-agy-ios-beta-current.json`. |
+| `ios-testflight-verify` | Broker implementation: `~/ix-agy`; target selected by `IOS_TARGET_ROOT` | `ix-agy-ios-verify`; no carrier policy | Fixed adapter tests, target preflight, and read-only App Store Connect authentication verification. | `PASSED` at L5 on 2026-08-11: skill tests, adapter test, target preflight and real read-only App Store Connect authentication all passed. Receipt: `~/.local/state/runtime-env/receipts/l5-20260811/ix-agy-ios-verify-current.json`. |
+| `local-jdk-verify` | `~/runtime-env` | No consumer binding or policy for the local verifier. | `verify`; real `JAVA_HOME`, matching `java`/`javac`, and compile/run receipt. | `PASSED` at L4 on 2026-08-11 with a clean runtime-env revision and compile/run receipt. |
+| `repo-wiki-converge` | `~/ix-agy` | `ix-agy-repo-wiki`; no carrier policy | Fixed author/verify/ingest adapter plus consumer and adapter public tests; mutable output is broker-owned. | `BLOCKED` above L3: `REPO_WIKI_RUN_ROOT` is user-owned mode `0700`, the explicit Python runtime is configured, and the adapter and 14 consumer tests pass. The broker output is empty, so verify correctly fails until author runs; author would transmit repository content to an external model and requires explicit authority. |
+| `stealth-browser-mcp` | `~/stealth-browser` | `stealth-browser-local`; no carrier policy | Isolated full tests plus a real stdio MCP handshake, tool listing, and `stealth_health` call. | `PASSED` at L5 on the local host: the isolated suite and real MCP stdio smoke passed with consumer HEAD/tree/status and ignored-file fingerprint unchanged. The current private receipt is `~/.local/state/runtime-env/receipts/l5-20260811/stealth-browser-current.json`; inspect its `runtime_source` rather than copying this claim. |
 
 Each row's acceptance record must include runtime-env commit/tree/dirty state;
 consumer path and commit/tree/dirty state when applicable; profile, workload,

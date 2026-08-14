@@ -29,8 +29,8 @@ for required in \
 done
 
 for required in \
-  '/Users/neon/runtime-env' \
-  '/Users/neon/runtime-env/.env' \
+  '~/runtime-env' \
+  '~/runtime-env/.env' \
   './runtime-env local-env doctor' \
   '~/.config/runtime-env/secrets/forgejo-local.env' \
   'scripts/verify-local-runtime.sh' \

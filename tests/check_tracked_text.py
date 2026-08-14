@@ -33,13 +33,36 @@ PATTERNS = (
 )
 
 
-def matches(text: str) -> list[tuple[str, int]]:
+# Internal-only metadata. These are not credentials, but publishing them discloses the
+# maintainer host layout and the existence of private repositories, and a public tree is
+# indexed and cached even if visibility is later reverted.
+DISCLOSURE_PATTERNS = (
+    CredentialPattern(
+        "host-account-path",
+        re.compile(r"/(?:Users|home)/[A-Za-z][A-Za-z0-9._-]*/"),
+    ),
+    CredentialPattern(
+        "private-repository-url",
+        re.compile(r"github\.com[/:]ed3c/(?!runtime-env\b)[A-Za-z0-9._-]+"),
+    ),
+)
+
+
+def _scan(patterns: tuple[CredentialPattern, ...], text: str) -> list[tuple[str, int]]:
     findings: list[tuple[str, int]] = []
-    for pattern in PATTERNS:
+    for pattern in patterns:
         for match in pattern.expression.finditer(text):
             line_number = text.count("\n", 0, match.start()) + 1
             findings.append((pattern.provider, line_number))
     return findings
+
+
+def matches(text: str) -> list[tuple[str, int]]:
+    return _scan(PATTERNS, text)
+
+
+def disclosure_matches(text: str) -> list[tuple[str, int]]:
+    return _scan(DISCLOSURE_PATTERNS, text)
 
 
 def tracked_paths(repo: Path) -> list[Path]:
@@ -53,15 +76,22 @@ def tracked_paths(repo: Path) -> list[Path]:
 
 def scan_repo(repo: Path) -> int:
     findings: list[tuple[Path, str, int]] = []
+    disclosures: list[tuple[Path, str, int]] = []
     for path in tracked_paths(repo):
         try:
             text = path.read_text(encoding="utf-8")
         except (UnicodeDecodeError, OSError):
             continue
-        findings.extend((path.relative_to(repo), provider, line) for provider, line in matches(text))
+        relative = path.relative_to(repo)
+        findings.extend((relative, provider, line) for provider, line in matches(text))
+        disclosures.extend(
+            (relative, label, line) for label, line in disclosure_matches(text)
+        )
     for path, provider, line in findings:
         print(f"ERROR: possible {provider} credential at {path}:{line}", file=sys.stderr)
-    if findings:
+    for path, label, line in disclosures:
+        print(f"ERROR: internal-only {label} at {path}:{line}", file=sys.stderr)
+    if findings or disclosures:
         return 1
     print("PASS: no supported credential signatures in tracked text")
     return 0
@@ -86,6 +116,32 @@ def selftest() -> int:
     if missed or matches("E2B_API_KEY=\nOPENAI_API_KEY=\nfixture-only-value"):
         print("ERROR: tracked-text scanner selftest failed", file=sys.stderr)
         return 1
+
+    planted_disclosure = (
+        "run it from /Users/" + "someone/runtime-env today",
+        "the checkout at /home/" + "builder/runtime-env",
+        "see https://github.com/" + "ed3c/some-private-repo/issues/1",
+    )
+    permitted_disclosure = (
+        "run it from ~/runtime-env today",
+        "clone https://github.com/" + "ed3c/runtime-env",
+        "profile skill-bettor-local and module bettor-arena-proof",
+        "the GitHub profile https://github.com/" + "users/ed3c",
+    )
+    missed_disclosure = [
+        sample for sample in planted_disclosure if not disclosure_matches(sample)
+    ]
+    flagged_permitted = [
+        sample for sample in permitted_disclosure if disclosure_matches(sample)
+    ]
+    if missed_disclosure or flagged_permitted:
+        print("ERROR: disclosure scanner selftest failed", file=sys.stderr)
+        for sample in missed_disclosure:
+            print(f"  missed: {sample}", file=sys.stderr)
+        for sample in flagged_permitted:
+            print(f"  wrongly flagged: {sample}", file=sys.stderr)
+        return 1
+
     print("PASS: tracked-text scanner detects planted signatures and ignores names")
     return 0
 

@@ -31,8 +31,8 @@ resolved JBR home only in the canonical untracked dotenv:
 ./runtime-env workload run \
   --id local-jdk-verify \
   --entrypoint verify \
-  --target-root /Users/neon/runtime-env \
-  --env-file /Users/neon/runtime-env/.env
+  --target-root ~/runtime-env \
+  --env-file ~/runtime-env/.env
 ```
 
 The workload does not trust `java -version` alone. It requires executable

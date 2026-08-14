@@ -11,7 +11,7 @@ does not repair that architecture.
 The supported local design separates four planes:
 
 ```text
-/Users/neon/runtime-env/.env (0600, host-only staging)
+~/runtime-env/.env (0600, host-only staging)
               |
               v
    provider or typed host broker
@@ -42,7 +42,7 @@ receipt. If the selected profile resolves any secret, execution fails closed.
 runner intentionally does not imitate them by exporting plaintext secrets.
 The workload's `entrypoint_environment` is the second boundary: it narrows the
 profile independently for every fixed command. Carrier configuration names are
-therefore not ambient merely because they coexist in `/Users/neon/runtime-env/.env`.
+therefore not ambient merely because they coexist in `~/runtime-env/.env`.
 
 ## Delivery classes
 
