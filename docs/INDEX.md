@@ -21,6 +21,7 @@
 ## Existing detailed contracts
 
 - [`modular-consumer-contract.md`](modular-consumer-contract.md) — desired/resolved consumer lifecycle.
+- [`public-consumption.md`](public-consumption.md) — credential-free consumption and SHA/tag pinning for public consumers.
 - [`local-integration.md`](local-integration.md) — local Forgejo/host integration.
 - [`local-credential-broker.md`](local-credential-broker.md) — secret/session ownership.
 - [`runtime-topology.md`](runtime-topology.md) — execution-plane distinctions.
