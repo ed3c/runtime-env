@@ -101,10 +101,10 @@ CURRENT_BINDING_READ
 
 The source PDF `科技巨頭開源授權與AI框架v2.pdf` proposes an `agent-shield-monorepo/` product topology. It is not a declaration that `runtime-env` or `bettor-arena` owns those domain services.
 
-At the 2026-08-14 audit snapshot:
+The immutable runtime contract implementation baseline evaluated by the 2026-08-14 audit is:
 
 ```text
-runtime-env current main:
+runtime-env implementation baseline:
   commit 4a333ccf106ef60bc6942b922b7f5efffb3876f5
   tree   68cda3d0ce7f1df26475a5d7322968194e794046
 
@@ -113,7 +113,7 @@ bettor-arena checked runtime binding:
   tree   1bd5c97e6f5519182d151055cf5f83fccb7ff5fa
 ```
 
-That relation is `STALE_SOURCE_PIN` relative to current runtime main. Do not call it invalid without running the exact verifier, and do not auto-sync it. Read the audit document for the product/provider status and required transitions.
+Later `runtime-env/main` commits may update audit documentation without changing the contract semantics under comparison. The checked Bettor binding remains `STALE_SOURCE_PIN` relative to the evaluated implementation baseline. Do not call it invalid without running the exact verifier, and do not auto-sync it. Read the audit document for the product/provider status and required transitions.
 
 PDF prose, directory diagrams, direct-license labels, capability claims, percentages and “fully integrated” statements remain `SOURCE_PROPOSAL` until repository decisions, implementation, controls, canaries and receipts independently admit them.
 
