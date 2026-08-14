@@ -32,12 +32,14 @@ Therefore the question is not whether PDF directories were copied into Bettor. T
 
 ## 2. Exact runtime binding freshness
 
-### Intended source at this audit
+### Runtime contract implementation baseline evaluated
 
 ```text
-runtime-env main commit: 4a333ccf106ef60bc6942b922b7f5efffb3876f5
-runtime-env main tree:   68cda3d0ce7f1df26475a5d7322968194e794046
+runtime-env commit: 4a333ccf106ef60bc6942b922b7f5efffb3876f5
+runtime-env tree:   68cda3d0ce7f1df26475a5d7322968194e794046
 ```
+
+This is the immutable implementation baseline evaluated by the audit. Later `runtime-env/main` commits may add or revise audit documentation without changing the contract semantics under comparison.
 
 ### Bettor consumer projection
 
@@ -48,9 +50,9 @@ binding source tree:   1bd5c97e6f5519182d151055cf5f83fccb7ff5fa
 binding content digest: 805a069efdad08342f79f3eee74f8f122de445f2f4e67bf46364353faa80f745
 ```
 
-Verdict: `STALE_SOURCE_PIN` relative to current `runtime-env/main`.
+Verdict: `STALE_SOURCE_PIN` relative to the evaluated runtime implementation baseline.
 
-This does **not** prove that the old binding is invalid. It proves that current upstream changes are not represented in Bettor's checked projection. The next transition must be an explicit dry-run comparison and Human-reviewed sync decision, not an automatic update.
+This does **not** prove that the old binding is invalid. It proves that the evaluated upstream contract changes are not represented in Bettor's checked projection. The next transition must be an explicit dry-run comparison and Human-reviewed sync decision, not an automatic update.
 
 ## 3. Integration matrix
 
