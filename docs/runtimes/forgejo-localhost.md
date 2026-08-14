@@ -26,7 +26,7 @@ do not require or store both merely because both names exist in the catalog.
 | Generated template | `examples/forgejo-delivery-local-password.dotenv.example` or `examples/forgejo-delivery-local-api.dotenv.example` | Blank secret placeholders only |
 | Untracked dotenv fallback | `~/.config/runtime-env/secrets/forgejo-local.env` | Mode `0600`; never copy into a repository |
 | Preferred Git HTTP/browser credential source on macOS | `git credential fill`, backed by `credential.helper=osxkeychain` | Encrypted backing store is `~/Library/Keychains/login.keychain-db`; do not read or edit that database directly |
-| One-time migration broker | `./runtime-env local-env migrate-forgejo-keychain` from `/Users/neon/runtime-env` | Reads the private dotenv in-process, sends values to Git helpers over stdin, and emits status only |
+| One-time migration broker | `./runtime-env local-env migrate-forgejo-keychain` from `~/runtime-env` | Reads the private dotenv in-process, sends values to Git helpers over stdin, and emits status only |
 | Existing legacy credential store on this machine | `~/.git-credentials` | Plaintext historical storage; do not print, copy, commit, or treat it as the recommended destination |
 | Per-repository Forgejo commit identity | `<forgejo-repo>/.git/config` via repo-local `git config user.name` and `user.email` | Identity only, never password or token |
 | Existing Chrome session | Logical surface: the user's current Chrome profile, controlled through the host's Chrome capability | Reuse the session; the profile's filesystem internals are intentionally not a credential API and cookies must never be exported |
@@ -68,7 +68,7 @@ After placing `FORGEJO_USERNAME` and `FORGEJO_PASSWORD` in the canonical private
 dotenv, run:
 
 ```bash
-cd /Users/neon/runtime-env
+cd ~/runtime-env
 ./runtime-env local-env migrate-forgejo-keychain
 ```
 
@@ -92,7 +92,7 @@ the executed verifier comes from the selected runtime-env catalog checkout, not
 from the consumer repository:
 
 ```bash
-cd /Users/neon/runtime-env
+cd ~/runtime-env
 ./runtime-env workload run \
   --id forgejo-delivery-loop \
   --entrypoint broker-selftest \

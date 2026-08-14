@@ -16,7 +16,7 @@ budgets, revision changes, and the explicit prohibition on iOS build/upload.
   commands, and carrier policies.
 - The consumer owns target-relative adapter scripts, public-seam tests, one
   requirements document, and its pre-commit hook.
-- The host owns one canonical `/Users/neon/runtime-env/.env`, provider sessions,
+- The host owns one canonical `~/runtime-env/.env`, provider sessions,
   credential files, browser profiles, and private receipt roots.
 - A consumer repository must not create its own `.env`. Generated
   `.runtime-env/examples/*.env.example` files contain names and safe defaults
@@ -32,14 +32,14 @@ budgets, revision changes, and the explicit prohibition on iOS build/upload.
 
 | Consumer | Binding | Workload | Consumer verifier |
 |---|---|---|---|
-| `/Users/neon/bettor-arena` | `bettor-arena-local` | `bettor-arena-proof` | `scripts/gates/check_runtime_env_binding.py` delegates to the installed `runtime-env verify-consumer` seam |
-| `/Users/neon/skill-bettor` | `skill-bettor-agy-replay` | `agy-gemini36-flash-high-replay` | `scripts/check_runtime_env_consumer.sh` |
-| `/Users/neon/skill-bettor` | `skill-bettor-dr-research` | `dr-research-loop` | `scripts/check_runtime_env_consumer.sh` |
-| `/Users/neon/ix-agy` | `ix-agy-repo-wiki` | `repo-wiki-converge` | `scripts/check_runtime_env_consumer.sh` |
-| `/Users/neon/ix-agy` | `ix-agy-ios-verify` | `ios-testflight-verify` | `scripts/check_runtime_env_consumer.sh` |
-| `/Users/neon/ix-agy` | `ix-agy-ios-beta` | `ios-testflight-beta` | `scripts/check_runtime_env_consumer.sh` |
-| `/Users/neon/stealth-browser` | `stealth-browser-local` | `stealth-browser-mcp` | `scripts/check-runtime-env-consumer.sh` |
-| `/Users/neon/ts-skill-bettor` | `ts-skill-bettor-gemini-research` | `gemini-conversation-research` | `scripts/check-runtime-env-consumer.sh` |
+| `~/bettor-arena` | `bettor-arena-local` | `bettor-arena-proof` | `scripts/gates/check_runtime_env_binding.py` delegates to the installed `runtime-env verify-consumer` seam |
+| `~/skill-bettor` | `skill-bettor-agy-replay` | `agy-gemini36-flash-high-replay` | `scripts/check_runtime_env_consumer.sh` |
+| `~/skill-bettor` | `skill-bettor-dr-research` | `dr-research-loop` | `scripts/check_runtime_env_consumer.sh` |
+| `~/ix-agy` | `ix-agy-repo-wiki` | `repo-wiki-converge` | `scripts/check_runtime_env_consumer.sh` |
+| `~/ix-agy` | `ix-agy-ios-verify` | `ios-testflight-verify` | `scripts/check_runtime_env_consumer.sh` |
+| `~/ix-agy` | `ix-agy-ios-beta` | `ios-testflight-beta` | `scripts/check_runtime_env_consumer.sh` |
+| `~/stealth-browser` | `stealth-browser-local` | `stealth-browser-mcp` | `scripts/check-runtime-env-consumer.sh` |
+| `~/ts-skill-bettor` | `ts-skill-bettor-gemini-research` | `gemini-conversation-research` | `scripts/check-runtime-env-consumer.sh` |
 
 Runtime-owned `local-jdk-verify` and `forgejo-delivery-loop` stop at L4 because
 they do not depend on consumer application code.
@@ -68,7 +68,7 @@ Work from a clean runtime-env revision and an isolated standard Git worktree for
 the consumer. Do not switch branches in a shared main working tree.
 
 ```bash
-cd /Users/neon/runtime-env
+cd ~/runtime-env
 ./runtime-env validate
 bash tests/run-all.sh
 
@@ -91,7 +91,7 @@ Review and commit the consumer adapter, tests, requirements, hook, and generated
 projection together. Then install the exact committed runtime revision:
 
 ```bash
-cd /Users/neon/runtime-env
+cd ~/runtime-env
 bash scripts/install-consumer-cli.sh
 ```
 
@@ -112,12 +112,12 @@ Only after the consumer and runtime-env are both clean and the host prerequisite
 exist, run the consolidated acceptance:
 
 ```bash
-cd /Users/neon/runtime-env
+cd ~/runtime-env
 ./runtime-env accept-consumer \
   --target-root /absolute/consumer \
   --binding <binding> \
   --hook-verifier scripts/<consumer-verifier>.sh \
-  --env-file /Users/neon/runtime-env/.env \
+  --env-file ~/runtime-env/.env \
   --receipt /absolute/private/0700/receipts/<binding>.json \
   --json
 ```
