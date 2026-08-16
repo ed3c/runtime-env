@@ -7,8 +7,13 @@ import sys
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from runtime_env.cli import main  # noqa: E402
-
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "skills":
+        from runtime_env.skill_environment import main as skills_main  # noqa: E402
+
+        raise SystemExit(skills_main(sys.argv[2:]))
+
+    from runtime_env.cli import main  # noqa: E402
+
     raise SystemExit(main())
