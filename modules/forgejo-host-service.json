@@ -1,0 +1,8 @@
+{
+  "schema":"runtime-env/module/v1",
+  "id":"forgejo-host-service",
+  "summary":"One exact-artifact loopback Forgejo service lifecycle per host; repositories reuse it instead of installing their own daemon.",
+  "requires":[],
+  "optional":[],
+  "defaults":{}
+}
