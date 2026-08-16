@@ -108,7 +108,7 @@ def backup(manifest,binding,output,service_stopped,receipt_path):
     if p.returncode or not out.is_file(): raise HostError("Forgejo dump failed")
     r={"schema":"runtime-env/forgejo-host-backup-receipt/v1","state":"PASS","version":manifest["version"],"backup_path":str(out),"backup_sha256":sha(out),"binary_sha256":sha(binary),"config_sha256":sha(config),"service_stopped":True}; receipt(receipt_path,r); print(json.dumps(r,sort_keys=True)); return 0
 
-def restore_check(manifest,binding,backup_receipt,backup_file):
+def restore_check(manifest,binding,backup_receipt,backup_file,emit=True):
     check_receipt=load(backup_receipt)
     if check_receipt.get("schema")!="runtime-env/forgejo-host-backup-receipt/v1" or check_receipt.get("state")!="PASS": raise HostError("invalid backup receipt")
     if check_receipt.get("version")!=manifest["version"]: raise HostError("backup version mismatch")
@@ -117,10 +117,12 @@ def restore_check(manifest,binding,backup_receipt,backup_file):
     install,state,target,binary,config,data,backups,launcher,staging=paths(manifest,binding)
     if not binary.is_file() or sha(binary)!=check_receipt.get("binary_sha256"): raise HostError("restore binary identity mismatch")
     if not config.is_file() or sha(config)!=check_receipt.get("config_sha256"): raise HostError("restore config identity mismatch")
-    r={"schema":"runtime-env/forgejo-host-restore-check/v1","state":"PASS","backup_sha256":check_receipt["backup_sha256"],"version":manifest["version"],"restore_execution":"NOT_EXERCISED","destructive_mutation":False}; print(json.dumps(r,sort_keys=True)); return 0
+    r={"schema":"runtime-env/forgejo-host-restore-check/v1","state":"PASS","backup_sha256":check_receipt["backup_sha256"],"version":manifest["version"],"restore_execution":"NOT_EXERCISED","destructive_mutation":False}
+    if emit: print(json.dumps(r,sort_keys=True))
+    return r
 
 def rollback_plan(manifest,binding,backup_receipt,backup_file):
-    restore_check(manifest,binding,backup_receipt,backup_file)
+    restore_check(manifest,binding,backup_receipt,backup_file,emit=False)
     r=plan(manifest,binding); r["rollback"]="HUMAN_ADMIT_REQUIRED"; r["restore_preflight"]="PASS"; r["destructive_mutation"]=False; print(json.dumps(r,sort_keys=True)); return 4
 
 def health(binding):
@@ -146,7 +148,7 @@ def main(argv=None):
             return backup(m,b,a.output,a.service_stopped,a.receipt)
         if a.command in {"restore-check","rollback-plan"}:
             if not a.backup_receipt or not a.backup_file: raise HostError(f"{a.command} requires --backup-receipt and --backup-file")
-            if a.command=="restore-check": return restore_check(m,b,a.backup_receipt,a.backup_file)
+            if a.command=="restore-check": restore_check(m,b,a.backup_receipt,a.backup_file); return 0
             return rollback_plan(m,b,a.backup_receipt,a.backup_file)
         r=plan(m,b); r["upgrade"]="HUMAN_ADMIT_REQUIRED"; r["backup_required"]=True; r["rollback_subject_required"]=True; print(json.dumps(r,sort_keys=True)); return 4
     except (HostError,OSError,subprocess.SubprocessError) as e: print(f"ERROR: {e}",file=sys.stderr); return 2
