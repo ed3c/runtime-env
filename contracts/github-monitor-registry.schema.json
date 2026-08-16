@@ -1,0 +1,37 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://runtime-env.invalid/github-monitor-registry/v1",
+  "title":"GitHub control-plane monitor registry",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema","repositories"],
+  "properties":{
+    "schema":{"const":"runtime-env/github-monitor-registry/v1"},
+    "repositories":{
+      "type":"object",
+      "minProperties":1,
+      "patternProperties":{
+        "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$":{
+          "type":"object",
+          "additionalProperties":false,
+          "required":["visibility_class","required_phases"],
+          "properties":{
+            "visibility_class":{"enum":["public","private"]},
+            "required_phases":{
+              "type":"object",
+              "patternProperties":{
+                "^[1-9][0-9]*$":{
+                  "type":"array",
+                  "uniqueItems":true,
+                  "items":{"enum":["BOOTSTRAP","SHADOW_ADMISSION","TECH_LEAD_PLAN","SPATIAL_INVARIANTS","STACK_DELIVERY","FORGE_RECONCILIATION"]}
+                }
+              },
+              "additionalProperties":false
+            }
+          }
+        }
+      },
+      "additionalProperties":false
+    }
+  }
+}

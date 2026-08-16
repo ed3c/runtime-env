@@ -1,0 +1,20 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"repository-control-plane-monitor",
+  "summary":"Validate the read-only GitHub monitor adapter contract; live one-shot fetch remains explicit and scheduler activation remains unimplemented.",
+  "profile":"repository-control-plane-monitor-local",
+  "host":"local-macos",
+  "entrypoints":{
+    "adapter-contract":["python3","@runtime-env/scripts/github-control-plane-monitor.py","--help"]
+  },
+  "acceptance_entrypoints":["adapter-contract"],
+  "entrypoint_environment":{"adapter-contract":[]},
+  "clean_catalog_entrypoints":["adapter-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{
+    "receipt":"host-owned metadata-only snapshot/plan/monitor receipt on explicit one-shot execution",
+    "control":"fixture acceptance proves adapter shape only; live GitHub fetch and scheduler remain NOT_EXERCISED"
+  }
+}

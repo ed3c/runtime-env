@@ -1,0 +1,8 @@
+{
+  "schema":"runtime-env/module/v1",
+  "id":"github-open-issues-snapshot",
+  "summary":"Read-only GitHub issue metadata and blocked-by dependency adapter for a provider-neutral repository-control-plane packet.",
+  "requires":[],
+  "optional":["GITHUB_TOKEN"],
+  "defaults":{}
+}
