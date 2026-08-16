@@ -1,0 +1,22 @@
+{
+  "schema":"runtime-env/forgejo-host-service-manifest/v1",
+  "service":"forgejo",
+  "version":"15.0.5",
+  "channel":"LTS",
+  "released_at":"2026-07-16",
+  "supported_until":"2027-07-15",
+  "artifact_policy":{
+    "kind":"binary",
+    "digest_source":"host-binding-required",
+    "mutable_tags_allowed":false
+  },
+  "network":{
+    "listen_host":"127.0.0.1",
+    "default_port":3000,
+    "external_bind_allowed":false
+  },
+  "upgrade":{
+    "backup_required":true,
+    "human_admit_required_for_migration":true
+  }
+}
