@@ -23,7 +23,6 @@
   "mutation": "read-only",
   "evidence": {
     "receipt": "metadata-only repository control-plane doctor receipt",
-    "live_stack": "NOT_EXERCISED until exact consumer receipt",
-    "live_dual_forge": "NOT_EXERCISED until exact consumer receipt"
+    "control": "doctor output keeps live Stack and dual-forge NOT_EXERCISED until exact consumer receipts exist"
   }
 }
