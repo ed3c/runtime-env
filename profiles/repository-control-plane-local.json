@@ -1,0 +1,9 @@
+{
+  "schema": "runtime-env/profile/v1",
+  "id": "repository-control-plane-local",
+  "summary": "Host-local repository control-plane capabilities shared across consumer repositories without per-repo tool installation.",
+  "modules": [
+    "git-town-user-toolchain",
+    "forgejo-local-keychain-helper"
+  ]
+}

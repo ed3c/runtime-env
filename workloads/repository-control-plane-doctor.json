@@ -1,0 +1,28 @@
+{
+  "schema": "runtime-env/workload/v2",
+  "id": "repository-control-plane-doctor",
+  "summary": "Report reusable repository control-plane capabilities while keeping live Stack and dual-forge lanes independent.",
+  "profile": "repository-control-plane-local",
+  "host": "local-macos",
+  "entrypoints": {
+    "doctor-contract": ["python3", "@runtime-env/scripts/repository-control-plane-doctor.py", "--mode", "contract"],
+    "git-town-check": ["python3", "@runtime-env/scripts/git-town-toolchain.py", "check"],
+    "git-town-version": ["python3", "@runtime-env/scripts/repository-control-plane-doctor.py", "--mode", "git-town"],
+    "forgejo-credential-canary": ["/bin/bash", "@runtime-env/scripts/verify-local-runtime.sh", "--credential-helper-only"]
+  },
+  "acceptance_entrypoints": ["doctor-contract"],
+  "entrypoint_environment": {
+    "doctor-contract": [],
+    "git-town-check": [],
+    "git-town-version": [],
+    "forgejo-credential-canary": []
+  },
+  "clean_catalog_entrypoints": ["doctor-contract", "git-town-check", "git-town-version", "forgejo-credential-canary"],
+  "secret_delivery": "none",
+  "agent_secret_access": "denied",
+  "mutation": "read-only",
+  "evidence": {
+    "receipt": "metadata-only repository control-plane doctor receipt",
+    "control": "doctor output keeps live Stack and dual-forge NOT_EXERCISED until exact consumer receipts exist"
+  }
+}

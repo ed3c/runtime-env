@@ -1,0 +1,31 @@
+{
+  "schema": "runtime-env/git-town-toolchain-manifest/v1",
+  "tool": "git-town",
+  "version": "24.0.0",
+  "release": {
+    "repository": "git-town/git-town",
+    "tag": "v24.0.0",
+    "immutable": true,
+    "published_at": "2026-07-23T13:48:21Z",
+    "checksums_asset": "checksums.txt",
+    "checksums_sha256": "7532377166cb59dc01c74f86e3a71c54ba9567a461313a5d203a1ea99c571b24"
+  },
+  "assets": {
+    "darwin-arm64": {
+      "name": "git-town_macos_arm_64.tar.gz",
+      "sha256": "0de42d52bad34316413c9d0ba0052d09d4ba8746930aa2cc6eaa5931562a91b2"
+    },
+    "darwin-amd64": {
+      "name": "git-town_macos_intel_64.tar.gz",
+      "sha256": "ef0ba7ef0526a4ad414d9a3e8507b2eaa6e08edb6dd67ffff0ee244222c84cd4"
+    },
+    "linux-arm64": {
+      "name": "git-town_linux_arm_64.tar.gz",
+      "sha256": "967d8014a43a7ad6cf9760b7cb70f79dc423c2b550ec934ad71b0513fbad9427"
+    },
+    "linux-amd64": {
+      "name": "git-town_linux_intel_64.tar.gz",
+      "sha256": "0ed4936f010b42db2ef573e4b2abd951289f4980d95b8236a619429e2501cbc7"
+    }
+  }
+}
