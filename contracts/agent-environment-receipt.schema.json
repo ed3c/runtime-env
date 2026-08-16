@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runtime-env.invalid/agent-environment-receipt/v1",
+  "title": "Agent Environment Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "plan_sha256", "runtime_env", "consumer", "executions", "required_secret_presence", "fixed_setup", "capability_probes", "environment_ready", "live_git_town", "live_forgejo"],
+  "properties": {
+    "schema": {"const": "runtime-env/agent-environment-receipt/v1"},
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runtime_env": {"type": "object"},
+    "consumer": {"type": "object"},
+    "executions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["entrypoint", "exit", "receipt_sha256"],
+        "properties": {
+          "entrypoint": {"type": "string", "minLength": 1},
+          "exit": {"type": "integer"},
+          "receipt_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "required_secret_presence": {
+      "type": "object",
+      "additionalProperties": {"enum": ["PRESENT", "ABSENT"]}
+    },
+    "fixed_setup": {"enum": ["PASS", "FAIL"]},
+    "capability_probes": {"enum": ["PASS", "FAIL"]},
+    "environment_ready": {"enum": ["PASS", "FAIL"]},
+    "live_git_town": {"const": "NOT_EXERCISED"},
+    "live_forgejo": {"const": "NOT_EXERCISED"}
+  }
+}

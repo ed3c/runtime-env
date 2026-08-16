@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runtime-env.invalid/repo-skill-runtime-binding/v1",
+  "title": "Repository Skill Runtime Binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "consumer", "runtime_env", "mode", "skills"],
+  "properties": {
+    "schema": {"const": "runtime-env/repo-skill-runtime-binding/v1"},
+    "consumer": {"$ref": "#/$defs/repo"},
+    "runtime_env": {"$ref": "#/$defs/runtime"},
+    "mode": {"enum": ["local", "actions", "connector", "public-consumer"]},
+    "skills": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirements_sha256", "capability_map"],
+        "properties": {
+          "requirements_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "capability_map": {
+            "type": "object",
+            "additionalProperties": {"$ref": "#/$defs/mapping"}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "tree"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modules", "profile", "workload", "policies", "setup_entrypoints", "probe_entrypoints"],
+      "properties": {
+        "modules": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "profile": {"type": ["string", "null"]},
+        "workload": {"type": ["string", "null"]},
+        "policies": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "setup_entrypoints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "probe_entrypoints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

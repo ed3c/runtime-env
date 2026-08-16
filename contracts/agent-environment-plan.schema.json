@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runtime-env.invalid/agent-environment-plan/v1",
+  "title": "Agent Environment Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "subject", "mode", "skills", "resolved", "capabilities", "secret_names", "authority", "claims", "plan_sha256"],
+  "properties": {
+    "schema": {"const": "runtime-env/agent-environment-plan/v1"},
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consumer", "skills_shared", "runtime_env"],
+      "properties": {
+        "consumer": {"$ref": "#/$defs/repo"},
+        "skills_shared": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["repository", "commit", "registry_sha256"],
+          "properties": {
+            "repository": {"type": "string", "minLength": 1},
+            "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        },
+        "runtime_env": {"$ref": "#/$defs/runtime"}
+      }
+    },
+    "mode": {"enum": ["local", "actions", "connector", "public-consumer"]},
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "content_sha256", "runtime_requirements_sha256"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "runtime_requirements_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "resolved": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modules", "profile", "workload", "policies", "setup_entrypoints", "probe_entrypoints"],
+      "properties": {
+        "modules": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "profile": {"type": ["string", "null"]},
+        "workload": {"type": ["string", "null"]},
+        "policies": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "setup_entrypoints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "probe_entrypoints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "capabilities": {"$ref": "#/$defs/names"},
+    "secret_names": {"$ref": "#/$defs/names"},
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["arbitrary_shell", "automatic_merge", "automatic_conflict_resolution", "visibility_change", "credential_values"],
+      "properties": {
+        "arbitrary_shell": {"const": false},
+        "automatic_merge": {"const": false},
+        "automatic_conflict_resolution": {"const": false},
+        "visibility_change": {"const": false},
+        "credential_values": {"const": false}
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixed_setup", "capability_probes", "environment_ready", "live_git_town", "live_forgejo"],
+      "properties": {
+        "fixed_setup": {"const": "NOT_EXERCISED"},
+        "capability_probes": {"const": "NOT_EXERCISED"},
+        "environment_ready": {"const": "NOT_EXERCISED"},
+        "live_git_town": {"const": "NOT_EXERCISED"},
+        "live_forgejo": {"const": "NOT_EXERCISED"}
+      }
+    },
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "tree"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "names": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "optional"],
+      "properties": {
+        "required": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "optional": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    }
+  }
+}
