@@ -40,23 +40,37 @@ cat > "${TMP}/binding.json" <<JSON
 JSON
 
 python3 "${ROOT}/scripts/forgejo-host-service.py" plan --binding "${TMP}/binding.json" > "${TMP}/plan.json"
-python3 - "${TMP}/plan.json" <<'PY'
+python3 "${ROOT}/scripts/forgejo-host-service.py" preflight --binding "${TMP}/binding.json" > "${TMP}/preflight.json"
+python3 - "${TMP}/plan.json" "${TMP}/preflight.json" <<'PY'
 import json,sys
-p=json.load(open(sys.argv[1])); assert p['version']=='15.0.5'; assert p['service']=='NOT_EXERCISED'; assert p['health']=='NOT_EXERCISED'; assert p['upgrade']=='HUMAN_ADMIT_REQUIRED'; assert p['rollback']=='NOT_EXERCISED'
+p,f=[json.load(open(x)) for x in sys.argv[1:]]
+assert p['version']=='15.0.5' and p['service']=='NOT_EXERCISED' and p['health']=='NOT_EXERCISED'
+assert p['restore']=='NOT_EXERCISED' and p['upgrade']=='HUMAN_ADMIT_REQUIRED' and p['rollback']=='NOT_EXERCISED'
+assert f['state']=='PASS' and f['port_available'] is True and f['service']=='NOT_EXERCISED'
 PY
+
+# Interrupted staging is a hard blocker: never activate half-installed bytes.
+staging="${TMP}/home/.local/lib/runtime-env/forgejo/.15.0.5.staging"
+mkdir -p "${staging}"
+if python3 "${ROOT}/scripts/forgejo-host-service.py" preflight --binding "${TMP}/binding.json" >/dev/null 2>&1; then
+  echo 'FAIL: interrupted staging was accepted' >&2; exit 1
+fi
+rm -rf "${staging}"
 
 RUNTIME_ENV_ALLOW_TEST_ROOT=1 python3 "${ROOT}/scripts/forgejo-host-service.py" install --binding "${TMP}/binding.json" --artifact "${fake}" --receipt "${TMP}/receipts/install.json" > "${TMP}/install.json"
 test "$(stat -c '%a' "${TMP}/receipts/install.json")" = 600
 test "$(stat -c '%a' "${TMP}/home/.local/state/runtime-env/forgejo/config/app.ini")" = 600
 grep -F 'HTTP_ADDR = 127.0.0.1' "${TMP}/home/.local/state/runtime-env/forgejo/config/app.ini" >/dev/null
 grep -F 'HTTP_PORT = 3000' "${TMP}/home/.local/state/runtime-env/forgejo/config/app.ini" >/dev/null
+test ! -e "${staging}"
 
 python3 "${ROOT}/scripts/forgejo-host-service.py" check --binding "${TMP}/binding.json" > "${TMP}/check.json"
 python3 - "${TMP}/install.json" "${TMP}/check.json" <<'PY'
 import json,sys
 a,b=[json.load(open(x)) for x in sys.argv[1:]]
-assert a['state']=='PASS'; assert a['service']=='NOT_EXERCISED'; assert a['health']=='NOT_EXERCISED'; assert a['credentials']=='NOT_EXERCISED'; assert a['migration']=='NOT_EXERCISED'
-assert b['state']=='PASS'; assert b['service']=='NOT_EXERCISED'; assert b['health']=='NOT_EXERCISED'
+assert a['state']=='PASS' and a['service']=='NOT_EXERCISED' and a['health']=='NOT_EXERCISED'
+assert a['credentials']=='NOT_EXERCISED' and a['migration']=='NOT_EXERCISED'
+assert b['state']=='PASS' and b['restore']=='NOT_EXERCISED' and b['rollback']=='NOT_EXERCISED'
 PY
 
 # Backup refuses a potentially live SQLite copy without explicit stopped-service evidence.
@@ -67,10 +81,36 @@ python3 "${ROOT}/scripts/forgejo-host-service.py" backup --binding "${TMP}/bindi
 test -s "${TMP}/backup.zip"
 python3 - "${TMP}/backup.json" <<'PY'
 import json,sys
-p=json.load(open(sys.argv[1])); assert p['state']=='PASS'; assert p['service_stopped'] is True; assert len(p['backup_sha256'])==64
+p=json.load(open(sys.argv[1])); assert p['state']=='PASS' and p['service_stopped'] is True
+assert len(p['backup_sha256'])==64 and len(p['binary_sha256'])==64 and len(p['config_sha256'])==64
 PY
 
-# Upgrade cannot self-admit; it produces a Human gate and a non-success exit.
+# Restore preflight proves exact backup + binary + config identity but performs no destructive mutation.
+python3 "${ROOT}/scripts/forgejo-host-service.py" restore-check --binding "${TMP}/binding.json" --backup-receipt "${TMP}/receipts/backup.json" --backup-file "${TMP}/backup.zip" > "${TMP}/restore.json"
+python3 - "${TMP}/restore.json" <<'PY'
+import json,sys
+p=json.load(open(sys.argv[1])); assert p['state']=='PASS'; assert p['restore_execution']=='NOT_EXERCISED'; assert p['destructive_mutation'] is False
+PY
+
+# Tampered backup cannot become a restore or rollback subject.
+printf 'tamper\n' >> "${TMP}/backup.zip"
+if python3 "${ROOT}/scripts/forgejo-host-service.py" restore-check --binding "${TMP}/binding.json" --backup-receipt "${TMP}/receipts/backup.json" --backup-file "${TMP}/backup.zip" >/dev/null 2>&1; then
+  echo 'FAIL: tampered backup was accepted' >&2; exit 1
+fi
+printf 'fake-consistent-forgejo-dump\n' > "${TMP}/backup.zip"
+
+# Rollback remains Human-owned even after exact restore preflight passes.
+set +e
+python3 "${ROOT}/scripts/forgejo-host-service.py" rollback-plan --binding "${TMP}/binding.json" --backup-receipt "${TMP}/receipts/backup.json" --backup-file "${TMP}/backup.zip" > "${TMP}/rollback.json"
+rollback_exit=$?
+set -e
+test "${rollback_exit}" = 4
+python3 - "${TMP}/rollback.json" <<'PY'
+import json,sys
+p=json.load(open(sys.argv[1])); assert p['rollback']=='HUMAN_ADMIT_REQUIRED'; assert p['restore_preflight']=='PASS'; assert p['destructive_mutation'] is False
+PY
+
+# Upgrade cannot self-admit and must bind both backup and rollback subjects.
 set +e
 python3 "${ROOT}/scripts/forgejo-host-service.py" upgrade-plan --binding "${TMP}/binding.json" > "${TMP}/upgrade.json"
 upgrade_exit=$?
@@ -78,7 +118,7 @@ set -e
 test "${upgrade_exit}" = 4
 python3 - "${TMP}/upgrade.json" <<'PY'
 import json,sys
-p=json.load(open(sys.argv[1])); assert p['upgrade']=='HUMAN_ADMIT_REQUIRED'; assert p['backup_required'] is True
+p=json.load(open(sys.argv[1])); assert p['upgrade']=='HUMAN_ADMIT_REQUIRED'; assert p['backup_required'] is True; assert p['rollback_subject_required'] is True
 PY
 
 # Wrong artifact digest is rejected before host mutation.
@@ -111,4 +151,4 @@ fi
 python3 -m json.tool "${ROOT}/catalog/forgejo-host-service.json" >/dev/null
 python3 -m json.tool "${ROOT}/contracts/forgejo-host-binding.schema.json" >/dev/null
 
-echo 'PASS: exact Forgejo host lifecycle, backup gate, and Human upgrade boundary'
+echo 'PASS: Forgejo atomic install, restore preflight, rollback gate, and interruption controls'
