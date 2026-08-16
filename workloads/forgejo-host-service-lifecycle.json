@@ -1,0 +1,20 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"forgejo-host-service-lifecycle",
+  "summary":"Validate the host-scoped Forgejo lifecycle contract; install/start/backup/upgrade remain explicit host transitions.",
+  "profile":"forgejo-host-service-local",
+  "host":"local-macos",
+  "entrypoints":{
+    "lifecycle-contract":["python3","@runtime-env/scripts/forgejo-host-service.py","--help"]
+  },
+  "acceptance_entrypoints":["lifecycle-contract"],
+  "entrypoint_environment":{"lifecycle-contract":[]},
+  "clean_catalog_entrypoints":["lifecycle-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{
+    "receipt":"exact host-binding lifecycle receipts for explicit transitions",
+    "control":"structural acceptance never claims live daemon health, backup, migration, rollback, or credential readiness"
+  }
+}
