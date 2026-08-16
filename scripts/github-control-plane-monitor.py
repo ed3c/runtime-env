@@ -131,9 +131,21 @@ def compile_plan(packet,skills_root,expected_commit):
 def atomic_json(path,value):
     path=path.expanduser().absolute(); path.parent.mkdir(mode=0o700,parents=True,exist_ok=True); tmp=path.with_suffix(path.suffix+".tmp"); tmp.write_text(json.dumps(value,indent=2,sort_keys=True)+"\n",encoding="utf-8"); os.replace(tmp,path)
 
+def acquire_lock(root: Path):
+    root.mkdir(mode=0o700,parents=True,exist_ok=True); lock=root/"monitor.lock"
+    try: fd=os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
+    except FileExistsError as e: raise MonitorError("overlapping monitor run refused") from e
+    os.write(fd,str(os.getpid()).encode()); os.close(fd); return lock
+
+def existing_receipt(root: Path):
+    p=root/"receipt.json"
+    return load(p) if p.is_file() else None
+
 def main(argv=None):
     p=argparse.ArgumentParser(); p.add_argument("command",choices=["fixture","fetch"]); p.add_argument("--registry",type=Path,required=True); p.add_argument("--repository",required=True); p.add_argument("--skills-root",type=Path,required=True); p.add_argument("--skills-commit",required=True); p.add_argument("--state-root",type=Path,required=True); p.add_argument("--issues-fixture",type=Path); p.add_argument("--dependencies-fixture",type=Path); args=p.parse_args(argv)
+    lock=None
     try:
+        root=args.state_root.expanduser().absolute(); lock=acquire_lock(root)
         reg=registry(args.registry); token=os.environ.get("GITHUB_TOKEN")
         if args.command=="fixture":
             if not args.issues_fixture or not args.dependencies_fixture: raise MonitorError("fixture mode requires issue/dependency fixtures")
@@ -141,8 +153,20 @@ def main(argv=None):
         else:
             if reg["repositories"][args.repository]["visibility_class"]=="private" and not token: raise MonitorError("GITHUB_TOKEN is required for private repository read")
             packet,provider=fetch_packet(reg,args.repository,token); provider={"mode":"github-read-only","api_version":API_VERSION,**provider}
-        plan,schema_sha=compile_plan(packet,args.skills_root,args.skills_commit); snapshot={"schema":"runtime-env/github-control-plane-snapshot/v1","repository":args.repository,"provider":provider,"packet":packet,"packet_sha256":digest(packet)}
-        receipt={"schema":"runtime-env/github-control-plane-monitor-receipt/v1","repository":args.repository,"skills_shared_commit":args.skills_commit,"snapshot_sha256":digest(snapshot),"packet_sha256":snapshot["packet_sha256"],"plan_sha256":digest(plan),"plan_schema_sha256":schema_sha,"provider_permission":"issues:read","provider_writes":False,"worker_execution":"NOT_EXERCISED","terminal_state":"READY"}
-        root=args.state_root.expanduser().absolute(); atomic_json(root/"snapshot.json",snapshot); atomic_json(root/"plan.json",plan); atomic_json(root/"receipt.json",receipt); print(json.dumps(receipt,sort_keys=True)); return 0
+        plan,schema_sha=compile_plan(packet,args.skills_root,args.skills_commit)
+        snapshot={"schema":"runtime-env/github-control-plane-snapshot/v1","repository":args.repository,"provider":provider,"packet":packet,"packet_sha256":digest(packet)}
+        identity=digest({"repository":args.repository,"skills_shared_commit":args.skills_commit,"packet_sha256":snapshot["packet_sha256"],"plan_sha256":digest(plan)})
+        old=existing_receipt(root)
+        if old and old.get("run_identity_sha256")==identity:
+            duplicate={**old,"deduplication":"SUPPRESSED_DUPLICATE"}; print(json.dumps(duplicate,sort_keys=True)); return 0
+        handoff={"schema":"runtime-env/repository-control-plane-handoff/v1","repository":args.repository,"plan_sha256":digest(plan),"admission":"READY_FOR_SCHEDULER_REVIEW","launch_worker":False,"worker_execution":"NOT_EXERCISED"}
+        receipt={"schema":"runtime-env/github-control-plane-monitor-receipt/v1","repository":args.repository,"skills_shared_commit":args.skills_commit,"snapshot_sha256":digest(snapshot),"packet_sha256":snapshot["packet_sha256"],"plan_sha256":digest(plan),"plan_schema_sha256":schema_sha,"run_identity_sha256":identity,"deduplication":"NEW","provider_permission":"issues:read","provider_writes":False,"worker_execution":"NOT_EXERCISED","terminal_state":"READY"}
+        # Publish only after every input/compile/handoff check has succeeded, preserving prior admitted state on failure.
+        atomic_json(root/"snapshot.json",snapshot); atomic_json(root/"plan.json",plan); atomic_json(root/"handoff.json",handoff); atomic_json(root/"receipt.json",receipt)
+        print(json.dumps(receipt,sort_keys=True)); return 0
     except (MonitorError,OSError) as e: print(f"ERROR: {e}",file=sys.stderr); return 2
+    finally:
+        if lock is not None:
+            try: lock.unlink()
+            except FileNotFoundError: pass
 if __name__=="__main__": raise SystemExit(main())
