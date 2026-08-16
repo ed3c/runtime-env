@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"repository-control-plane-monitor-local",
+  "summary":"Read-only host adapter for allowlisted GitHub issue snapshots and offline repository-control-plane compilation.",
+  "modules":["github-open-issues-snapshot"]
+}
