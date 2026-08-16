@@ -1,0 +1,8 @@
+{
+  "schema": "runtime-env/module/v1",
+  "id": "git-town-user-toolchain",
+  "summary": "One checksum-bound Git Town executable per user; consumer repositories bind the capability but never vendor the binary.",
+  "requires": [],
+  "optional": [],
+  "defaults": {}
+}
