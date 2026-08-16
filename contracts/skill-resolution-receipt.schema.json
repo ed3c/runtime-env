@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runtime-env.invalid/skill-resolution-receipt/v1",
+  "title": "Skill Resolution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "skills_shared", "consumer", "skills"],
+  "properties": {
+    "schema": {"const": "skills-shared/skill-resolution-receipt/v1"},
+    "skills_shared": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "registry_sha256"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "registry_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "consumer": {"$ref": "#/$defs/repo"},
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "content_sha256", "runtime_requirements_sha256"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "runtime_requirements_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    }
+  }
+}
