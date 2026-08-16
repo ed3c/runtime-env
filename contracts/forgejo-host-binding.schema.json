@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://runtime-env.invalid/forgejo-host-binding/v1",
+  "title":"Forgejo host binding",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema","version","platform","artifact_sha256","install_root","state_root","port"],
+  "properties":{
+    "schema":{"const":"runtime-env/forgejo-host-binding/v1"},
+    "version":{"type":"string","pattern":"^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "platform":{"enum":["darwin-arm64","darwin-amd64","linux-arm64","linux-amd64"]},
+    "artifact_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+    "install_root":{"type":"string","minLength":1},
+    "state_root":{"type":"string","minLength":1},
+    "port":{"type":"integer","minimum":1024,"maximum":65535}
+  }
+}

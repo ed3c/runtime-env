@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"forgejo-host-service-local",
+  "summary":"Host-scoped Forgejo service lifecycle and existing local credential helper contract.",
+  "modules":["forgejo-host-service","forgejo-local-keychain-helper"]
+}
