@@ -24,6 +24,8 @@ PRD requirement
 
 The graph is checked by `tests/check_prd_traceability.py` and planted disagreement controls. A closed GitHub issue cannot substitute for this evidence chain, and `LIVE_CLOSED` cannot be represented without an exact live evidence subject.
 
+PRD traceability issue **#54 is `CONTRACT_CLOSED`** on merged PR #55; PR-head CI #107 and merged-main CI #108 passed. This proves the traceability mechanism, not #37/#38/#45 live runtime readiness.
+
 ## What this repository separates
 
 ```text
@@ -77,8 +79,10 @@ Current convergence owner: **issue #50**.
 main / convergence
 ├─ #37 read-only GitHub monitor live closure
 ├─ #38 Forgejo exact-host lifecycle live closure
-├─ #45 admitted-consumer multi-Worker live closure
-└─ #54 PRD requirement graph / traceability closure
+└─ #45 admitted-consumer multi-Worker live closure
+
+closed governance leaf:
+└─ #54 PRD requirement graph → PR #55 → CONTRACT_CLOSED
 ```
 
 The Runtime Contract Plane and public release exist. Current-head CI must remain green, and #37/#38/#45 retain their exact live receipt requirements. Read [`docs/architecture/SHADOW_ARCHITECT_LEDGER.md`](docs/architecture/SHADOW_ARCHITECT_LEDGER.md) for the mutable current assessment rather than inferring readiness from issue state.
@@ -91,8 +95,10 @@ The Runtime Contract Plane and public release exist. Current-head CI must remain
 same admitted base
 ├─ terminal leaf #37  GitHub monitor
 ├─ terminal leaf #38  Forgejo host lifecycle
-├─ terminal leaf #45  scheduler runtime
-└─ terminal leaf #54  PRD requirement graph
+└─ terminal leaf #45  scheduler runtime
+
+completed sibling:
+└─ #54 / PR #55  PRD requirement graph
         ↓
 #50 convergence owns shared README / AGENTS / index / aggregate evidence
 ```
