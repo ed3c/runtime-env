@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prd-requirements.schema.json",
+  "title": "runtime-env PRD requirement graph",
+  "type": "object",
+  "required": ["schema", "source", "requirements"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "prd-requirements/v1"},
+    "source": {
+      "type": "object",
+      "required": ["repository", "issue", "title"],
+      "additionalProperties": false,
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "issue": {"type": "integer", "minimum": 1},
+        "title": {"type": "string", "minLength": 1}
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "source_item", "owner", "implementation_paths", "issues", "prs", "positive_controls", "negative_controls", "live_required", "live_evidence", "closure"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^REQ-[A-Z0-9-]+$"},
+          "source_item": {"type": "string", "minLength": 1},
+          "owner": {
+            "type": "object",
+            "required": ["directory", "state_machine"],
+            "additionalProperties": false,
+            "properties": {
+              "directory": {"type": "string", "minLength": 1},
+              "state_machine": {"type": "string", "minLength": 1}
+            }
+          },
+          "implementation_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "issues": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+          "prs": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+          "positive_controls": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "negative_controls": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "live_required": {"type": "boolean"},
+          "live_evidence": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "closure": {"enum": ["PARTIAL", "CONTRACT_CLOSED", "LIVE_CLOSED"]}
+        }
+      }
+    }
+  }
+}
