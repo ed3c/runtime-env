@@ -1,6 +1,6 @@
 # Shadow Architect current closure ledger
 
-> Observation time: 2026-08-17 23:29 Asia/Taipei  
+> Observation time: 2026-08-17 23:39 Asia/Taipei  
 > Repository: `ed3c/runtime-env`  
 > Convergence owner: issue #50
 
@@ -11,8 +11,8 @@ This is an evidence ledger, not a second implementation SSOT.
 ```text
 Runtime Contract Plane                  IMPLEMENTED
 Public repository / v0.1.0             PUBLISHED
-Deterministic contract controls         MOSTLY CLOSED
-Current main GitHub Actions             FAIL at observed HEAD
+Deterministic current-head CI           PASS
+CI safety/freshness repair (#51)        CONTRACT_CLOSED
 GitHub monitor live acceptance (#37)    PARTIAL / NOT_EXERCISED
 Forgejo exact-host acceptance (#38)     PARTIAL / NOT_EXERCISED
 Multi-Worker live consumer (#45)        PARTIAL / NOT_EXERCISED
@@ -20,7 +20,22 @@ Cross-repo/PDF end-to-end integration   PARTIAL
 Operational completion                  NOT CLOSED
 ```
 
-At the start of this pass, `main` was `6eaae8b8d31fd867dd933a3266024ff7a5e35ce3`; CI run #94 failed while prior main `77dca3584a4adb1c463c815bdb5ab603eae32b23` passed. The connector exposed exit code `1` but not enough failing-test log to prove a root cause. Independently observed freshness drift: delivery metrics still represented issue #4 as open although GitHub #4 is closed, and the publication attestation still carries `export-tree-drift` / `open-delivery-slices`. Treat this as a freshness defect to verify, not as a fabricated CI diagnosis.
+## Current-head CI closure
+
+The pass started with `main@6eaae8b8d31fd867dd933a3266024ff7a5e35ce3` failing CI run #94. The exact failing seam was later proven: `scripts/publish_v0_1_0.sh` tracked a maintainer-specific `/Users/...` path while `tests/check_tracked_text.py` intentionally rejects host-account paths in the public tree.
+
+Issue #51 / PR #52 replaced that path with explicit host-owned `GITHUB_DELIVERY_SCRIPT` binding and fail-closed validation.
+
+```text
+PR #52 head d928edf0bfa14b7c4e6d01c44a476dd77192b228
+→ CI run #95 PASS
+→ merged main cd92685459d60064c5b1bf31ebeda5784d51c120
+→ main CI run #97 PASS
+```
+
+The Shadow Architect documentation branch was then merged with repaired main; its head `75382a50a0799a73de7f71b2658ce38009a71ea0` passed CI run #98. #51 is therefore `CONTRACT_CLOSED`. It does not close any live lane.
+
+Delivery metrics/attestations remain point-in-time snapshots. If their timestamp/commit predates material GitHub state, classify them as stale evidence and compare them with current provider truth rather than rewriting historical release identity.
 
 ## Closure classification
 
@@ -112,38 +127,25 @@ SOURCE_PROPOSAL
 
 Article/PDF prose, diagrams, package presence or licensing claims never become live PASS by themselves.
 
-## Freshness defects found
+## Documentation defects addressed by PR #53
 
-1. Root README still says the repository is private although GitHub is public and `v0.1.0` is published.
-2. Delivery metrics/attestations are point-in-time snapshots and can be stale relative to GitHub issue/HEAD state.
-3. Directory READMEs often omit upstream/downstream DAG ownership and evidence ceiling.
-4. Root `AGENTS.md` lacks a mandatory current Shadow Architect ledger route.
-5. Current main CI is red; current-head completion cannot be claimed.
+- root README public/private truth corrected;
+- directory READMEs now name upstream/downstream DAG ownership and evidence ceilings;
+- architecture README adds molecular Stack index and closure states;
+- architecture AGENTS adds mandatory Shadow Architect / Tech Lead audit packet;
+- docs index routes Agents through the current ledger;
+- delivery README makes point-in-time freshness explicit.
 
-## Closure DAG
+## Residual closure DAG
 
 ```text
-current-head CI/freshness
-          │
-          ├──────────────┬──────────────┐
-          ▼              ▼              ▼
-      #37 live        #38 live        #45 live
-          │              │              │
-          └──────────────┴──────────────┘
-                         ▼
-               #50 shared convergence
-                         ▼
-       README / AGENTS / index / ledger refresh
-                         ▼
-              exact current-head CI PASS
-                         ▼
-             applicable live receipts PASS
-                         ▼
-             zero residue + rollback bound
-                         ▼
-                    Human Admit
+#37 live monitor ───────┐
+#38 live Forgejo ───────┼─→ #50 convergence → exact current-head verification → Human Admit / rollback
+#45 live scheduler ─────┘
 ```
+
+The deterministic CI repair is no longer a residual dependency. Operational closure now depends on the exact live receipts, cleanup/residue checks and any cross-repository acceptance required by the claimed capability.
 
 ## Stop conditions
 
-Refuse a completion claim when current-head CI is not PASS, source identity is ambiguous, a fixture proxies live evidence, a closed issue proxies runtime evidence, a receipt predates material subject changes, cleanup is unmeasured, or Human-only destructive/secret-bearing authority remains required.
+Refuse a completion claim when source identity is ambiguous, a fixture proxies live evidence, a closed issue proxies runtime evidence, a receipt predates material subject changes, cleanup is unmeasured, current-head CI is not PASS, or Human-only destructive/secret-bearing authority remains required.
