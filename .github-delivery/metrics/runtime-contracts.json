@@ -1,0 +1,263 @@
+{
+  "fetched_at": "2026-08-17T06:30:31Z",
+  "github_repo": "ed3c/runtime-env",
+  "github_repository_id": "R_kgDOT0Gv5A",
+  "line": "runtime-contracts",
+  "percentiles": {
+    "blocked_seconds": {
+      "p50": 0,
+      "p85": 0
+    },
+    "cycle_seconds": {
+      "p50": 127,
+      "p85": 3677
+    },
+    "lead_seconds": {
+      "p50": 381,
+      "p85": 76604
+    },
+    "queue_seconds": {
+      "p50": 1609,
+      "p85": 116163
+    },
+    "review_seconds": {
+      "p50": 127,
+      "p85": 3677
+    }
+  },
+  "project_url": "https://github.com/users/ed3c/projects/3",
+  "quality": {
+    "first_pass_rate": null,
+    "redaction_leakage_rate": null,
+    "reopen_rate": 0.0
+  },
+  "schema": "github-delivery-metrics/v1",
+  "slices": [
+    {
+      "accepted_pr": 3,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 3677,
+      "issue_number": 2,
+      "issue_state": "CLOSED",
+      "lead_seconds": 5286,
+      "queue_seconds": 1609,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 3677,
+      "started_pr": 3,
+      "title": "Implement catalog, profiles, and runtime-env CLI"
+    },
+    {
+      "accepted_pr": null,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": null,
+      "issue_number": 4,
+      "issue_state": "OPEN",
+      "lead_seconds": null,
+      "queue_seconds": 336782,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": null,
+      "started_pr": 33,
+      "title": "Publish runtime-env for credential-free public consumption"
+    },
+    {
+      "accepted_pr": 20,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 127,
+      "issue_number": 19,
+      "issue_state": "CLOSED",
+      "lead_seconds": 157,
+      "queue_seconds": 30,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 127,
+      "started_pr": 20,
+      "title": "Enforce L5 acceptance across bound consumer repositories"
+    },
+    {
+      "accepted_pr": 22,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 56,
+      "issue_number": 21,
+      "issue_state": "CLOSED",
+      "lead_seconds": 74,
+      "queue_seconds": 18,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 56,
+      "started_pr": 22,
+      "title": "Honor workspace-mutating L5 consumer acceptance"
+    },
+    {
+      "accepted_pr": 30,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 74540,
+      "issue_number": 29,
+      "issue_state": "CLOSED",
+      "lead_seconds": 76604,
+      "queue_seconds": 2064,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 74540,
+      "started_pr": 30,
+      "title": "Docs: bind runtime-env to the shared multi-hop document-routing contract"
+    },
+    {
+      "accepted_pr": 32,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 95,
+      "issue_number": 31,
+      "issue_state": "CLOSED",
+      "lead_seconds": 381,
+      "queue_seconds": 286,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 95,
+      "started_pr": 32,
+      "title": "Remove host-local paths and private repository URLs from the publishable tree"
+    },
+    {
+      "accepted_pr": 39,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 1101,
+      "issue_number": 35,
+      "issue_state": "CLOSED",
+      "lead_seconds": 117264,
+      "queue_seconds": 116163,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 1101,
+      "started_pr": 39,
+      "title": "P0: consume canonical Skill requirements and emit secret-free Agent environment bootstrap plans"
+    },
+    {
+      "accepted_pr": 40,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 874,
+      "issue_number": 36,
+      "issue_state": "CLOSED",
+      "lead_seconds": 6717,
+      "queue_seconds": 5843,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 874,
+      "started_pr": 40,
+      "title": "P0: add pinned user-scoped Git Town toolchain and repository-control-plane doctor"
+    },
+    {
+      "accepted_pr": null,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": null,
+      "issue_number": 37,
+      "issue_state": "OPEN",
+      "lead_seconds": null,
+      "queue_seconds": null,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": null,
+      "started_pr": null,
+      "title": "P1: add read-only GitHub issue snapshot adapter and repository-control-plane monitor runner"
+    },
+    {
+      "accepted_pr": null,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": null,
+      "issue_number": 38,
+      "issue_state": "OPEN",
+      "lead_seconds": null,
+      "queue_seconds": null,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": null,
+      "started_pr": null,
+      "title": "P0: add host-scoped Forgejo service lifecycle and portable doctor receipts"
+    },
+    {
+      "accepted_pr": null,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": null,
+      "issue_number": 45,
+      "issue_state": "OPEN",
+      "lead_seconds": null,
+      "queue_seconds": null,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": null,
+      "started_pr": null,
+      "title": "P0: implement bounded multi-Worker scheduler runtime for skills-shared#231"
+    },
+    {
+      "accepted_pr": 49,
+      "blocked_seconds": 0,
+      "currently_blocked": false,
+      "cycle_seconds": 50,
+      "issue_number": 48,
+      "issue_state": "CLOSED",
+      "lead_seconds": 111,
+      "queue_seconds": 61,
+      "reference_causality": {
+        "attribution": "known-or-absent",
+        "unknown_current_body_refs": []
+      },
+      "reopened": false,
+      "review_seconds": 50,
+      "started_pr": 49,
+      "title": "P0: compose Bettor Tech Lead consumer profile with bounded scheduler runtime"
+    }
+  ],
+  "summary": {
+    "accepted_slices": 8,
+    "blocked_slices": 0,
+    "closed_without_merge": 0,
+    "throughput_28d": 8,
+    "throughput_7d": 8,
+    "total_slices": 12,
+    "unknown_reference_attributions": 0,
+    "wip": 1
+  }
+}

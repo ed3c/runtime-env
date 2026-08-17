@@ -1,12 +1,12 @@
 {
   "blockers": [
-    "open-delivery-slices",
-    "human-visibility-gate"
+    "export-tree-drift",
+    "open-delivery-slices"
   ],
-  "commit": "648d474e7cc06bbd00b2b1ec626cd0df78f1ef87",
+  "commit": "77dca3584a4adb1c463c815bdb5ab603eae32b23",
   "export_source_commit": "648d474e7cc06bbd00b2b1ec626cd0df78f1ef87",
   "export_tree_sha": "e214062dadb825c5f135a5299b27e6893c6f8fe4",
-  "file_count": 198,
+  "file_count": 236,
   "github_repo": "ed3c/runtime-env",
   "github_repository_id": "R_kgDOT0Gv5A",
   "history_root": true,
@@ -15,6 +15,6 @@
   "public_ready": false,
   "remote_url": "https://github.com/ed3c/runtime-env",
   "schema": "github-publication-attestation/v1",
-  "verified_at": "2026-08-14T12:28:38Z",
-  "visibility": "PRIVATE"
+  "verified_at": "2026-08-17T06:30:31Z",
+  "visibility": "PUBLIC"
 }

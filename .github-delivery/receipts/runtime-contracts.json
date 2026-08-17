@@ -7,7 +7,13 @@
     "https://github.com/ed3c/runtime-env/issues/19",
     "https://github.com/ed3c/runtime-env/issues/21",
     "https://github.com/ed3c/runtime-env/issues/29",
-    "https://github.com/ed3c/runtime-env/issues/31"
+    "https://github.com/ed3c/runtime-env/issues/31",
+    "https://github.com/ed3c/runtime-env/issues/35",
+    "https://github.com/ed3c/runtime-env/issues/36",
+    "https://github.com/ed3c/runtime-env/issues/37",
+    "https://github.com/ed3c/runtime-env/issues/38",
+    "https://github.com/ed3c/runtime-env/issues/45",
+    "https://github.com/ed3c/runtime-env/issues/48"
   ],
   "line": "runtime-contracts",
   "pr_urls": [
@@ -36,11 +42,21 @@
     "https://github.com/ed3c/runtime-env/pull/28",
     "https://github.com/ed3c/runtime-env/pull/30",
     "https://github.com/ed3c/runtime-env/pull/32",
-    "https://github.com/ed3c/runtime-env/pull/33"
+    "https://github.com/ed3c/runtime-env/pull/33",
+    "https://github.com/ed3c/runtime-env/pull/34",
+    "https://github.com/ed3c/runtime-env/pull/39",
+    "https://github.com/ed3c/runtime-env/pull/40",
+    "https://github.com/ed3c/runtime-env/pull/41",
+    "https://github.com/ed3c/runtime-env/pull/42",
+    "https://github.com/ed3c/runtime-env/pull/43",
+    "https://github.com/ed3c/runtime-env/pull/44",
+    "https://github.com/ed3c/runtime-env/pull/46",
+    "https://github.com/ed3c/runtime-env/pull/47",
+    "https://github.com/ed3c/runtime-env/pull/49"
   ],
   "prd_issue_url": "https://github.com/ed3c/runtime-env/issues/1",
   "project_url": "https://github.com/users/ed3c/projects/3",
   "schema": "github-delivery-receipt/v1",
   "source_commit": "648d474e7cc06bbd00b2b1ec626cd0df78f1ef87",
-  "synced_at": "2026-08-14T12:28:38Z"
+  "synced_at": "2026-08-17T06:30:31Z"
 }
