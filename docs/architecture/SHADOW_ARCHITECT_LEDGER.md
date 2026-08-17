@@ -1,6 +1,6 @@
 # Shadow Architect current closure ledger
 
-> Observation time: 2026-08-18 00:28 Asia/Taipei  
+> Observation time: 2026-08-18 00:34 Asia/Taipei  
 > Repository: `ed3c/runtime-env`  
 > Convergence owner: issue #50
 
@@ -11,9 +11,9 @@ This is an evidence ledger, not a second implementation SSOT.
 ```text
 Runtime Contract Plane                  IMPLEMENTED
 Public repository / v0.1.0             PUBLISHED
-Deterministic current-head CI           PASS at last admitted main
+Deterministic current-head CI           PASS at main d979c696... / run #108
 CI safety/freshness repair (#51)        CONTRACT_CLOSED
-PRD requirement graph (#54)             IMPLEMENTED ON PR #55 / CI REQUIRED
+PRD requirement graph (#54)             CONTRACT_CLOSED
 GitHub monitor live acceptance (#37)    PARTIAL / NOT_EXERCISED / REOPENED
 Forgejo exact-host acceptance (#38)     PARTIAL / NOT_EXERCISED
 Multi-Worker live consumer (#45)        PARTIAL / NOT_EXERCISED
@@ -23,7 +23,7 @@ Operational completion                  NOT CLOSED
 
 ## PRD traceability lane — #54
 
-PRD #1 previously had a human-readable acceptance checklist but no stable machine-verifiable requirement IDs. PR #55 adds:
+PRD #1 previously had a human-readable acceptance checklist but no stable machine-verifiable requirement IDs. PR #55 added:
 
 ```text
 prd/requirements.json
@@ -31,11 +31,24 @@ contracts/prd-requirements.schema.json
 tests/check_prd_traceability.py
 tests/test_prd_traceability.sh
 prd/README.md + prd/AGENTS.md
+README.md + AGENTS.md + docs/INDEX.md routing
 ```
 
-The six original PRD #1 acceptance requirements are now assigned `REQ-PRD-001` through `REQ-PRD-006` and bind directory/State Machine owner, repository implementation paths, issue/PR lineage, positive controls, disagreement controls, live-evidence requirement and closure state.
+The six original PRD #1 acceptance requirements are assigned `REQ-PRD-001` through `REQ-PRD-006` and bind directory/State Machine owner, repository implementation paths, issue/PR lineage, positive controls, disagreement controls, live-evidence requirement and closure state.
 
-Planted controls require duplicate IDs, missing implementation paths and `LIVE_CLOSED` without exact live evidence to turn red. #54 may become `CONTRACT_CLOSED` only after exact PR-head CI passes and the routing docs are admitted. It cannot close or promote #37/#38/#45.
+Planted controls require duplicate IDs, missing implementation paths and `LIVE_CLOSED` without exact live evidence to turn red.
+
+Exact evidence:
+
+```text
+PR #55 head 4f624c33bbd75e09e946d07fea2dc2776406a47c
+→ CI run #107 PASS
+→ merged main d979c696261750b1823b1e06becfa6892761c5db
+→ main CI run #108 PASS
+→ issue #54 CLOSED / CONTRACT_CLOSED
+```
+
+This closes the traceability mechanism only. It does not close or promote #37/#38/#45.
 
 ## #37 closure correction
 
@@ -53,9 +66,12 @@ PR #52 head d928edf0bfa14b7c4e6d01c44a476dd77192b228
 → merged main cd92685459d60064c5b1bf31ebeda5784d51c120
 → main CI run #97 PASS
 → PR #53 convergence merged main 3cf0118f3ada21d91d7e692f3938d1d47e59d0e5
+→ CI run #101 PASS
+→ PR #55 requirement graph merged main d979c696261750b1823b1e06becfa6892761c5db
+→ CI run #108 PASS
 ```
 
-#51 is `CONTRACT_CLOSED`. It does not close any live lane. Every new head, including PR #55 and any later merge, still requires its own exact CI result.
+#51 and #54 are `CONTRACT_CLOSED`. Neither closes any live lane. Every later head still requires its own exact CI result.
 
 Delivery metrics/attestations remain point-in-time snapshots. If their timestamp/commit predates material GitHub state, classify them as stale evidence and compare them with current provider truth rather than rewriting historical release identity.
 
@@ -152,13 +168,14 @@ Article/PDF prose, diagrams, package presence or licensing claims never become l
 ## Residual closure DAG
 
 ```text
-#54 PRD graph ──────────┐
-#37 live monitor ───────┤
+#37 live monitor ───────┐
 #38 live Forgejo ───────┼─→ #50 convergence → exact current-head verification → Human Admit / rollback
 #45 live scheduler ─────┘
+
+#54 PRD graph → CONTRACT_CLOSED (non-residual)
 ```
 
-#54 is connector/CI-completable. #37/#38/#45 require exact runtime/provider/host subjects and remain open unless those receipts are actually obtained.
+At this stage the remaining open terminal leaves are exact-runtime evidence lanes. #37 requires a real admitted GitHub provider fetch/readback; #38 requires an admitted Forgejo host/service lifecycle; #45 requires an admitted consumer with real linked worktrees/processes. Connector/CI fixtures must not be used to close them.
 
 ## Stop conditions
 
