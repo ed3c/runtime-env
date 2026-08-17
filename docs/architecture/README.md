@@ -78,38 +78,35 @@ No arrow may be collapsed. `module exists` does not mean `provider runs`; `test 
 
 ## Molecular implementation Stack
 
-`runtime-env` does not claim a repository-owned Git Town configuration. We still record the **molecular Stack topology** that `git-town-stacked-pr-worker` must preserve when branches/PRs are created. GitHub base/head metadata is publication truth.
+`runtime-env` does not claim a repository-owned Git Town configuration. We still record the molecular Stack topology that `git-town-stacked-pr-worker` must preserve. GitHub base/head metadata is publication truth.
 
 ```text
 main
-└─ #50 Shadow Architect convergence                         [convergence parent]
-   ├─ #37 GitHub read-only monitor live closure            [terminal leaf]
-   ├─ #38 Forgejo exact-host lifecycle live closure        [terminal leaf]
-   ├─ #45 multi-Worker admitted-consumer live closure      [terminal leaf]
-   └─ current-head CI/evidence freshness repair            [terminal leaf when materialized]
+└─ #50 Shadow Architect convergence                    [convergence parent]
+   ├─ #37 GitHub read-only monitor live closure       [terminal leaf]
+   ├─ #38 Forgejo exact-host lifecycle live closure   [terminal leaf]
+   ├─ #45 multi-Worker live closure                   [terminal leaf]
+   └─ #51 current-head CI repair                      [terminal sibling, CONTRACT_CLOSED via PR #52]
 
-terminal leaves complete independently
-        ↓
-#50 convergence refreshes shared README/AGENTS/index/ledger
-        ↓
-current-head CI exact SHA PASS
-        ↓
-all required live receipts + zero-residue checks
-        ↓
-Human Admit / rollback subject
+#51 → PR #52 head CI #95 PASS → merged main cd926854... → main CI #97 PASS
+
+remaining #37/#38/#45
+→ #50 convergence
+→ live receipts + zero residue
+→ Human Admit / rollback
 ```
 
 ### Stack PR index
 
-| Stack node | Issue | Branch / PR role | Allowed shared writes | Closure evidence |
-|---|---:|---|---|---|
-| Convergence parent | #50 | `shadow-architect/convergence-50` | README/AGENTS/docs index/ledger only | all leaves classified + current-head truth |
-| GitHub monitor leaf | #37 | terminal implementation PR | monitor module/profile/workload/script/test only | real read-only GitHub fetch, pagination/rate metadata, replay, failure preservation, zero writes |
-| Forgejo host leaf | #38 | terminal implementation PR | Forgejo host lifecycle code/tests only | activation/status/health, credential canary, restore drill, rollback receipt |
-| Scheduler leaf | #45 | terminal implementation PR | scheduler/process/worktree code/tests only | admitted consumer concurrency, stale refusal, straggler reassignment, budget, zero residue |
-| CI freshness leaf | #50 child if needed | terminal repair PR | failing test/delivery snapshot producer only | exact-head GitHub Actions PASS |
+| Stack node | Issue / PR | Role | Closure evidence |
+|---|---|---|---|
+| Convergence | #50 / PR #53 | shared README/AGENTS/index/ledger | all leaves classified + current-head truth |
+| GitHub monitor | #37 | terminal implementation leaf | real read-only fetch, pagination/rate, replay/failure/dedup, zero writes |
+| Forgejo host | #38 | terminal implementation leaf | activation/health, credential canary, restore drill, rollback |
+| Scheduler | #45 | terminal implementation leaf | admitted consumer concurrency, stale refusal, straggler reassignment, budget, zero residue |
+| CI repair | #51 / PR #52 | merged terminal sibling | PR-head CI #95 PASS + merged-main CI #97 PASS |
 
-A true child PR is used only when it consumes unmerged parent bytes. Otherwise leaves are siblings based on the same admitted main/convergence base. Do not manufacture Stack ancestry for visual neatness.
+A true child PR is used only when it consumes unmerged parent bytes. Otherwise terminal leaves are siblings from the same admitted base. Do not manufacture Stack ancestry for visual neatness.
 
 ## Data-flow closure rule
 
@@ -143,8 +140,8 @@ STALE_SOURCE_PIN
 SKIPPED_BY_POLICY
 ```
 
-`CLOSED` from GitHub alone is not one of these runtime closure states.
+GitHub `CLOSED` alone is not a runtime closure state.
 
 ## Shadow Architect monitor
 
-Read [`SHADOW_ARCHITECT_LEDGER.md`](SHADOW_ARCHITECT_LEDGER.md) for the current exact-head assessment. It is intentionally mutable and must name the observation date, main SHA, CI state, open terminal leaves, stale documents/receipts, and the next required transitions.
+Read [`SHADOW_ARCHITECT_LEDGER.md`](SHADOW_ARCHITECT_LEDGER.md) for the current exact-head assessment.
