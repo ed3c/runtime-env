@@ -1,0 +1,183 @@
+{
+  "schema_version": "runtime-env.dual-agent-closure.v1",
+  "source": {
+    "id": "DA-SRC-001",
+    "class": "SOURCE_PROPOSAL",
+    "locators": {
+      "DA-L01": "page 1 lines 5-17: cloud/local lanes",
+      "DA-L02": "page 2 lines 53-73: offload/reconnect",
+      "DA-L03": "page 3 lines 85-107: API/browser routing"
+    }
+  },
+  "documentation_subject": {
+    "issue": 50,
+    "branch": "docs/50-dual-agent-shadow-closure",
+    "base": "main",
+    "owned_paths": [
+      "docs/architecture/dual-agent-runtime/AGENTS.md",
+      "docs/architecture/dual-agent-runtime/README.md",
+      "docs/architecture/dual-agent-runtime/closure-matrix.json",
+      "docs/INDEX.md"
+    ],
+    "evidence_ceiling": "DOCUMENTATION_ONLY"
+  },
+  "current": {
+    "runtime_contract_plane": "IMPLEMENTED",
+    "offload_contracts": "NOT_IMPLEMENTED",
+    "sqlite_nats_transport": "NOT_IMPLEMENTED",
+    "transport_canary": "NOT_EXERCISED",
+    "identity_policy_secret_binding": "NOT_IMPLEMENTED",
+    "identity_canary": "NOT_EXERCISED",
+    "consumer_canary": "NOT_EXERCISED",
+    "release": "OUTSIDE_RUNTIME_ENV"
+  },
+  "problems": [
+    {
+      "id": "DA-R01",
+      "problem": "exact secret-free offload and receipt boundary",
+      "issue": 57,
+      "state": "OWNER_AND_CONTRACT_BOUND",
+      "implementation": "NOT_IMPLEMENTED",
+      "next": "closed schemas plus cross-schema validator"
+    },
+    {
+      "id": "DA-R02",
+      "problem": "durable local outbox/inbox and at-least-once delivery",
+      "issue": 58,
+      "state": "OWNER_AND_CONTRACT_BOUND",
+      "implementation": "NOT_IMPLEMENTED",
+      "next": "SQLite outbox/inbox plus transport SPI"
+    },
+    {
+      "id": "DA-R03",
+      "problem": "disconnect, reconnect, duplicate and restart semantics",
+      "issue": 58,
+      "state": "OWNER_AND_CONTRACT_BOUND",
+      "live": "NOT_EXERCISED",
+      "next": "physical disconnect/reconnect/restart/stale/cleanup canary"
+    },
+    {
+      "id": "DA-R04",
+      "problem": "workload identity, audience and capability binding",
+      "issue": 59,
+      "state": "OWNER_AND_CONTRACT_BOUND",
+      "implementation": "NOT_IMPLEMENTED",
+      "next": "provider-neutral contract and local/cloud adapters"
+    },
+    {
+      "id": "DA-R05",
+      "problem": "policy epoch, revocation and opaque secret handles",
+      "issue": 59,
+      "state": "OWNER_AND_CONTRACT_BOUND",
+      "implementation": "NOT_IMPLEMENTED",
+      "live": "NOT_EXERCISED",
+      "next": "stale/revoked/wrong-audience/leak controls and canary"
+    },
+    {
+      "id": "DA-R06",
+      "problem": "local/cloud evidence separation and provider-independent SPI",
+      "issues": [57, 58, 59],
+      "state": "CONTRACT_REQUIRED"
+    },
+    {
+      "id": "DA-R07",
+      "problem": "cleanup, residue, cancellation, timeout and rollback evidence",
+      "issues": [45, 58, 59],
+      "state": "PARTIAL_MECHANISMS",
+      "live": "NOT_EXERCISED_FOR_DUAL_AGENT_SUBJECT"
+    },
+    {
+      "id": "DA-R08",
+      "problem": "immutable consumer projection and stale-binding refusal",
+      "issues": [50, 57, 58, 59],
+      "state": "FOUNDATION_EXISTS_NEW_BINDINGS_REQUIRED"
+    }
+  ],
+  "directories": [
+    {
+      "path": "contracts/dual-agent/",
+      "state_machine": "UNDECLARED_TO_SCHEMA_VALIDATED_TO_CROSS_SCHEMA_CLOSED",
+      "input": "portable method and runtime requirements",
+      "output": "offload/capability/effect/artifact/receipt contracts",
+      "owner": 57,
+      "ceiling": "CONTRACT_ONLY"
+    },
+    {
+      "path": "modules/",
+      "state_machine": "MODULE_REQUESTED_TO_REFERENCES_RESOLVED_TO_MODULE_VALID",
+      "output": "runtime requirement unit",
+      "ceiling": "DECLARATION_ONLY"
+    },
+    {
+      "path": "profiles/",
+      "state_machine": "PROFILE_SELECTED_TO_MODULES_RESOLVED_TO_PROFILE_RESOLVED",
+      "output": "portable composition",
+      "ceiling": "COMPOSITION_ONLY"
+    },
+    {
+      "path": "workloads/",
+      "state_machine": "WORKLOAD_SELECTED_TO_EXACT_ENV_TO_FIXED_ENTRYPOINT_TO_RECEIPT",
+      "output": "bounded invocation receipt",
+      "ceiling": "ONE_EXACT_INVOCATION"
+    },
+    {
+      "path": "scripts/dual_agent_transport/",
+      "state_machine": "PACKET_TO_OUTBOX_TO_DELIVERY_TO_RESULT_TO_INBOX_TO_RECONCILED",
+      "owner": 58,
+      "ceiling": "EXACT_HOST_CANARY_ONLY"
+    },
+    {
+      "path": "identity_policy_adapters",
+      "state_machine": "IDENTITY_TO_AUDIENCE_TO_POLICY_TO_LEASE_TO_REVOKED_OR_EXPIRED",
+      "owner": 59,
+      "ceiling": "EXACT_ENROLLMENT_CANARY_ONLY"
+    },
+    {
+      "path": "tests/",
+      "state_machine": "SUBJECT_TO_CONTROL_TO_VERDICT",
+      "ceiling": "FIXTURE_UNLESS_EXACT_LIVE_SUBJECT"
+    },
+    {
+      "path": "docs/architecture/dual-agent-runtime/",
+      "state_machine": "SOURCE_PROBLEM_TO_OWNER_TO_ISSUE_TO_EVIDENCE_STATE",
+      "owner": 50,
+      "ceiling": "DOCUMENTATION_ONLY"
+    }
+  ],
+  "process_edges": [
+    ["skills-shared#359", "runtime-env#57", "PROCESS_NOT_GIT_ANCESTRY"],
+    ["runtime-env#57", "runtime-env#58", "CONTRACT_PREREQUISITE"],
+    ["runtime-env#57", "runtime-env#59", "CONTRACT_PREREQUISITE"],
+    ["runtime-env#45", "runtime-env#58", "SCHEDULER_PREREQUISITE_WHEN_SELECTED"],
+    ["runtime-env#58", "bettor#184", "RUNTIME_EVENT_INPUT"],
+    ["runtime-env#59", "bettor#184", "ADMISSION_INPUT"],
+    ["runtime-env#58", "bettor#186", "PHYSICAL_PREREQUISITE"],
+    ["runtime-env#59", "bettor#186", "PHYSICAL_PREREQUISITE"]
+  ],
+  "molecular_stacks": {
+    "issue_57": ["DA-RC-C", "DA-RC-K", "DA-RC-E", "DA-RC-D"],
+    "issue_58": ["DA-TR-C", "DA-TR-L", "DA-TR-N", "DA-TR-E", "DA-TR-D"],
+    "issue_59": ["DA-ID-C", "DA-ID-L", "DA-ID-CLOUD", "DA-ID-P", "DA-ID-E", "DA-ID-D"]
+  },
+  "authority": {
+    "portable_method": "skills-shared#359",
+    "task_state": "bettor LoopX reducer",
+    "effect_state": "bettor effect ledger after implementation",
+    "provider_execution": "agent-shield-monorepo",
+    "independent_evidence": "truth-verify-loop#22",
+    "release": "bettor#68",
+    "human_owned": ["credentials", "trust enrollment", "data egress", "irreversible effects", "merge", "release", "rollback"]
+  },
+  "forbidden_promotions": [
+    "DECLARATION_TO_PROVIDER_INSTALLED",
+    "PROFILE_TO_WORKLOAD_EXECUTED",
+    "SCHEMA_TO_TRANSPORT_PASS",
+    "ACK_TO_TASK_SUCCESS",
+    "AUTHENTICATION_TO_AUTHORIZATION",
+    "LOCAL_TO_CLOUD_SUBSTITUTION",
+    "FIXTURE_TO_LIVE_PASS",
+    "ONE_PROVIDER_TO_ANOTHER",
+    "CLEANUP_UNKNOWN_TO_PASS",
+    "DOCUMENTATION_TO_RUNTIME_OR_RELEASE_PASS"
+  ]
+}
