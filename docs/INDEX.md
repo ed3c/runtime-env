@@ -27,6 +27,16 @@ Before claiming that a PRD requirement is implemented or live, Agents must resol
 
 For completion, integration, issue-closing, article/PDF, provider, scheduler, Forgejo or Stack work, Agents must read the architecture README + AGENTS + current ledger before claiming PASS.
 
+### Dual-Agent runtime closure
+
+Read this specialized route when working on the uploaded `双 Agent 架构：云端本地协同` source, local/cloud offload, reconnect transport, workload identity, policy or secret-handle binding:
+
+- [`architecture/dual-agent-runtime/AGENTS.md`](architecture/dual-agent-runtime/AGENTS.md) — runtime authority, Tech Lead packet, writer/Stack rules, evidence ladder, Shadow review and Local Handoff contract.
+- [`architecture/dual-agent-runtime/README.md`](architecture/dual-agent-runtime/README.md) — source-runtime denominator, directory → State Machine → DAG → data-flow map, issue review and molecular Stack plan for #57–#59.
+- [`architecture/dual-agent-runtime/closure-matrix.json`](architecture/dual-agent-runtime/closure-matrix.json) — machine-readable runtime problems, directory owners, process edges, evidence states and forbidden promotions.
+
+This route remains documentation owned by convergence issue #50. It records that #57–#59 are owned and `NOT_IMPLEMENTED`/`NOT_EXERCISED`; it does not implement or exercise them.
+
 ## Integration routes
 
 - [`integration/README.md`](integration/README.md) — directory → State Machine → data-flow ownership for cross-repository integration.
@@ -67,3 +77,11 @@ tests/README.md
 ```
 
 README/ledger text explains ownership and evidence ceilings. JSON/schema/code/tests/receipts plus exact GitHub provider state remain the authoritative subjects.
+
+## Validation
+
+```sh
+python3 -m json.tool docs/architecture/dual-agent-runtime/closure-matrix.json >/dev/null
+```
+
+The nearest README routes to machine authority. Documentation does not override contracts, code, tests, receipts, exact Git subjects, current host/provider observations or Human admission.
