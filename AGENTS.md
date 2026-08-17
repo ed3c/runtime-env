@@ -7,12 +7,15 @@
 1. [`README.md`](README.md) — repository purpose, public CLI and current runtime-contract lifecycle.
 2. [`CONTEXT.md`](CONTEXT.md) — mutable current handoff and four-repository relationship.
 3. [`ARCHITECTURE.md`](ARCHITECTURE.md) — stable ownership, State Machines and secret boundaries.
-4. [`docs/INDEX.md`](docs/INDEX.md) — complete local route map.
-5. [`docs/architecture/DOCUMENT_ROUTING.md`](docs/architecture/DOCUMENT_ROUTING.md) and [`docs/architecture/STATE_MACHINES.md`](docs/architecture/STATE_MACHINES.md).
-6. [`docs/modular-consumer-contract.md`](docs/modular-consumer-contract.md) for requirements → binding → verification.
-7. For Bettor, Agent Shield or PDF architecture work, read [`docs/integration/README.md`](docs/integration/README.md), [`docs/integration/AGENTS.md`](docs/integration/AGENTS.md) and [`docs/integration/BETTOR_PDF_MODULAR_INTEGRATION_AUDIT.md`](docs/integration/BETTOR_PDF_MODULAR_INTEGRATION_AUDIT.md).
-8. The nearest directory `README.md`, then the exact JSON/schema/script/workload/test that owns the task.
-9. The exact issue, PR base/head, immutable commit/tree, acceptance tests and evidence subject.
+4. [`prd/README.md`](prd/README.md), [`prd/AGENTS.md`](prd/AGENTS.md) and [`prd/requirements.json`](prd/requirements.json) — stable PRD requirement IDs and machine-verifiable requirement → owner → implementation → control → evidence routing.
+5. [`docs/INDEX.md`](docs/INDEX.md) — complete local route map.
+6. [`docs/architecture/README.md`](docs/architecture/README.md), [`docs/architecture/AGENTS.md`](docs/architecture/AGENTS.md), [`docs/architecture/SHADOW_ARCHITECT_LEDGER.md`](docs/architecture/SHADOW_ARCHITECT_LEDGER.md), [`docs/architecture/DOCUMENT_ROUTING.md`](docs/architecture/DOCUMENT_ROUTING.md) and [`docs/architecture/STATE_MACHINES.md`](docs/architecture/STATE_MACHINES.md).
+7. [`docs/modular-consumer-contract.md`](docs/modular-consumer-contract.md) for requirements → binding → verification.
+8. For Bettor, Agent Shield or PDF architecture work, read [`docs/integration/README.md`](docs/integration/README.md), [`docs/integration/AGENTS.md`](docs/integration/AGENTS.md) and [`docs/integration/BETTOR_PDF_MODULAR_INTEGRATION_AUDIT.md`](docs/integration/BETTOR_PDF_MODULAR_INTEGRATION_AUDIT.md).
+9. The nearest directory `README.md`/`AGENTS.md`, then the exact JSON/schema/script/workload/test that owns the task.
+10. The exact issue, PR base/head, immutable commit/tree, acceptance tests and evidence subject.
+
+Before claiming a PRD requirement complete, resolve its `REQ-*` entry in `prd/requirements.json`. A GitHub closed issue, merged PR, fixture PASS or declaration cannot substitute for the graph's named machine authority and applicable exact evidence.
 
 For local Forgejo, credential placement or host capability work, read [`docs/local-integration.md`](docs/local-integration.md) and [`docs/local-credential-broker.md`](docs/local-credential-broker.md). A missing route, owner, contract, profile, workload, host or receipt is `ABSENT`; do not infer it from another repository or a local sibling checkout.
 
@@ -26,6 +29,9 @@ AGENTS.md
 CLAUDE.md
 CONTEXT.md
 ARCHITECTURE.md
+prd/README.md
+prd/AGENTS.md
+prd/requirements.json
 docs/INDEX.md
 docs/architecture/DOCUMENT_ROUTING.md
 docs/architecture/STATE_MACHINES.md
@@ -41,6 +47,7 @@ README files explain ownership and route to machine authority. They must not dup
 
 | Directory | Owns | Does not own |
 |---|---|---|
+| `prd/` | stable requirement identity and traceability bindings | runtime implementation truth or live evidence by itself |
 | `catalog/` | one declaration per variable name and security metadata | provider composition or values |
 | `contracts/` | JSON document shape | cross-file runtime semantics by itself |
 | `modules/` | provider/runtime requirement sets | workload selection or execution proof |
@@ -55,6 +62,16 @@ README files explain ownership and route to machine authority. They must not dup
 | `docs/integration/` | cross-repository ownership, freshness audit and Stack routing | machine status or provider evidence |
 
 Nearest READMEs provide local details and route to the exact machine owner.
+
+## PRD traceability invariants
+
+- Every load-bearing admitted product requirement has one stable `REQ-*` identity.
+- A requirement binds one source item, directory/State Machine owner, implementation subjects, issue/PR lineage, positive controls and disagreement/negative controls.
+- Repository-relative paths named by the graph must exist in the checked tree.
+- `CONTRACT_CLOSED` requires implementation subjects plus positive and disagreement controls.
+- `LIVE_CLOSED` additionally requires exact subject-bound live evidence. Deterministic CI, fixtures, issue state and another runtime cannot proxy it.
+- Scope changes get new requirement IDs rather than silently repurposing historical identities.
+- `tests/check_prd_traceability.py` and `tests/test_prd_traceability.sh` are mandatory disagreement controls for the graph.
 
 ## Core invariants
 
@@ -145,6 +162,9 @@ NOT_IMPLEMENTED
 NOT_EXERCISED
 SKIPPED_BY_POLICY
 STALE_SOURCE_PIN
+CONTRACT_CLOSED
+LIVE_CLOSED
+PARTIAL
 ```
 
 A declaration is not a canary. A workload that did not run because configuration is absent returns its named absence state/exit; it is not PASS. A receipt is a claim and must be bound to the exact source/profile/workload/policy subject.
@@ -155,6 +175,8 @@ A declaration is not a canary. A workload that did not run because configuration
 
 This repository does not admit a repository-owned `.git-town.toml`; do not invent Git Town state.
 
+The local `runtime-env` convergence Stack currently includes terminal live leaves #37/#38/#45 and governance/traceability leaf #54 under convergence #50. A sibling leaf is path-disjoint work from the same admitted parent. A true child consumes unmerged parent bytes. A terminal leaf owns one provider/product/runtime/governance lane. A convergence leaf owns shared registries, status, release manifests and aggregate evidence. Git Town manages branch movement only; GitHub base/head/merge metadata and exact commits remain publication truth.
+
 The PDF domain-product molecular Stack belongs to `agent-shield-monorepo`, whose canonical plan covers:
 
 ```text
@@ -164,17 +186,16 @@ The PDF domain-product molecular Stack belongs to `agent-shield-monorepo`, whose
 #65–#75  Bettor reference consumer
 ```
 
-A sibling leaf is path-disjoint work from the same admitted parent. A true child consumes unmerged parent bytes. A terminal leaf owns one provider/product lane. A convergence leaf owns shared registries, status, release manifests and aggregate evidence. Git Town manages branch movement only; GitHub base/head/merge metadata and exact commits remain publication truth.
-
 ## Change procedure
 
-1. Identify the exact directory owner and State Machine transition.
-2. Add or update a failing public-seam/negative test before changing runtime semantics.
-3. Make the smallest catalog/CLI/contract change.
-4. Run `bash tests/run-all.sh` and `git diff --check`.
-5. Verify generated examples from their producer rather than hand-editing them.
-6. Update the nearest README and traceability when ownership, State Machine flow, consumer source identity or cross-repository binding changes.
-7. For a consumer projection change, record the prior and new source commit/tree, dry-run diff, staged verifier and rollback subject.
+1. Resolve the applicable `REQ-*` requirement when the change implements or changes product scope.
+2. Identify the exact directory owner and State Machine transition.
+3. Add or update a failing public-seam/negative test before changing runtime semantics.
+4. Make the smallest catalog/CLI/contract change.
+5. Run `bash tests/run-all.sh` and `git diff --check`.
+6. Verify generated examples from their producer rather than hand-editing them.
+7. Update the nearest README/AGENTS, PRD graph and traceability when ownership, State Machine flow, consumer source identity or cross-repository binding changes.
+8. For a consumer projection change, record the prior and new source commit/tree, dry-run diff, staged verifier and rollback subject.
 
 Do not bypass hooks, weaken fixed entrypoints, print values or hand-edit generated consumer projections.
 
@@ -189,8 +210,10 @@ Absolute-security claims are forbidden. Record threat model, controls, disagreem
 Report before claiming completion:
 
 ```text
+applicable REQ-* IDs and requirement closure states
 changed catalog/module/profile/workload/policy IDs
 changed State Machine transition and directory owner
+issue / Stack leaf / PR lineage
 consumer binding prior/new commit, tree and digest
 freshness decision: MATCH / STALE_SOURCE_PIN / accepted pin / updated pin
 consumer projections affected
@@ -203,7 +226,7 @@ secret-bearing Human steps not performed
 rollback subject and Human Admit required
 ```
 
-Missing an applicable item forbids a claim that modular integration is complete.
+Missing an applicable item forbids a claim that modular integration or the named PRD requirement is complete.
 
 <!-- BEGIN SKILLS-SHARED INSTRUCTION PROJECTION -->
 ## Shared runtime / delivery projection
