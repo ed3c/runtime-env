@@ -2,16 +2,24 @@
 
 ## Root routes
 
-- [`../README.md`](../README.md) — repository entry and concise lifecycle.
-- [`../AGENTS.md`](../AGENTS.md) — mandatory Agent procedure.
+- [`../README.md`](../README.md) — repository entry and public CLI.
+- [`../AGENTS.md`](../AGENTS.md) — repository-wide Agent procedure and safety boundaries.
 - [`../CLAUDE.md`](../CLAUDE.md) — Claude thin projection.
 - [`../CONTEXT.md`](../CONTEXT.md) — mutable current handoff.
 - [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — stable contract topology.
 
-## Standard routes
+## Architecture / Shadow Architect routes
 
-- [`architecture/DOCUMENT_ROUTING.md`](architecture/DOCUMENT_ROUTING.md)
-- [`architecture/STATE_MACHINES.md`](architecture/STATE_MACHINES.md)
+- [`architecture/README.md`](architecture/README.md) — directory → State Machine → DAG → evidence owner map and molecular Stack index.
+- [`architecture/AGENTS.md`](architecture/AGENTS.md) — Tech Lead / Shadow Architect issue-audit procedure.
+- [`architecture/STATE_MACHINES.md`](architecture/STATE_MACHINES.md) — stable transition definitions.
+- [`architecture/DOCUMENT_ROUTING.md`](architecture/DOCUMENT_ROUTING.md) — document routing contract.
+- [`architecture/SHADOW_ARCHITECT_LEDGER.md`](architecture/SHADOW_ARCHITECT_LEDGER.md) — current exact-head/live-evidence convergence ledger. Mutable; never treat as machine implementation SSOT.
+
+For completion, integration, issue-closing, article/PDF, provider, scheduler, Forgejo or Stack work, Agents must read the architecture README + AGENTS + current ledger before claiming PASS.
+
+## Integration routes
+
 - [`integration/README.md`](integration/README.md) — directory → State Machine → data-flow ownership for cross-repository integration.
 - [`integration/AGENTS.md`](integration/AGENTS.md) — nearest Agent contract for audits in `docs/integration/`.
 - [`integration/CROSS_REPO_INTEGRATION.md`](integration/CROSS_REPO_INTEGRATION.md)
@@ -29,4 +37,22 @@
 - [`jdk-runtime.md`](jdk-runtime.md) — local/cloud JDK boundary.
 - [`runtimes/forgejo-localhost.md`](runtimes/forgejo-localhost.md) — Forgejo runtime details.
 
-Nearest directory READMEs route to machine authority.
+## Nearest-directory rule
+
+After the architecture routes, read the nearest directory README and exact machine authority. Current key routes include:
+
+```text
+catalog/README.md
+contracts/README.md
+modules/README.md
+profiles/README.md
+workloads/README.md
+policies/README.md
+src/runtime_env/README.md
+scripts/README.md
+examples/README.md
+tests/README.md
+.github-delivery/README.md
+```
+
+README/ledger text explains ownership and evidence ceilings. JSON/schema/code/tests/receipts plus exact GitHub provider state remain the authoritative subjects.
