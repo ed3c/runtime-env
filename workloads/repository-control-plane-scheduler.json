@@ -1,0 +1,20 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"repository-control-plane-scheduler",
+  "summary":"Validate the bounded scheduler runtime contract; live Worker/process/worktree execution remains explicit and NOT_EXERCISED.",
+  "profile":"repository-control-plane-scheduler-local",
+  "host":"local-macos",
+  "entrypoints":{
+    "scheduler-contract":["python3","@runtime-env/scripts/multi-worker-scheduler.py","--help"]
+  },
+  "acceptance_entrypoints":["scheduler-contract"],
+  "entrypoint_environment":{"scheduler-contract":[]},
+  "clean_catalog_entrypoints":["scheduler-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{
+    "receipt":"host-owned metadata-only lifecycle and scheduler receipt on explicit execution",
+    "control":"contract acceptance proves state-machine/runtime binding only; real Worker/process/worktree execution remains NOT_EXERCISED"
+  }
+}
