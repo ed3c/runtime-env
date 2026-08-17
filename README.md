@@ -4,7 +4,25 @@
 
 The repository is **public**. `v0.1.0` was published on 2026-08-17 from commit `648d474e7cc06bbd00b2b1ec626cd0df78f1ef87`. Consumers should pin an exact commit SHA; a tag alone is not sufficient immutability authority.
 
-> **Agent route:** read [`AGENTS.md`](AGENTS.md) → [`CONTEXT.md`](CONTEXT.md) → [`ARCHITECTURE.md`](ARCHITECTURE.md) → [`docs/INDEX.md`](docs/INDEX.md) → [`docs/architecture/README.md`](docs/architecture/README.md) → [`docs/architecture/AGENTS.md`](docs/architecture/AGENTS.md) → [`docs/architecture/SHADOW_ARCHITECT_LEDGER.md`](docs/architecture/SHADOW_ARCHITECT_LEDGER.md) → nearest directory README → exact issue/PR/commit/test/receipt.
+> **Agent route:** read [`AGENTS.md`](AGENTS.md) → [`CONTEXT.md`](CONTEXT.md) → [`ARCHITECTURE.md`](ARCHITECTURE.md) → [`prd/README.md`](prd/README.md) → [`prd/requirements.json`](prd/requirements.json) → [`docs/INDEX.md`](docs/INDEX.md) → [`docs/architecture/README.md`](docs/architecture/README.md) → [`docs/architecture/AGENTS.md`](docs/architecture/AGENTS.md) → [`docs/architecture/SHADOW_ARCHITECT_LEDGER.md`](docs/architecture/SHADOW_ARCHITECT_LEDGER.md) → nearest directory README/AGENTS → exact issue/PR/commit/test/receipt.
+
+## Requirement → implementation traceability
+
+PRD #1 and later admitted requirements are bound through stable `REQ-*` IDs in [`prd/requirements.json`](prd/requirements.json):
+
+```text
+PRD requirement
+→ stable REQ-* identity
+→ directory + State Machine owner
+→ implementation subjects
+→ issue / molecular Stack leaf / PR lineage
+→ positive control
+→ disagreement / negative control
+→ exact live evidence when required
+→ CONTRACT_CLOSED | LIVE_CLOSED | PARTIAL
+```
+
+The graph is checked by `tests/check_prd_traceability.py` and planted disagreement controls. A closed GitHub issue cannot substitute for this evidence chain, and `LIVE_CLOSED` cannot be represented without an exact live evidence subject.
 
 ## What this repository separates
 
@@ -35,6 +53,7 @@ publication receipt ≠ runtime correctness
 
 | Directory | State Machine responsibility | DAG input | Output / next owner | Evidence ceiling |
 |---|---|---|---|---|
+| [`prd/`](prd/README.md) | `SOURCE_REQUIREMENT → REQ_ID → OWNER/CONTROL BINDING → CLOSURE_CLASS` | PRD/issue requirement | traceability graph → exact owner/evidence | traceability only |
 | [`catalog/`](catalog/README.md) | `UNDECLARED → METADATA_VALIDATED → VARIABLE_DECLARED` | source/runtime requirement | canonical variable vocabulary → modules | declaration only |
 | [`contracts/`](contracts/README.md) | document-shape validation | JSON subject | schema verdict | shape only |
 | [`modules/`](modules/README.md) | `MODULE_REQUESTED → REFERENCES_RESOLVED → MODULE_VALID` | catalog variables | provider/runtime requirement unit → profiles | declared, not live |
@@ -59,10 +78,10 @@ main / convergence
 ├─ #37 read-only GitHub monitor live closure
 ├─ #38 Forgejo exact-host lifecycle live closure
 ├─ #45 admitted-consumer multi-Worker live closure
-└─ current-head CI/evidence freshness repair when exact failing seam is proven
+└─ #54 PRD requirement graph / traceability closure
 ```
 
-At the start of the 2026-08-17 Shadow Architect pass, the Runtime Contract Plane and public release existed, but current-head GitHub Actions was red and #37/#38/#45 still lacked their required exact live closure receipts. Read [`docs/architecture/SHADOW_ARCHITECT_LEDGER.md`](docs/architecture/SHADOW_ARCHITECT_LEDGER.md) for the mutable current assessment rather than inferring readiness from issue state.
+The Runtime Contract Plane and public release exist. Current-head CI must remain green, and #37/#38/#45 retain their exact live receipt requirements. Read [`docs/architecture/SHADOW_ARCHITECT_LEDGER.md`](docs/architecture/SHADOW_ARCHITECT_LEDGER.md) for the mutable current assessment rather than inferring readiness from issue state.
 
 ## Molecular Stack PR rule
 
@@ -73,7 +92,7 @@ same admitted base
 ├─ terminal leaf #37  GitHub monitor
 ├─ terminal leaf #38  Forgejo host lifecycle
 ├─ terminal leaf #45  scheduler runtime
-└─ terminal CI repair leaf if independently proven
+└─ terminal leaf #54  PRD requirement graph
         ↓
 #50 convergence owns shared README / AGENTS / index / aggregate evidence
 ```
@@ -90,6 +109,7 @@ Use a **true child PR only when it consumes unmerged parent bytes**. Otherwise t
 ./runtime-env workload list
 ./runtime-env local-env init
 ./runtime-env local-env doctor
+python3 tests/check_prd_traceability.py
 ```
 
 Exit codes are public contract:
@@ -199,4 +219,4 @@ bash tests/run-all.sh
 git diff --check
 ```
 
-Before claiming completion, require exact current-head CI plus all applicable live receipts and cleanup/residue evidence. See [`AGENTS.md`](AGENTS.md) and [`docs/architecture/AGENTS.md`](docs/architecture/AGENTS.md).
+Before claiming completion, require exact current-head CI plus all applicable live receipts and cleanup/residue evidence. See [`AGENTS.md`](AGENTS.md), [`prd/AGENTS.md`](prd/AGENTS.md), and [`docs/architecture/AGENTS.md`](docs/architecture/AGENTS.md).

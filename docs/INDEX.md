@@ -8,6 +8,15 @@
 - [`../CONTEXT.md`](../CONTEXT.md) — mutable current handoff.
 - [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — stable contract topology.
 
+## PRD / requirement traceability
+
+- [`../prd/README.md`](../prd/README.md) — requirement graph purpose, closure laws and update procedure.
+- [`../prd/AGENTS.md`](../prd/AGENTS.md) — nearest Agent rules for requirement identity and evidence ceilings.
+- [`../prd/requirements.json`](../prd/requirements.json) — machine-verifiable `REQ-*` graph from PRD requirement to owner, implementation, issue/PR lineage, controls and closure state.
+- [`../contracts/prd-requirements.schema.json`](../contracts/prd-requirements.schema.json) — graph shape contract.
+
+Before claiming that a PRD requirement is implemented or live, Agents must resolve its `REQ-*` entry and then inspect the named machine authority and evidence subject. GitHub issue state alone is not requirement closure.
+
 ## Architecture / Shadow Architect routes
 
 - [`architecture/README.md`](architecture/README.md) — directory → State Machine → DAG → evidence owner map and molecular Stack index.
@@ -39,9 +48,11 @@ For completion, integration, issue-closing, article/PDF, provider, scheduler, Fo
 
 ## Nearest-directory rule
 
-After the architecture routes, read the nearest directory README and exact machine authority. Current key routes include:
+After the PRD and architecture routes, read the nearest directory README/AGENTS and exact machine authority. Current key routes include:
 
 ```text
+prd/README.md
+prd/AGENTS.md
 catalog/README.md
 contracts/README.md
 modules/README.md

@@ -1,0 +1,88 @@
+{
+  "schema": "prd-requirements/v1",
+  "source": {
+    "repository": "ed3c/runtime-env",
+    "issue": 1,
+    "title": "PRD: modular runtime environment contracts for agent repositories"
+  },
+  "requirements": [
+    {
+      "id": "REQ-PRD-001",
+      "source_item": "Catalog covers the provider/runtime variable names named by PRD #1 without storing values.",
+      "owner": {"directory": "catalog", "state_machine": "UNDECLARED -> METADATA_VALIDATED -> VARIABLE_DECLARED"},
+      "implementation_paths": ["catalog/variables.json", "modules"],
+      "issues": [1, 2],
+      "prs": [3],
+      "positive_controls": ["tests/test_validate.sh"],
+      "negative_controls": ["tests/test_validate.sh", "tests/test_repository_safety.sh"],
+      "live_required": false,
+      "live_evidence": [],
+      "closure": "CONTRACT_CLOSED"
+    },
+    {
+      "id": "REQ-PRD-002",
+      "source_item": "Skill-bettor profiles preserve local-zero-key, E2B, and Gemini cloud opt-in semantics.",
+      "owner": {"directory": "profiles", "state_machine": "PROFILE_SELECTED -> MODULES_RESOLVED -> PROFILE_RESOLVED"},
+      "implementation_paths": ["profiles", "modules"],
+      "issues": [1, 2],
+      "prs": [3],
+      "positive_controls": ["tests/test_examples.sh"],
+      "negative_controls": ["tests/test_check.sh"],
+      "live_required": false,
+      "live_evidence": [],
+      "closure": "CONTRACT_CLOSED"
+    },
+    {
+      "id": "REQ-PRD-003",
+      "source_item": "validate, list, render, and check are deterministic and dependency-free public CLI seams.",
+      "owner": {"directory": "src/runtime_env", "state_machine": "INPUT -> VALIDATED -> DETERMINISTIC_DECISION"},
+      "implementation_paths": ["src/runtime_env/cli.py", "runtime-env"],
+      "issues": [1, 2],
+      "prs": [3],
+      "positive_controls": ["tests/test_validate.sh", "tests/test_check.sh", "tests/test_examples.sh"],
+      "negative_controls": ["tests/test_validate.sh", "tests/test_check.sh"],
+      "live_required": false,
+      "live_evidence": [],
+      "closure": "CONTRACT_CLOSED"
+    },
+    {
+      "id": "REQ-PRD-004",
+      "source_item": "Missing required variables, invalid references, conflicting declarations, and secret-looking committed values fail loudly.",
+      "owner": {"directory": "tests", "state_machine": "SUBJECT -> POSITIVE_OR_NEGATIVE_CONTROL -> VERDICT"},
+      "implementation_paths": ["tests/test_validate.sh", "tests/test_check.sh", "tests/test_repository_safety.sh", "tests/check_tracked_text.py"],
+      "issues": [1, 2, 31],
+      "prs": [3, 32],
+      "positive_controls": ["tests/test_repository_safety.sh"],
+      "negative_controls": ["tests/test_validate.sh", "tests/check_tracked_text.py"],
+      "live_required": false,
+      "live_evidence": [],
+      "closure": "CONTRACT_CLOSED"
+    },
+    {
+      "id": "REQ-PRD-005",
+      "source_item": "CI runs the full positive and negative contract suite for the exact checked subject.",
+      "owner": {"directory": ".github", "state_machine": "EXACT_HEAD -> CONTRACT_SUITE -> CI_VERDICT"},
+      "implementation_paths": [".github/workflows/ci.yml", "tests/run-all.sh"],
+      "issues": [1, 2, 51],
+      "prs": [3, 52],
+      "positive_controls": ["tests/run-all.sh"],
+      "negative_controls": ["tests/test_repository_safety.sh"],
+      "live_required": false,
+      "live_evidence": [],
+      "closure": "CONTRACT_CLOSED"
+    },
+    {
+      "id": "REQ-PRD-006",
+      "source_item": "Documentation distinguishes developer .env, GitHub Actions, Codex cloud, self-hosted runners, and MCP tunnel placement without claiming connectors provide compute.",
+      "owner": {"directory": "docs", "state_machine": "EXECUTION_PLANE -> AUTHORITY_BOUNDARY -> ROUTED_CONFIGURATION"},
+      "implementation_paths": ["README.md", "AGENTS.md", "docs/runtime-topology.md", "docs/local-credential-broker.md"],
+      "issues": [1, 2],
+      "prs": [3],
+      "positive_controls": ["tests/test_public_consumption.sh"],
+      "negative_controls": ["tests/test_repository_safety.sh"],
+      "live_required": false,
+      "live_evidence": [],
+      "closure": "CONTRACT_CLOSED"
+    }
+  ]
+}
