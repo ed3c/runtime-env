@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"repository-control-plane-scheduler-local",
+  "summary":"Local host profile for bounded multi-Worker scheduler lifecycle state and receipts.",
+  "modules":["multi-worker-scheduler"]
+}

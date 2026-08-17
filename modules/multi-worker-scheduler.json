@@ -1,0 +1,8 @@
+{
+  "schema":"runtime-env/module/v1",
+  "id":"multi-worker-scheduler",
+  "summary":"Host-owned bounded scheduler state/runtime adapter bound to the canonical skills-shared lifecycle contract.",
+  "requires":[],
+  "optional":[],
+  "defaults":{}
+}
