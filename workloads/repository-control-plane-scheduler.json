@@ -1,20 +1,21 @@
 {
   "schema":"runtime-env/workload/v2",
   "id":"repository-control-plane-scheduler",
-  "summary":"Validate the bounded scheduler runtime contract; live Worker/process/worktree execution remains explicit and NOT_EXERCISED.",
+  "summary":"Validate bounded scheduler and fixed local process/worktree canary contracts without granting delivery or merge authority.",
   "profile":"repository-control-plane-scheduler-local",
   "host":"local-macos",
   "entrypoints":{
-    "scheduler-contract":["python3","@runtime-env/scripts/multi-worker-scheduler.py","--help"]
+    "scheduler-contract":["python3","@runtime-env/scripts/multi-worker-scheduler.py","--help"],
+    "process-canary-contract":["python3","@runtime-env/scripts/multi-worker-canary.py","--help"]
   },
-  "acceptance_entrypoints":["scheduler-contract"],
-  "entrypoint_environment":{"scheduler-contract":[]},
-  "clean_catalog_entrypoints":["scheduler-contract"],
+  "acceptance_entrypoints":["scheduler-contract","process-canary-contract"],
+  "entrypoint_environment":{"scheduler-contract":[],"process-canary-contract":[]},
+  "clean_catalog_entrypoints":["scheduler-contract","process-canary-contract"],
   "secret_delivery":"none",
   "agent_secret_access":"denied",
   "mutation":"read-only",
   "evidence":{
-    "receipt":"host-owned metadata-only lifecycle and scheduler receipt on explicit execution",
-    "control":"contract acceptance proves state-machine/runtime binding only; real Worker/process/worktree execution remains NOT_EXERCISED"
+    "receipt":"host-owned metadata-only lifecycle and process/worktree canary receipts on explicit execution",
+    "control":"CI synthetic process/worktree PASS remains scoped to the harness selftest; admitted consumer, Git Town, Forgejo and merge remain NOT_EXERCISED"
   }
 }
