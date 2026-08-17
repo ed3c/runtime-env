@@ -2,7 +2,7 @@
   "schema": "runtime-env/workload/v2",
   "id": "bettor-arena-proof",
   "summary": "Generate bettor-arena proof receipts and run independent controls.",
-  "profile": "bettor-arena-runtime-local",
+  "profile": "bettor-arena-tech-lead-local",
   "host": "local-macos",
   "entrypoints": {
     "prove-equivalence": ["sh", "loopctl/loopctl.sh", "equivalence", "prove", "--force-receipt"],
