@@ -8,7 +8,20 @@ REPO=ed3c/runtime-env
 COMMIT=648d474e7cc06bbd00b2b1ec626cd0df78f1ef87
 TREE=e214062dadb825c5f135a5299b27e6893c6f8fe4
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SYNC=/Users/neon/.claude/skills/github-delivery-loop/scripts/github_delivery.py
+
+# Host-owned delivery tooling is intentionally not pinned to a maintainer account
+# path in the public repository. The caller must explicitly bind the exact script
+# it intends to use. This preserves the historical runbook without disclosing a
+# host layout or silently depending on one user's ~/.claude tree.
+SYNC="${GITHUB_DELIVERY_SCRIPT:-}"
+[[ -n "${SYNC}" ]] || {
+  echo "FATAL: set GITHUB_DELIVERY_SCRIPT to the admitted github_delivery.py path" >&2
+  exit 1
+}
+[[ -f "${SYNC}" ]] || {
+  echo "FATAL: GITHUB_DELIVERY_SCRIPT does not name a regular file" >&2
+  exit 1
+}
 
 gh_clean() { env -u HTTPS_PROXY -u https_proxy -u HTTP_PROXY -u http_proxy -u ALL_PROXY -u all_proxy gh "$@"; }
 
