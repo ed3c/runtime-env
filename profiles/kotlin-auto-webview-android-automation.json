@@ -1,0 +1,6 @@
+{
+  "schema": "runtime-env/profile/v1",
+  "id": "kotlin-auto-webview-android-automation",
+  "summary": "Local Android automation evidence profile for kotlin-auto-webview.",
+  "modules": ["kotlin-auto-webview-android-automation", "android-dual-avd"]
+}
