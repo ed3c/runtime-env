@@ -1,0 +1,8 @@
+{
+  "schema": "runtime-env/module/v1",
+  "id": "kotlin-auto-webview-android-automation",
+  "summary": "Secret-free JDK/Android SDK/ADB requirements for kotlin-auto-webview automation evidence.",
+  "requires": ["JAVA_HOME", "ANDROID_SDK_ROOT"],
+  "optional": ["ANDROID_HOME", "ANDROID_AVD_HOME", "ANDROID_SENDER_AVD", "ANDROID_RECEIVER_AVD", "KAW_ANDROID_DEVICE_CLASS"],
+  "defaults": {"KAW_ANDROID_DEVICE_CLASS": "emulator"}
+}
