@@ -1,0 +1,23 @@
+{
+  "schema": "runtime-env/workload/v2",
+  "id": "kotlin-auto-webview-android-automation-evidence",
+  "summary": "Fixed, secret-free preflight and evidence contract for kotlin-auto-webview Android automation.",
+  "profile": "kotlin-auto-webview-android-automation",
+  "host": "local-macos",
+  "entrypoints": {
+    "preflight": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight"],
+    "render-handoff": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "render-handoff"]
+  },
+  "acceptance_entrypoints": ["preflight"],
+  "entrypoint_environment": {
+    "preflight": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_AVD_HOME", "ANDROID_SENDER_AVD", "ANDROID_RECEIVER_AVD", "KAW_ANDROID_DEVICE_CLASS"],
+    "render-handoff": ["KAW_ANDROID_DEVICE_CLASS"]
+  },
+  "secret_delivery": "none",
+  "agent_secret_access": "denied",
+  "mutation": "read-only",
+  "evidence": {
+    "receipt": "metadata-only stdout or caller-owned local receipt path",
+    "control": "tests/test_kotlin_auto_webview_android_automation.py"
+  }
+}
