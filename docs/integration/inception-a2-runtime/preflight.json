@@ -17,9 +17,9 @@
     "packet_digest": "sha256:18e6a7c89d6f6de322b68fd1c2928fcc6c4cd42508236bb1ca03957435106aec",
     "bundle_digest": "sha256:dc4473b3195a738e55eb49c43661b6e1f4ea7f95c66749454776f2003b18ebc3"
   },
-  "owner_issue": "https://github.com/ed3c/runtime-env/issues/67",
-  "upstream_issue": "https://github.com/ed3c/enterprise_agent_system/issues/7",
-  "consumer_issue": "https://github.com/ed3c/agent-shield-monorepo/issues/153",
+  "owner_issue": "ed3c/runtime-env#67",
+  "upstream_issue": "ed3c/enterprise_agent_system#7",
+  "consumer_issue": "ed3c/agent-shield-monorepo#153",
   "interface": "inception/runtime-capability-contracts",
   "state_machine": [
     "RUNTIME_REQUIREMENT_DECLARED",
@@ -95,7 +95,14 @@
   ],
   "cleanup_contract": {
     "required": true,
-    "inventory": ["path", "process", "port", "container", "mount", "artifact"],
+    "inventory": [
+      "path",
+      "process",
+      "port",
+      "container",
+      "mount",
+      "artifact"
+    ],
     "rollback_subject": "c0790b9a8c81d7eb45ed45ac3d761c7fad5baa9b"
   },
   "forbidden_actions": [
