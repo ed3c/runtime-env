@@ -10,19 +10,18 @@ BASELINE = {
     "consumer_commit": "8d0ac180971d8aa5a93643165d1a59cf26ed6e71",
     "consumer_tree": "91a288004630abe543fd1402a507173a973aa285",
 }
-ALLOWED_DEVICE_CLASSES = {"emulator", "physical", "privileged"}
+ALLOWED_PREFLIGHTS = {
+    "preflight-emulator": "emulator",
+    "preflight-physical": "physical",
+    "preflight-privileged": "privileged",
+}
 
 
 def present_env(name: str) -> bool:
     return bool(os.environ.get(name, "").strip())
 
 
-def preflight() -> int:
-    device_class = os.environ.get("KAW_ANDROID_DEVICE_CLASS", "emulator").strip()
-    if device_class not in ALLOWED_DEVICE_CLASSES:
-        print(json.dumps({"schema": "runtime-env/kaw-android-preflight/v1", "state": "FAIL", "reason": "UNDECLARED_DEVICE_CLASS"}, sort_keys=True))
-        return 2
-
+def preflight(device_class: str) -> int:
     java_present = shutil.which("java") is not None or present_env("JAVA_HOME")
     sdk_present = present_env("ANDROID_SDK_ROOT") or present_env("ANDROID_HOME")
     adb_present = shutil.which("adb") is not None
@@ -70,10 +69,16 @@ def render_handoff() -> int:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2 or argv[1] not in {"preflight", "render-handoff"}:
-        print("usage: kotlin_auto_webview_android_automation.py {preflight|render-handoff}", file=sys.stderr)
+    if len(argv) != 2:
+        print("usage: kotlin_auto_webview_android_automation.py {preflight-emulator|preflight-physical|preflight-privileged|render-handoff}", file=sys.stderr)
         return 2
-    return preflight() if argv[1] == "preflight" else render_handoff()
+    command = argv[1]
+    if command in ALLOWED_PREFLIGHTS:
+        return preflight(ALLOWED_PREFLIGHTS[command])
+    if command == "render-handoff":
+        return render_handoff()
+    print("usage: kotlin_auto_webview_android_automation.py {preflight-emulator|preflight-physical|preflight-privileged|render-handoff}", file=sys.stderr)
+    return 2
 
 
 if __name__ == "__main__":
