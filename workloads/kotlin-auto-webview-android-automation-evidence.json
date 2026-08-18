@@ -5,13 +5,17 @@
   "profile": "kotlin-auto-webview-android-automation",
   "host": "local-macos",
   "entrypoints": {
-    "preflight": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight"],
+    "preflight-emulator": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight-emulator"],
+    "preflight-physical": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight-physical"],
+    "preflight-privileged": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight-privileged"],
     "render-handoff": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "render-handoff"]
   },
-  "acceptance_entrypoints": ["preflight"],
+  "acceptance_entrypoints": ["preflight-emulator", "preflight-physical", "preflight-privileged"],
   "entrypoint_environment": {
-    "preflight": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_AVD_HOME", "ANDROID_SENDER_AVD", "ANDROID_RECEIVER_AVD", "KAW_ANDROID_DEVICE_CLASS"],
-    "render-handoff": ["KAW_ANDROID_DEVICE_CLASS"]
+    "preflight-emulator": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_AVD_HOME", "ANDROID_SENDER_AVD", "ANDROID_RECEIVER_AVD"],
+    "preflight-physical": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME"],
+    "preflight-privileged": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME"],
+    "render-handoff": []
   },
   "secret_delivery": "none",
   "agent_secret_access": "denied",
