@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ed3c/runtime-env/blob/main/contracts/dual-agent-transport/nats-jetstream-adapter.v1.schema.json",
+  "title": "Dual-Agent NATS JetStream Adapter Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "adapter_id",
+    "provider_class",
+    "server_ref",
+    "tenant_subjects",
+    "stream",
+    "consumer",
+    "tls",
+    "contract_set_digest",
+    "evidence_state",
+    "claims_not_proven"
+  ],
+  "properties": {
+    "schema": {"const": "runtime-env/dual-agent-transport/nats-jetstream-adapter/v1"},
+    "adapter_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
+    "provider_class": {"const": "NATS_JETSTREAM_ADAPTER"},
+    "server_ref": {"type": "string", "pattern": "^runtime-ref://nats/[a-z0-9][a-z0-9._-]+$"},
+    "tenant_subjects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tenant_scope", "subject"],
+        "properties": {
+          "tenant_scope": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+          "subject": {"type": "string", "pattern": "^dual-agent\\.[a-z0-9._-]+\\.(jobs|results)$"}
+        }
+      }
+    },
+    "stream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "subjects", "max_age_seconds", "max_bytes"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Z][A-Z0-9_-]{2,63}$"},
+        "subjects": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "max_age_seconds": {"type": "integer", "minimum": 1, "maximum": 604800},
+        "max_bytes": {"type": "integer", "minimum": 1024, "maximum": 1073741824}
+      }
+    },
+    "consumer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["durable_name", "ack_wait_ms", "max_deliver"],
+      "properties": {
+        "durable_name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
+        "ack_wait_ms": {"type": "integer", "minimum": 100, "maximum": 600000},
+        "max_deliver": {"type": "integer", "minimum": 1, "maximum": 100}
+      }
+    },
+    "tls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "credential_handles"],
+      "properties": {
+        "mode": {"const": "REQUIRED"},
+        "credential_handles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^secret://[A-Za-z0-9._/-]+$"}
+        }
+      }
+    },
+    "contract_set_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence_state": {"const": "NOT_EXERCISED"},
+    "claims_not_proven": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}
