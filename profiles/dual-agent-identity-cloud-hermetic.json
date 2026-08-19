@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"dual-agent-identity-cloud-hermetic",
+  "summary":"Hermetic deterministic profile for CLOUD identity-adapter controls.",
+  "modules":["dual-agent-identity-binding","dual-agent-identity-cloud-adapter"]
+}

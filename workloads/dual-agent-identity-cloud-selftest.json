@@ -1,0 +1,15 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"dual-agent-identity-cloud-selftest",
+  "summary":"Validate CLOUD identity adapter metadata without provider enrollment or credential issuance.",
+  "profile":"dual-agent-identity-cloud-hermetic",
+  "host":"local-macos",
+  "entrypoints":{"cloud-identity-contract":["python3","@runtime-env/scripts/dual_agent_identity_cloud.py","--selftest"]},
+  "acceptance_entrypoints":["cloud-identity-contract"],
+  "entrypoint_environment":{"cloud-identity-contract":[]},
+  "clean_catalog_entrypoints":["cloud-identity-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{"receipt":"deterministic cloud identity-adapter receipt only","control":"trust-domain, attestation, credential issuance and provider execution remain NOT_EXERCISED"}
+}
