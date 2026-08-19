@@ -1,0 +1,8 @@
+{
+  "schema":"runtime-env/module/v1",
+  "id":"dual-agent-transport-local",
+  "summary":"Provider-neutral local durable transport core for Dual-Agent offload packets; live NATS remains a separate adapter/evidence lane.",
+  "requires":[],
+  "optional":[],
+  "defaults":{}
+}
