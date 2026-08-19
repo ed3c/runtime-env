@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runtime-env.invalid/contracts/dual-agent/artifact-manifest.v1.schema.json",
+  "title": "Dual-Agent Artifact Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "manifest_id",
+    "job_id",
+    "attempt_id",
+    "artifacts",
+    "completeness_state",
+    "contract_set_ref"
+  ],
+  "properties": {
+    "schema": {
+      "const": "runtime-env/dual-agent/artifact-manifest/v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "job_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "attempt_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "logical_name",
+          "media_type",
+          "digest",
+          "size_bytes",
+          "source_readback"
+        ],
+        "properties": {
+          "logical_name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+          },
+          "media_type": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.+-]+/[A-Za-z0-9.+-]+$"
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "source_readback": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "digest"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "CONTENT_ADDRESS",
+                  "PROVIDER_READBACK",
+                  "LOCAL_READBACK"
+                ]
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    "completeness_state": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL",
+        "EMPTY"
+      ]
+    },
+    "contract_set_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "manifest_digest"
+      ],
+      "properties": {
+        "schema": {
+          "const": "runtime-env/dual-agent/contract-set-manifest/v1"
+        },
+        "manifest_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

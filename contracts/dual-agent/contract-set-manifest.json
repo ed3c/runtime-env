@@ -1,0 +1,60 @@
+{
+  "schema": "runtime-env/dual-agent/contract-set-manifest/v1",
+  "manifest_state": "CANDIDATE_SUBJECT_PENDING",
+  "runtime_subject": {
+    "repository": "ed3c/runtime-env",
+    "commit": "CANDIDATE_SUBJECT_PENDING",
+    "tree": "CANDIDATE_SUBJECT_PENDING"
+  },
+  "method_subject": {
+    "repository": "ed3c/skills-shared",
+    "commit": "7e33890e9e3763e0cd6188fdc68fce96e1caaba3",
+    "tree": "7e2293b52b48394e4aa905d61fb5782f55110a67",
+    "path": "skills/agentic-tech-lead-orchestration/references/dual-agent-offload/method-contract.v1.schema.json",
+    "id": "https://skills-shared.invalid/agentic-tech-lead-orchestration/dual-agent-offload/method-contract.v1.schema.json",
+    "sha256": "83e1393a87c7caee5bc7cb8772b3706d3114b568b11a916609dccf723b251daf"
+  },
+  "schemas": [
+    {
+      "logical_id": "runtime-env/dual-agent/offload-job/v1",
+      "path": "contracts/dual-agent/offload-job.v1.schema.json",
+      "id": "https://runtime-env.invalid/contracts/dual-agent/offload-job.v1.schema.json",
+      "sha256": "8cc7ca664199c54032dfef090ae5f0dff89299f4793aec7dc5ce8994163d4cfa"
+    },
+    {
+      "logical_id": "runtime-env/dual-agent/capability-grant/v1",
+      "path": "contracts/dual-agent/capability-grant.v1.schema.json",
+      "id": "https://runtime-env.invalid/contracts/dual-agent/capability-grant.v1.schema.json",
+      "sha256": "48796750b1f7aef4e35da1a9f572f8b9683698efc911475e9bd896f672769011"
+    },
+    {
+      "logical_id": "runtime-env/dual-agent/effect-intent/v1",
+      "path": "contracts/dual-agent/effect-intent.v1.schema.json",
+      "id": "https://runtime-env.invalid/contracts/dual-agent/effect-intent.v1.schema.json",
+      "sha256": "66ddeb762832db2d367ad29859e470407503e52be1a4ceb5d250d856a61382b5"
+    },
+    {
+      "logical_id": "runtime-env/dual-agent/artifact-manifest/v1",
+      "path": "contracts/dual-agent/artifact-manifest.v1.schema.json",
+      "id": "https://runtime-env.invalid/contracts/dual-agent/artifact-manifest.v1.schema.json",
+      "sha256": "072a999ca07328076e2ece6b92dc755e838063a207f16a4d31246f6ea80a6854"
+    },
+    {
+      "logical_id": "runtime-env/dual-agent/execution-receipt/v1",
+      "path": "contracts/dual-agent/execution-receipt.v1.schema.json",
+      "id": "https://runtime-env.invalid/contracts/dual-agent/execution-receipt.v1.schema.json",
+      "sha256": "0ee2a18f7aae6b255829f213321dbae91a7079c4997519a2bb24b69c15f1d5c7"
+    }
+  ],
+  "contract_set_digest": "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe",
+  "compatibility_state": "COMPATIBLE_WITH_METHOD",
+  "claims_not_proven": [
+    "TRANSPORT_EXECUTION",
+    "WORKLOAD_IDENTITY_ENROLLMENT",
+    "PROVIDER_EXECUTION",
+    "EXTERNAL_EFFECT_EXECUTION",
+    "USER_OUTCOME",
+    "MERGE",
+    "RELEASE"
+  ]
+}

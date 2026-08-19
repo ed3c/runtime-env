@@ -1,0 +1,395 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runtime-env.invalid/contracts/dual-agent/execution-receipt.v1.schema.json",
+  "title": "Dual-Agent Execution Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "receipt_id",
+    "job_id",
+    "attempt_id",
+    "parent_attempt_id",
+    "execution_lane",
+    "execution_subject",
+    "source_subject",
+    "bindings",
+    "started_at",
+    "ended_at",
+    "terminal_state",
+    "transport_state",
+    "workflow_state",
+    "task_state",
+    "effect_state",
+    "artifact_state",
+    "cleanup_state",
+    "budget_observation",
+    "artifact_manifest_ref",
+    "policy_decisions",
+    "residue_observation",
+    "capability_class",
+    "evidence_class",
+    "evidence_ceiling",
+    "claims_not_proven",
+    "external_states",
+    "contract_set_ref"
+  ],
+  "properties": {
+    "schema": {
+      "const": "runtime-env/dual-agent/execution-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "job_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "attempt_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "parent_attempt_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "execution_lane": {
+      "enum": [
+        "LOCAL",
+        "CLOUD"
+      ]
+    },
+    "execution_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_subject",
+        "runtime_subject",
+        "environment_subject"
+      ],
+      "properties": {
+        "provider_subject": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repository",
+            "commit",
+            "tree"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "tree": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
+        },
+        "runtime_subject": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repository",
+            "commit",
+            "tree"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "tree": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
+        },
+        "environment_subject": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "source_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "commit",
+        "tree"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tree": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_digest",
+        "profile_digest",
+        "policy_digest",
+        "skill_digest",
+        "tool_digests",
+        "image_digest"
+      ],
+      "properties": {
+        "runtime_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "profile_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policy_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "skill_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "tool_digests": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "image_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "started_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "ended_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "terminal_state": {
+      "enum": [
+        "SUCCEEDED",
+        "FAILED",
+        "CANCELLED",
+        "TIMED_OUT",
+        "STALE_RESULT",
+        "POLICY_REFUSED",
+        "CAPABILITY_REFUSED",
+        "PARTIAL_ARTIFACT",
+        "CLEANUP_FAILED",
+        "COMPENSATION_FAILED",
+        "UNKNOWN_EXTERNAL_EFFECT",
+        "NOT_EXERCISED"
+      ]
+    },
+    "transport_state": {
+      "enum": [
+        "NOT_EXERCISED",
+        "ACKED",
+        "DUPLICATE_ACKED",
+        "DISCONNECTED",
+        "TIMED_OUT",
+        "FAILED"
+      ]
+    },
+    "workflow_state": {
+      "enum": [
+        "NOT_EXERCISED",
+        "OBSERVED_ONLY",
+        "BLOCKED"
+      ]
+    },
+    "task_state": {
+      "enum": [
+        "NOT_EXERCISED",
+        "OBSERVED_ONLY",
+        "BLOCKED"
+      ]
+    },
+    "effect_state": {
+      "enum": [
+        "NOT_EXERCISED",
+        "READ_ONLY",
+        "INTENT_RESERVED",
+        "APPLIED",
+        "COMPENSATED",
+        "UNKNOWN_EXTERNAL_EFFECT",
+        "FAILED"
+      ]
+    },
+    "artifact_state": {
+      "enum": [
+        "NOT_EXERCISED",
+        "COMPLETE",
+        "PARTIAL",
+        "MISSING"
+      ]
+    },
+    "cleanup_state": {
+      "enum": [
+        "NOT_EXERCISED",
+        "PASS",
+        "FAIL",
+        "UNKNOWN"
+      ]
+    },
+    "budget_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cpu_seconds",
+        "output_bytes",
+        "attempt_number"
+      ],
+      "properties": {
+        "cpu_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempt_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cost_microunits": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "artifact_manifest_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{2,127}$"
+    },
+    "policy_decisions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "residue_observation": {
+      "enum": [
+        "NOT_EXERCISED",
+        "CLEAN",
+        "RESIDUE_FOUND",
+        "UNKNOWN"
+      ]
+    },
+    "capability_class": {
+      "enum": [
+        "API",
+        "BROWSER_FALLBACK",
+        "LOCAL_PROCESS"
+      ]
+    },
+    "evidence_class": {
+      "enum": [
+        "API_OBSERVATION",
+        "BROWSER_OBSERVATION",
+        "LOCAL_OBSERVATION"
+      ]
+    },
+    "evidence_ceiling": {
+      "enum": [
+        "CONTRACT_FIXTURE_ONLY",
+        "EXECUTION_OBSERVED",
+        "LIVE_CLOSED"
+      ]
+    },
+    "claims_not_proven": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "external_states": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "user_outcome",
+        "human_admit",
+        "release"
+      ],
+      "properties": {
+        "user_outcome": {
+          "enum": [
+            "NOT_EXERCISED",
+            "EXTERNALLY_REFERENCED"
+          ]
+        },
+        "human_admit": {
+          "enum": [
+            "HUMAN_ADMIT_REQUIRED",
+            "EXTERNALLY_REFERENCED"
+          ]
+        },
+        "release": {
+          "enum": [
+            "NOT_EXERCISED",
+            "EXTERNALLY_REFERENCED"
+          ]
+        }
+      }
+    },
+    "contract_set_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "manifest_digest"
+      ],
+      "properties": {
+        "schema": {
+          "const": "runtime-env/dual-agent/contract-set-manifest/v1"
+        },
+        "manifest_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

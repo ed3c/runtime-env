@@ -1,0 +1,77 @@
+{
+  "schema": "runtime-env/dual-agent/mutation-registry/v1",
+  "controls": [
+    {
+      "id": "R01",
+      "expected_failure": "METHOD_SUBJECT_MISMATCH"
+    },
+    {
+      "id": "R02",
+      "expected_failure": "DUPLICATE_OR_UNKNOWN_SCHEMA_ID"
+    },
+    {
+      "id": "R03",
+      "expected_failure": "UNKNOWN_PROPERTY_OR_EXECUTION_WIDENING"
+    },
+    {
+      "id": "R04",
+      "expected_failure": "MUTABLE_SUBJECT"
+    },
+    {
+      "id": "R05",
+      "expected_failure": "JOB_RECEIPT_SOURCE_MISMATCH"
+    },
+    {
+      "id": "R06",
+      "expected_failure": "LANE_SUBSTITUTION"
+    },
+    {
+      "id": "R07",
+      "expected_failure": "LOCAL_ONLY_REMOTE_EGRESS"
+    },
+    {
+      "id": "R08",
+      "expected_failure": "SECRET_SESSION_OR_HOST_PATH"
+    },
+    {
+      "id": "R09",
+      "expected_failure": "WRITE_WITHOUT_EFFECT_IDENTITY"
+    },
+    {
+      "id": "R10",
+      "expected_failure": "IDEMPOTENCY_COLLISION"
+    },
+    {
+      "id": "R11",
+      "expected_failure": "SUCCESS_WITH_CLEANUP_FAILURE"
+    },
+    {
+      "id": "R12",
+      "expected_failure": "TERMINAL_STATE_COLLAPSE"
+    },
+    {
+      "id": "R13",
+      "expected_failure": "ARTIFACT_WITHOUT_DIGEST_OR_READBACK"
+    },
+    {
+      "id": "R14",
+      "expected_failure": "BROWSER_AS_API_EVIDENCE"
+    },
+    {
+      "id": "R15",
+      "expected_failure": "STATIC_FIXTURE_AS_LIVE_PASS"
+    },
+    {
+      "id": "R16",
+      "expected_failure": "MANIFEST_SCHEMA_DIGEST_DRIFT"
+    },
+    {
+      "id": "R17",
+      "expected_failure": "UNKNOWN_EXTERNAL_EFFECT_AS_SUCCESS"
+    },
+    {
+      "id": "R18",
+      "expected_failure": "WORKER_OR_PROVIDER_SELF_PROMOTION"
+    }
+  ]
+}
