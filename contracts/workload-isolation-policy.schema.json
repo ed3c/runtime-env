@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "runtime-env/workload-isolation-policy/v1",
+  "title": "runtime-env workload isolation policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "summary",
+    "allowed_classes",
+    "forbidden_execution_surfaces",
+    "non_equivalence",
+    "absence_semantics",
+    "owner",
+    "reference"
+  ],
+  "properties": {
+    "schema": {"const": "runtime-env/workload-isolation-policy/v1"},
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 128},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 512},
+    "allowed_classes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["STATIC", "LOCAL", "EMULATOR", "PHYSICAL", "PRIVILEGED", "STORE_POLICY"]}
+    },
+    "forbidden_execution_surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "maxLength": 128}
+    },
+    "non_equivalence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["observed", "cannot_satisfy"],
+        "properties": {
+          "observed": {"enum": ["STATIC", "LOCAL", "EMULATOR", "PHYSICAL", "PRIVILEGED", "STORE_POLICY"]},
+          "cannot_satisfy": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"enum": ["STATIC", "LOCAL", "EMULATOR", "PHYSICAL", "PRIVILEGED", "STORE_POLICY"]}
+          }
+        }
+      }
+    },
+    "absence_semantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["missing_runtime", "missing_subject", "unsupported_capability", "not_exercised", "policy_denied"],
+      "properties": {
+        "missing_runtime": {"const": "ABSENT"},
+        "missing_subject": {"const": "ABSENT"},
+        "unsupported_capability": {"const": "UNSUPPORTED"},
+        "not_exercised": {"const": "NOT_EXERCISED"},
+        "policy_denied": {"const": "DENIED"}
+      }
+    },
+    "owner": {"$ref": "#/$defs/repositoryReference"},
+    "reference": {"$ref": "#/$defs/repositoryReference"}
+  },
+  "$defs": {
+    "repositoryReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "issue"],
+      "properties": {
+        "repository": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", "maxLength": 200},
+        "issue": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

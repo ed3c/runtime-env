@@ -1,0 +1,37 @@
+{
+  "schema": "runtime-env/workload-isolation-policy/v1",
+  "id": "kotlin-auto-webview-android-device-evidence",
+  "summary": "Isolation contract for Android device evidence lanes without granting product execution authority",
+  "allowed_classes": [
+    "STATIC",
+    "LOCAL",
+    "EMULATOR",
+    "PHYSICAL",
+    "PRIVILEGED",
+    "STORE_POLICY"
+  ],
+  "forbidden_execution_surfaces": [
+    "caller-supplied-shell",
+    "generic-command-string",
+    "generic-terminal",
+    "root-fallback",
+    "unbounded-adb-shell"
+  ],
+  "non_equivalence": [
+    {"observed": "STATIC", "cannot_satisfy": ["LOCAL", "EMULATOR", "PHYSICAL", "PRIVILEGED", "STORE_POLICY"]},
+    {"observed": "LOCAL", "cannot_satisfy": ["STATIC", "EMULATOR", "PHYSICAL", "PRIVILEGED", "STORE_POLICY"]},
+    {"observed": "EMULATOR", "cannot_satisfy": ["STATIC", "LOCAL", "PHYSICAL", "PRIVILEGED", "STORE_POLICY"]},
+    {"observed": "PHYSICAL", "cannot_satisfy": ["STATIC", "LOCAL", "EMULATOR", "PRIVILEGED", "STORE_POLICY"]},
+    {"observed": "PRIVILEGED", "cannot_satisfy": ["STATIC", "LOCAL", "EMULATOR", "PHYSICAL", "STORE_POLICY"]},
+    {"observed": "STORE_POLICY", "cannot_satisfy": ["STATIC", "LOCAL", "EMULATOR", "PHYSICAL", "PRIVILEGED"]}
+  ],
+  "absence_semantics": {
+    "missing_runtime": "ABSENT",
+    "missing_subject": "ABSENT",
+    "unsupported_capability": "UNSUPPORTED",
+    "not_exercised": "NOT_EXERCISED",
+    "policy_denied": "DENIED"
+  },
+  "owner": {"repository": "ed3c/runtime-env", "issue": 64},
+  "reference": {"repository": "ed3c/kotlin-auto-webview", "issue": 74}
+}
