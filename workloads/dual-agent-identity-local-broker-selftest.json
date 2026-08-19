@@ -1,0 +1,15 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"dual-agent-identity-local-broker-selftest",
+  "summary":"Validate LOCAL identity-to-broker metadata binding without resolving a secret.",
+  "profile":"dual-agent-identity-local-broker-hermetic",
+  "host":"local-macos",
+  "entrypoints":{"local-broker-contract":["python3","@runtime-env/scripts/dual_agent_identity_local.py","--selftest"]},
+  "acceptance_entrypoints":["local-broker-contract"],
+  "entrypoint_environment":{"local-broker-contract":[]},
+  "clean_catalog_entrypoints":["local-broker-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{"receipt":"deterministic local broker-binding receipt only","control":"Keychain/secret resolution and credential access remain NOT_EXERCISED"}
+}

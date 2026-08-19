@@ -1,0 +1,8 @@
+{
+  "schema":"runtime-env/module/v1",
+  "id":"dual-agent-identity-local-broker",
+  "summary":"Deterministic LOCAL workload identity binding to the existing broker contract; live secret resolution remains external.",
+  "requires":[],
+  "optional":[],
+  "defaults":{}
+}
