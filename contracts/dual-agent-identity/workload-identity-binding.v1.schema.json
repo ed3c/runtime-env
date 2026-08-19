@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ed3c/runtime-env/blob/main/contracts/dual-agent-identity/workload-identity-binding.v1.schema.json",
+  "title": "Dual-Agent Workload Identity Binding v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "binding_id",
+    "execution_lane",
+    "workload_subject",
+    "identity_ref",
+    "tenant_scope",
+    "audience",
+    "enrollment",
+    "capability",
+    "policy",
+    "secret_handles",
+    "credential_presentation",
+    "transport_auth_state",
+    "contract_set_digest",
+    "external_states",
+    "claims_not_proven"
+  ],
+  "properties": {
+    "schema": {"const": "runtime-env/dual-agent-identity/workload-identity-binding/v1"},
+    "binding_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$"},
+    "execution_lane": {"enum": ["LOCAL", "CLOUD"]},
+    "workload_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "tree"],
+      "properties": {
+        "repository": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "tree": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "identity_ref": {"type": "string", "pattern": "^identity-ref://[A-Za-z0-9._/-]+$"},
+    "tenant_scope": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "audience": {"type": "string", "pattern": "^[A-Za-z0-9._/-]+$"},
+    "enrollment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "evidence_kind", "evidence_digest"],
+      "properties": {
+        "state": {"enum": ["NOT_EXERCISED", "ATTESTED", "ENROLLED", "REVOKED", "EXPIRED"]},
+        "evidence_kind": {"enum": ["NONE", "ATTESTATION_RECEIPT", "PACKAGE_PRESENCE"]},
+        "evidence_digest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["grant_ref", "capabilities", "fallback_capabilities"],
+      "properties": {
+        "grant_ref": {"type": "string", "minLength": 1},
+        "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "fallback_capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digest", "epoch", "state"],
+      "properties": {
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "epoch": {"type": "integer", "minimum": 1},
+        "state": {"enum": ["CURRENT", "STALE", "REFUSED"]}
+      }
+    },
+    "secret_handles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "lease_state", "expires_at"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^secret://[A-Za-z0-9._/-]+$"},
+          "lease_state": {"enum": ["UNRESOLVED", "ACTIVE", "REVOKED", "EXPIRED", "RELEASED"]},
+          "expires_at": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "credential_presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "state", "evidence_digest"],
+      "properties": {
+        "mode": {"enum": ["NONE", "MTLS", "TOKEN_EXCHANGE"]},
+        "state": {"enum": ["NOT_EXERCISED", "ISSUED", "REVOKED", "EXPIRED"]},
+        "evidence_digest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "transport_auth_state": {"enum": ["NOT_EXERCISED", "AUTHENTICATED", "REFUSED"]},
+    "contract_set_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "external_states": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task", "provider", "user_outcome", "release"],
+      "properties": {
+        "task": {"const": "NOT_EXERCISED"},
+        "provider": {"const": "NOT_EXERCISED"},
+        "user_outcome": {"const": "NOT_EXERCISED"},
+        "release": {"const": "NOT_EXERCISED"}
+      }
+    },
+    "claims_not_proven": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}
