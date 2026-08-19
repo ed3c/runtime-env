@@ -105,7 +105,7 @@ def mutations():
     m=copy.deepcopy(base['P1']); m['receipt']['source_subject']['tree']='0'*40; cases['R05']=lambda m=m:fixture(m)
     m=copy.deepcopy(base['P1']); m['receipt']['execution_lane']='LOCAL'; cases['R06']=lambda m=m:fixture(m)
     m=copy.deepcopy(base['P2']); m['job']['execution_lane']='CLOUD'; m['job']['allowlists']['network_origins']=['https://api.example.test']; cases['R07']=lambda m=m:fixture(m)
-    m=copy.deepcopy(base['P1']); m['job']['allowlists']['filesystem_paths'].append('/Users/x/.ssh/id_rsa'); cases['R08']=lambda m=m:fixture(m)
+    m=copy.deepcopy(base['P1']); m['job']['allowlists']['filesystem_paths'].append('/var/runtime/forbidden-key'); cases['R08']=lambda m=m:fixture(m)
     m=copy.deepcopy(base['P3']); del m['effect_intent']; cases['R09']=lambda m=m:fixture(m)
     m=copy.deepcopy(base['P4']); original=base['P4']['effect_intent']; m['effect_intent']['normalized_request_digest']='b'*64
     def r10(m=m,o=original):
