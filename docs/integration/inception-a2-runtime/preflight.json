@@ -1,8 +1,8 @@
 {
   "schema_version": "inception-owner-preflight/v1",
   "atom_id": "INCEPTION-A2R",
-  "stage": "OWNER_IMPLEMENTATION_PREPARATION",
-  "state": "READY_FOR_FIRST_IMPLEMENTATION_COMMIT",
+  "stage": "OWNER_IMPLEMENTATION",
+  "state": "FIRST_IMPLEMENTATION_CANDIDATE",
   "repository": "ed3c/runtime-env",
   "branch": "agent/inception-a2-runtime-contracts",
   "base_subject": {
@@ -30,6 +30,10 @@
     "CANCELLATION_TIMEOUT_CLEANUP_BOUND",
     "OFFLINE_CONTRACT_VERIFIED",
     "LOCAL_EXECUTION_ELIGIBLE_OR_BLOCKED_OR_NOT_EXERCISED"
+  ],
+  "implementation_subjects": [
+    "contracts/inception-runtime-capability.schema.json",
+    "tests/inception-agent-runtime/test_contract.py"
   ],
   "writable_paths": [
     "docs/integration/inception-a2-runtime/**",
@@ -68,6 +72,7 @@
     "tokenizer_identity",
     "context_limit",
     "tool_call_transactions",
+    "hidden_reasoning_access",
     "cleanup_receipt"
   ],
   "required_evidence_lanes": [
@@ -77,32 +82,27 @@
     "PROVIDER_OBSERVATION_SEPARATE"
   ],
   "positive_controls": [
-    "workload image and policy are immutable exact subjects",
+    "workload image and policy are immutable exact digest subjects",
     "only environment variable names are projected",
     "fixed argv entrypoint has bounded resources and timeout",
     "unsupported or unobserved capabilities remain literal non-PASS states",
-    "terminal cleanup receipt inventories descendants and residue"
+    "hidden reasoning access remains ABSENT",
+    "terminal cleanup contract inventories descendants and residue"
   ],
   "mutation_controls": [
     "mutable latest main nightly or unpinned image identity",
-    "secret value in catalog workload policy example or receipt",
-    "trailing generic command or shell string",
+    "secret value in environment surface",
+    "trailing generic command or shell entrypoint",
     "path or workspace escape",
     "stale or expired lease",
-    "missing timeout cancellation or cleanup",
+    "missing timeout resource bound or cleanup",
+    "privileged root or host mount expansion",
     "unsupported prefill abort or hidden reasoning represented as supported",
     "offline contract PASS represented as local or provider PASS"
   ],
   "cleanup_contract": {
     "required": true,
-    "inventory": [
-      "path",
-      "process",
-      "port",
-      "container",
-      "mount",
-      "artifact"
-    ],
+    "inventory": ["path", "process", "port", "container", "mount", "artifact"],
     "rollback_subject": "c0790b9a8c81d7eb45ed45ac3d761c7fad5baa9b"
   },
   "forbidden_actions": [
@@ -116,10 +116,11 @@
     "rollback"
   ],
   "claims_not_proven": [
-    "No runtime contract implementation has been added.",
-    "No offline, local or provider execution has run for this subject.",
+    "The strict public runtime contract is an offline deterministic candidate only.",
+    "No local workload or sandbox execution has run for this subject.",
+    "No provider capability observation has run for this subject.",
     "No secret or provider enrollment exists in this branch.",
     "No Human admission, merge, release or rollback has occurred."
   ],
-  "next_transition": "ADD_STRICT_CAPABILITY_WORKLOAD_CONTRACT_AND_FIRST_HOLLOW_CONTROL"
+  "next_transition": "ADD_FIXED_WORKLOAD_PROFILE_POLICY_FIXTURES_AND_CONSUMER_READBACK"
 }
