@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Deterministic, provider-neutral Dual-Agent transport core for issue #70.
+"""Deterministic, provider-neutral Dual-Agent transport core.
 
-This module owns only local durable transport mechanics. It does not connect to
-NATS, execute a workflow, perform an external effect, or promote task/user/release
-state.
+DA-TR-C owns local durable packet transport mechanics. DA-TR-L extends the same
+store with restart/replay, content-addressed result inbox, stale-result refusal,
+and reconciliation. No code here connects to NATS, executes a workflow, performs
+an external effect, or promotes task/user/release state.
 """
 from __future__ import annotations
 
@@ -11,6 +12,7 @@ import argparse
 import copy
 import hashlib
 import json
+import re
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -19,7 +21,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_SET_PATH = ROOT / "contracts" / "dual-agent" / "contract-set-manifest.json"
 EXPECTED_CONTRACT_SET_DIGEST = "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe"
-STORE_SCHEMA_VERSION = 1
+STORE_SCHEMA_VERSION = 2
+H64 = re.compile(r"^[0-9a-f]{64}$")
 
 NON_TRANSPORT_LANES = (
     "workflow_state",
@@ -37,7 +40,11 @@ TRANSITIONS = {
     "CONNECTED": {"PUBLISHED"},
     "PUBLISHED": {"CONSUMER_ACKED"},
     "CONSUMER_ACKED": {"RESULT_PENDING"},
-    "RESULT_PENDING": set(),
+    "RESULT_PENDING": {"RESULT_RECEIVED"},
+    "RESULT_RECEIVED": {"VERIFIED"},
+    "VERIFIED": {"INBOX_COMMITTED"},
+    "INBOX_COMMITTED": {"RECONCILED"},
+    "RECONCILED": set(),
 }
 
 SCHEMA_SQL = """
@@ -61,6 +68,13 @@ CREATE TABLE IF NOT EXISTS transport_events (
   kind TEXT NOT NULL,
   event_digest TEXT NOT NULL,
   UNIQUE(packet_id, kind, event_digest)
+);
+CREATE TABLE IF NOT EXISTS inbox_results (
+  packet_id TEXT PRIMARY KEY REFERENCES packets(packet_id),
+  tenant_scope TEXT NOT NULL,
+  result_digest TEXT NOT NULL,
+  result_json TEXT NOT NULL,
+  state TEXT NOT NULL
 );
 """
 
@@ -115,7 +129,7 @@ def _require_job(job: dict[str, Any]) -> None:
         refuse("PACKET_SCHEMA_MISMATCH", "bindings")
     for key in ("policy_digest", "runtime_digest"):
         value = bindings.get(key)
-        if not isinstance(value, str) or len(value) != 64:
+        if not isinstance(value, str) or not H64.fullmatch(value):
             refuse("PACKET_SCHEMA_MISMATCH", key)
 
 
@@ -148,6 +162,11 @@ class SQLiteTransportStore:
     def _packet_by_idempotency(self, idempotency_key: str) -> sqlite3.Row | None:
         return self.conn.execute(
             "SELECT * FROM packets WHERE idempotency_key=?", (idempotency_key,)
+        ).fetchone()
+
+    def _result(self, packet_id: str) -> sqlite3.Row | None:
+        return self.conn.execute(
+            "SELECT * FROM inbox_results WHERE packet_id=?", (packet_id,)
         ).fetchone()
 
     def _append_event(self, packet_id: str, kind: str, payload: Any) -> None:
@@ -216,15 +235,103 @@ class SQLiteTransportStore:
             self._append_event(packet_id, next_state, {"tenant_scope": tenant_scope})
         return next_state
 
+    def pending_packets(self) -> list[str]:
+        rows = self.conn.execute(
+            """SELECT packet_id FROM packets
+               WHERE state NOT IN ('RECONCILED')
+               ORDER BY packet_id"""
+        ).fetchall()
+        return [str(row["packet_id"]) for row in rows]
+
+    def receive_result(self, packet_id: str, result: dict[str, Any]) -> str:
+        row = self._packet(packet_id)
+        if row is None:
+            refuse("RESULT_MISMATCH", "unknown packet")
+        if row["state"] != "RESULT_PENDING":
+            refuse("RESULT_MISMATCH", f"state={row['state']}")
+        if result.get("job_id") != packet_id or result.get("tenant_scope") != row["tenant_scope"]:
+            refuse("RESULT_MISMATCH")
+        if result.get("policy_digest") != row["policy_digest"] or result.get("runtime_digest") != row["runtime_digest"]:
+            refuse("STALE_RESULT")
+        artifact_digest = result.get("artifact_digest")
+        if not isinstance(artifact_digest, str) or not H64.fullmatch(artifact_digest):
+            refuse("RESULT_MISMATCH", "artifact_digest")
+        result_digest = digest_json(result)
+        existing = self._result(packet_id)
+        if existing is not None:
+            if existing["result_digest"] == result_digest:
+                return "DUPLICATE_DELIVERY"
+            refuse("RESULT_MISMATCH", "conflicting result")
+
+        with self.conn:
+            self.conn.execute(
+                """INSERT INTO inbox_results(
+                     packet_id,tenant_scope,result_digest,result_json,state
+                   ) VALUES(?,?,?,?,?)""",
+                (
+                    packet_id,
+                    row["tenant_scope"],
+                    result_digest,
+                    canonical_json(result),
+                    "RESULT_RECEIVED",
+                ),
+            )
+            self.conn.execute(
+                "UPDATE packets SET state='RESULT_RECEIVED' WHERE packet_id=?", (packet_id,)
+            )
+            self._append_event(packet_id, "RESULT_RECEIVED", {"result_digest": result_digest})
+        return result_digest
+
+    def verify_result(self, packet_id: str) -> None:
+        row = self._packet(packet_id)
+        result = self._result(packet_id)
+        if row is None or result is None or row["state"] != "RESULT_RECEIVED":
+            refuse("RESULT_MISMATCH", "result not receivable")
+        with self.conn:
+            self.conn.execute(
+                "UPDATE inbox_results SET state='VERIFIED' WHERE packet_id=?", (packet_id,)
+            )
+            self.conn.execute(
+                "UPDATE packets SET state='VERIFIED' WHERE packet_id=?", (packet_id,)
+            )
+            self._append_event(packet_id, "VERIFIED", {"result_digest": result["result_digest"]})
+
+    def reconcile(self, packet_id: str) -> None:
+        row = self._packet(packet_id)
+        result = self._result(packet_id)
+        if row is None or result is None or row["state"] != "VERIFIED":
+            refuse("RESULT_MISMATCH", "result not verified")
+        with self.conn:
+            self.conn.execute(
+                "UPDATE packets SET state='INBOX_COMMITTED' WHERE packet_id=?", (packet_id,)
+            )
+            self.conn.execute(
+                "UPDATE inbox_results SET state='INBOX_COMMITTED' WHERE packet_id=?", (packet_id,)
+            )
+            self._append_event(packet_id, "INBOX_COMMITTED", {"result_digest": result["result_digest"]})
+            self.conn.execute(
+                "UPDATE packets SET state='RECONCILED' WHERE packet_id=?", (packet_id,)
+            )
+            self.conn.execute(
+                "UPDATE inbox_results SET state='RECONCILED' WHERE packet_id=?", (packet_id,)
+            )
+            self._append_event(packet_id, "RECONCILED", {"result_digest": result["result_digest"]})
+
+    def assert_rebuild_contains(self, packet_id: str) -> None:
+        if self._packet(packet_id) is None:
+            refuse("RESTART_LOSS")
+
     def receipt(self, packet_id: str) -> dict[str, Any]:
         row = self._packet(packet_id)
         if row is None:
             refuse("ACK_BEFORE_DURABLE_COMMIT")
+        result = self._result(packet_id)
         receipt = {
             "schema": "runtime-env/dual-agent/transport-receipt/v1",
             "packet_id": row["packet_id"],
             "tenant_scope": row["tenant_scope"],
             "packet_digest": row["packet_digest"],
+            "result_digest": None if result is None else result["result_digest"],
             "transport_state": row["state"],
             "contract_set_digest": EXPECTED_CONTRACT_SET_DIGEST,
             "workflow_state": "NOT_EXERCISED",
@@ -249,6 +356,7 @@ class SQLiteTransportStore:
     def counts(self) -> dict[str, int]:
         return {
             "packets": int(self.conn.execute("SELECT COUNT(*) FROM packets").fetchone()[0]),
+            "results": int(self.conn.execute("SELECT COUNT(*) FROM inbox_results").fetchone()[0]),
             "events": int(self.conn.execute("SELECT COUNT(*) FROM transport_events").fetchone()[0]),
         }
 
@@ -330,6 +438,17 @@ def _fixture_job() -> dict[str, Any]:
     }
 
 
+def _fixture_result(job: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "job_id": job["job_id"],
+        "tenant_scope": job["tenant_scope"],
+        "policy_digest": job["bindings"]["policy_digest"],
+        "runtime_digest": job["bindings"]["runtime_digest"],
+        "artifact_digest": "a" * 64,
+        "result": {"status": "ok"},
+    }
+
+
 def _expect(code: str, fn: Any) -> None:
     try:
         fn()
@@ -341,7 +460,7 @@ def _expect(code: str, fn: Any) -> None:
         raise AssertionError(f"{code}: planted control survived")
 
 
-def selftest() -> int:
+def core_selftest() -> int:
     manifest = json.loads(CONTRACT_SET_PATH.read_text(encoding="utf-8"))
     assert manifest["contract_set_digest"] == EXPECTED_CONTRACT_SET_DIGEST, manifest
 
@@ -407,14 +526,77 @@ def selftest() -> int:
     return 0
 
 
+def replay_selftest() -> int:
+    manifest = json.loads(CONTRACT_SET_PATH.read_text(encoding="utf-8"))
+    assert manifest["contract_set_digest"] == EXPECTED_CONTRACT_SET_DIGEST, manifest
+
+    with tempfile.TemporaryDirectory(prefix="dual-agent-replay-") as td:
+        db = Path(td) / "transport.sqlite3"
+        job = _fixture_job()
+
+        first = SQLiteTransportStore(db)
+        first.enqueue(job)
+        first.advance(job["job_id"], "DISCONNECTED", job["tenant_scope"])
+        first.close()
+
+        second = SQLiteTransportStore(db)
+        second.assert_rebuild_contains(job["job_id"])
+        assert second.pending_packets() == [job["job_id"]]
+        assert second.enqueue(copy.deepcopy(job))["state"] == "DUPLICATE_DELIVERY"
+        assert second.counts()["packets"] == 1
+
+        _expect("RESTART_LOSS", lambda: second.assert_rebuild_contains("missing-packet"))
+
+        second.advance(job["job_id"], "CONNECTED", job["tenant_scope"])
+        second.advance(job["job_id"], "PUBLISHED", job["tenant_scope"])
+        second.advance(job["job_id"], "CONSUMER_ACKED", job["tenant_scope"])
+        second.advance(job["job_id"], "RESULT_PENDING", job["tenant_scope"])
+
+        stale = _fixture_result(job)
+        stale["policy_digest"] = "9" * 64
+        _expect("STALE_RESULT", lambda: second.receive_result(job["job_id"], stale))
+
+        mismatch = _fixture_result(job)
+        mismatch["tenant_scope"] = "tenant-other"
+        _expect("RESULT_MISMATCH", lambda: second.receive_result(job["job_id"], mismatch))
+
+        result = _fixture_result(job)
+        result_digest = second.receive_result(job["job_id"], result)
+        assert H64.fullmatch(result_digest)
+        second.verify_result(job["job_id"])
+        second.reconcile(job["job_id"])
+        assert second.pending_packets() == []
+        receipt = second.receipt(job["job_id"])
+        assert receipt["transport_state"] == "RECONCILED"
+        assert receipt["result_digest"] == result_digest
+        assert all(receipt[lane] == "NOT_EXERCISED" for lane in NON_TRANSPORT_LANES)
+        second.close()
+        assert_cleanup(db)
+
+        third = SQLiteTransportStore(db)
+        third.assert_rebuild_contains(job["job_id"])
+        assert third.pending_packets() == []
+        assert third.counts()["packets"] == 1
+        assert third.counts()["results"] == 1
+        rebuilt = third.receipt(job["job_id"])
+        assert rebuilt["transport_state"] == "RECONCILED"
+        assert rebuilt["result_digest"] == result_digest
+        third.close()
+        assert_cleanup(db)
+
+    print("PASS: Dual-Agent SQLite restart/replay/inbox reconciliation")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--selftest", action="store_true")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--selftest", action="store_true")
+    group.add_argument("--replay-selftest", action="store_true")
     args = parser.parse_args()
     if args.selftest:
-        return selftest()
-    parser.error("only the fixed --selftest surface is admitted in DA-TR-C")
-    return 2
+        return core_selftest()
+    return replay_selftest()
 
 
 if __name__ == "__main__":

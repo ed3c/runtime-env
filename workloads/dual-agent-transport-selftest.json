@@ -1,21 +1,22 @@
 {
   "schema":"runtime-env/workload/v2",
   "id":"dual-agent-transport-selftest",
-  "summary":"Run the deterministic SQLite transport-core selftest without network access, provider enrollment, or task/effect promotion.",
+  "summary":"Run deterministic SQLite transport core and restart/replay selftests without network/provider enrollment or task/effect promotion.",
   "profile":"dual-agent-transport-local",
   "host":"local-macos",
   "entrypoints":{
-    "transport-contract":["python3","@runtime-env/scripts/dual_agent_transport.py","--selftest"]
+    "transport-contract":["python3","@runtime-env/scripts/dual_agent_transport.py","--selftest"],
+    "transport-replay":["python3","@runtime-env/scripts/dual_agent_transport.py","--replay-selftest"]
   },
-  "acceptance_entrypoints":["transport-contract"],
-  "public_test_entrypoints":["transport-contract"],
-  "entrypoint_environment":{"transport-contract":[]},
-  "clean_catalog_entrypoints":["transport-contract"],
+  "acceptance_entrypoints":["transport-contract","transport-replay"],
+  "public_test_entrypoints":["transport-contract","transport-replay"],
+  "entrypoint_environment":{"transport-contract":[],"transport-replay":[]},
+  "clean_catalog_entrypoints":["transport-contract","transport-replay"],
   "secret_delivery":"none",
   "agent_secret_access":"denied",
   "mutation":"read-only",
   "evidence":{
-    "receipt":"deterministic local SQLite transport receipt with non-transport lanes fixed to NOT_EXERCISED",
-    "control":"CI selftest proves durable local packet mechanics only; NATS, cross-host delivery, workflow, effects, user outcome and release remain NOT_EXERCISED"
+    "receipt":"deterministic local SQLite transport and replay receipts with non-transport lanes fixed to NOT_EXERCISED",
+    "control":"CI selftests prove local durability/restart/reconciliation only; NATS, cross-host delivery, workflow, effects, user outcome and release remain NOT_EXERCISED"
   }
 }

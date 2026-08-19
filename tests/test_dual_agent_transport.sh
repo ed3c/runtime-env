@@ -3,6 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 python3 "${ROOT}/scripts/dual_agent_transport.py" --selftest
+python3 "${ROOT}/scripts/dual_agent_transport.py" --replay-selftest
 
 python3 - "${ROOT}" <<'PY'
 import json
@@ -32,12 +33,20 @@ assert workload["entrypoints"] == {
         "python3",
         "@runtime-env/scripts/dual_agent_transport.py",
         "--selftest",
-    ]
+    ],
+    "transport-replay": [
+        "python3",
+        "@runtime-env/scripts/dual_agent_transport.py",
+        "--replay-selftest",
+    ],
 }
-assert workload["acceptance_entrypoints"] == ["transport-contract"]
-assert workload["entrypoint_environment"] == {"transport-contract": []}
+assert workload["acceptance_entrypoints"] == ["transport-contract", "transport-replay"]
+assert workload["entrypoint_environment"] == {
+    "transport-contract": [],
+    "transport-replay": [],
+}
 assert workload["secret_delivery"] == "none"
 assert workload["agent_secret_access"] == "denied"
 assert workload["mutation"] == "read-only"
-print("PASS: Dual-Agent transport module/profile/fixed-workload binding")
+print("PASS: Dual-Agent transport module/profile/fixed-workload replay binding")
 PY
