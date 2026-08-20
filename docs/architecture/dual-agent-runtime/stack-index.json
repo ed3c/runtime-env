@@ -1,0 +1,206 @@
+{
+  "schema": "runtime-env.dual-agent-runtime-stack-index.v1",
+  "trace_owner_issue": 50,
+  "transport_docs_issue": 74,
+  "identity_docs_issue": 84,
+  "trace_state": "MAIN_IMPLEMENTATION_TRACE",
+  "implementation_main": {
+    "repository": "ed3c/runtime-env",
+    "branch": "main",
+    "commit": "92feed7c4e671dc63238155da9d4f394aac80d90",
+    "tree": "406895a4b0ac0df301d146aa89940c6adda402cd",
+    "merge_pr": 69,
+    "state": "DETERMINISTIC_RUNTIME_STACK_MERGED"
+  },
+  "method_subject": {
+    "repository": "ed3c/skills-shared",
+    "commit": "7e33890e9e3763e0cd6188fdc68fce96e1caaba3",
+    "tree": "7e2293b52b48394e4aa905d61fb5782f55110a67",
+    "path": "skills/agentic-tech-lead-orchestration/references/dual-agent-offload/method-contract.v1.schema.json",
+    "id": "https://skills-shared.invalid/agentic-tech-lead-orchestration/dual-agent-offload/method-contract.v1.schema.json",
+    "sha256": "83e1393a87c7caee5bc7cb8772b3706d3114b568b11a916609dccf723b251daf"
+  },
+  "contract_set": {
+    "manifest_state": "BOUND",
+    "digest": "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe"
+  },
+  "nodes": [
+    {
+      "atom": "DA-RC-C",
+      "issue": 61,
+      "pr": 69,
+      "head": "1fd6a65a2e628ba1b31e89800297e7202dadf126",
+      "tree": "cc287010c96391e0a718141c2f4afb92bac3db06",
+      "targeted_run": 32251505194,
+      "state": "MERGED_CONTRACT_CLOSED"
+    },
+    {
+      "atom": "DA-TR-C",
+      "issue": 70,
+      "pr": 76,
+      "head": "08fd712572ebe63b3c4286b361909a11ded9d172",
+      "tree": "a0971d7b4bb0f70548989582f54f522ce655c91b",
+      "targeted_run": 32252919999,
+      "integration_head": "fdcdb9404439d1e524a6fb9b3b20b922b16810a4",
+      "integration_run": 32327396401,
+      "parent_merge": "6ac77e3925dc0b91e34d6cca70dfa87ea50f467f",
+      "state": "MERGED_CONTRACT_CLOSED"
+    },
+    {
+      "atom": "DA-TR-L",
+      "issue": 71,
+      "pr": 77,
+      "head": "f910536b5a8ace7610eb8957cd3eb37f16c08065",
+      "tree": "a1aa879cbd9b0d8ddf9845183c4d1a3e3a6dc4e3",
+      "targeted_run": 32253473378,
+      "integration_merge": "50f2001e31e44bd6d0f32ee1ae7c1f5e7411a345",
+      "state": "MERGED_CONTRACT_CLOSED"
+    },
+    {
+      "atom": "DA-TR-N",
+      "issue": 72,
+      "pr": 78,
+      "head": "ebf7e36387d4ffff8f8b428eb062525098013f5c",
+      "tree": "c706be102cb4466ffed041d7985e3713579528be",
+      "targeted_run": 32254465413,
+      "integration_merge": "fdcdb9404439d1e524a6fb9b3b20b922b16810a4",
+      "state": "MERGED_CONTRACT_CLOSED"
+    },
+    {
+      "atom": "DA-ID-C",
+      "issue": 75,
+      "pr": 79,
+      "head": "5c9a960ed9883e294d6cdb5c949256cf937972ed",
+      "tree": "b8c7efc2a653a008cf12aa4f7120ed526eb80b3d",
+      "targeted_run": 32254852893,
+      "integration_head": "3f2a7410377af3ffdcb69ba4f2be695f5b031e0e",
+      "integration_run": 32327755557,
+      "parent_merge": "cd2c36970bb6b2248a146e98d083fa0a35ce99e1",
+      "state": "MERGED_CONTRACT_CLOSED"
+    },
+    {
+      "atom": "DA-ID-L",
+      "issue": 80,
+      "pr": 85,
+      "head": "8ea2667265b553059b2879f800c7bb1afc788d40",
+      "tree": "48a5744fd4ca6d6d7b6a4921dba81c02c7c3ddaf",
+      "targeted_run": 32258804609,
+      "integration_merge": "454a7a482e39b940d156bfbaa445f3bd8ba4ee62",
+      "state": "MERGED_CONTRACT_CLOSED"
+    },
+    {
+      "atom": "DA-ID-CLOUD",
+      "issue": 81,
+      "pr": 86,
+      "head": "940f9c74be8b8f7b2c427e79725786059696cd45",
+      "tree": "61a7e346c6e0e0a1346d8363188db5128615fd35",
+      "targeted_run": 32259034357,
+      "integration_merge": "48330cefc608e08e7b24dd7f7a0563a9dbc261d2",
+      "state": "MERGED_CONTRACT_CLOSED"
+    },
+    {
+      "atom": "DA-ID-P",
+      "issue": 82,
+      "pr": 87,
+      "head": "22bff7e329209491ee47e29c4cdd8c74b4725d81",
+      "tree": "8ddb3c88e80f76ef74210d9fba9b0c9a540404ce",
+      "targeted_run": 32259277414,
+      "integration_merge": "3f2a7410377af3ffdcb69ba4f2be695f5b031e0e",
+      "state": "MERGED_CONTRACT_CLOSED"
+    }
+  ],
+  "merge_chain": {
+    "transport": [
+      {"pr": 77, "merge": "50f2001e31e44bd6d0f32ee1ae7c1f5e7411a345"},
+      {"pr": 78, "merge": "fdcdb9404439d1e524a6fb9b3b20b922b16810a4"},
+      {"pr": 76, "merge": "6ac77e3925dc0b91e34d6cca70dfa87ea50f467f"}
+    ],
+    "identity": [
+      {"pr": 85, "merge": "454a7a482e39b940d156bfbaa445f3bd8ba4ee62"},
+      {"pr": 86, "merge": "48330cefc608e08e7b24dd7f7a0563a9dbc261d2"},
+      {"pr": 87, "merge": "3f2a7410377af3ffdcb69ba4f2be695f5b031e0e"},
+      {"pr": 79, "merge": "cd2c36970bb6b2248a146e98d083fa0a35ce99e1"}
+    ],
+    "main": {"pr": 69, "merge": "92feed7c4e671dc63238155da9d4f394aac80d90"}
+  },
+  "retained_failures": [
+    {
+      "pr": 69,
+      "run": 32251265059,
+      "finding": "PUBLIC_HOST_ACCOUNT_PATH_DISCLOSURE_IN_PLANTED_CONTROL",
+      "resolution_head": "1fd6a65a2e628ba1b31e89800297e7202dadf126"
+    }
+  ],
+  "closure_actions": {
+    "issues_ready_to_close_completed": [57, 61, 70, 71, 72, 74, 75, 80, 81, 82, 84],
+    "issues_keep_open": [58, 59, 73, 83],
+    "prs_merged": [69, 76, 77, 78, 79, 85, 86, 87],
+    "prs_ready_to_close_superseded": [60]
+  },
+  "authority": {
+    "method_owner": "ed3c/skills-shared",
+    "wire_contract_owner": "ed3c/runtime-env/contracts/dual-agent",
+    "transport_semantics_owner": "ed3c/runtime-env",
+    "identity_semantics_owner": "ed3c/runtime-env",
+    "workflow_owner": "ed3c/bettor-arena",
+    "effect_owner": "ed3c/bettor-arena",
+    "provider_owner": "ed3c/agent-shield-monorepo",
+    "verification_owner": "ed3c/truth-verify-loop",
+    "human_admission": "EXTERNAL",
+    "release": "EXTERNAL"
+  },
+  "evidence_ceiling": "DETERMINISTIC_DUAL_AGENT_RUNTIME_STACK_ONLY",
+  "live_frontier": {
+    "physical_cross_host_transport": "NOT_EXERCISED",
+    "live_nats_jetstream_tls": "NOT_EXERCISED",
+    "live_local_identity_and_secret_resolution": "NOT_EXERCISED",
+    "live_cloud_identity_attestation_and_issuance": "NOT_EXERCISED",
+    "live_policy_revocation_rotation": "NOT_EXERCISED",
+    "workflow_execution": "NOT_EXERCISED_BY_RUNTIME_ENV",
+    "provider_execution": "NOT_EXERCISED_BY_RUNTIME_ENV",
+    "effect_execution": "NOT_EXERCISED_BY_RUNTIME_ENV",
+    "user_outcome": "NOT_EXERCISED",
+    "human": "NOT_EXERCISED",
+    "release": "NOT_PERFORMED"
+  },
+  "local_handoffs": [
+    {
+      "id": "LH-TR-001",
+      "owner": "ed3c/runtime-env#73",
+      "parent": "ed3c/runtime-env#58",
+      "exact_base": {
+        "repository": "ed3c/runtime-env",
+        "commit": "92feed7c4e671dc63238155da9d4f394aac80d90",
+        "tree": "406895a4b0ac0df301d146aa89940c6adda402cd"
+      },
+      "state": "HANDOFF_READY_NOT_EXERCISED",
+      "idempotency": "one packet identity and one accepted logical result; duplicate delivery retained",
+      "timeout": "all network process ACK redelivery restart and cleanup actions bounded",
+      "receipt": "complete server client config packet attempt ACK redelivery restart result inbox and residue ledger",
+      "rollback": "stop disposable NATS resources revoke temporary TLS handles preserve receipts and return to exact base",
+      "verifier": "ed3c/truth-verify-loop#22"
+    },
+    {
+      "id": "LH-ID-001",
+      "owner": "ed3c/runtime-env#83",
+      "parent": "ed3c/runtime-env#59",
+      "exact_base": {
+        "repository": "ed3c/runtime-env",
+        "commit": "92feed7c4e671dc63238155da9d4f394aac80d90",
+        "tree": "406895a4b0ac0df301d146aa89940c6adda402cd"
+      },
+      "state": "HANDOFF_READY_NOT_EXERCISED",
+      "idempotency": "one workload subject per lane and no capability widening across renewal or fallback",
+      "timeout": "all enrollment issuance policy revocation rotation secret and cleanup actions bounded",
+      "receipt": "provider trust audience capability policy lease revocation rotation and residue metadata without secret values",
+      "rollback": "revoke disposable identities credentials policies and leases preserve receipts and return to exact base",
+      "verifier": "ed3c/truth-verify-loop#22"
+    }
+  ],
+  "downstream": [
+    "ed3c/bettor-arena#184",
+    "ed3c/bettor-arena#185",
+    "ed3c/bettor-arena#186",
+    "ed3c/truth-verify-loop#22"
+  ]
+}
