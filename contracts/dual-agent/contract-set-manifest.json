@@ -1,10 +1,10 @@
 {
   "schema": "runtime-env/dual-agent/contract-set-manifest/v1",
-  "manifest_state": "CANDIDATE_SUBJECT_PENDING",
+  "manifest_state": "BOUND",
   "runtime_subject": {
     "repository": "ed3c/runtime-env",
-    "commit": "CANDIDATE_SUBJECT_PENDING",
-    "tree": "CANDIDATE_SUBJECT_PENDING"
+    "commit": "92feed7c4e671dc63238155da9d4f394aac80d90",
+    "tree": "406895a4b0ac0df301d146aa89940c6adda402cd"
   },
   "method_subject": {
     "repository": "ed3c/skills-shared",
@@ -49,12 +49,16 @@
   "contract_set_digest": "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe",
   "compatibility_state": "COMPATIBLE_WITH_METHOD",
   "claims_not_proven": [
-    "TRANSPORT_EXECUTION",
-    "WORKLOAD_IDENTITY_ENROLLMENT",
-    "PROVIDER_EXECUTION",
+    "PHYSICAL_CROSS_HOST_TRANSPORT_EXECUTION",
+    "LIVE_NATS_JETSTREAM_SERVER_CONSUMER_TLS",
+    "LIVE_WORKLOAD_IDENTITY_ENROLLMENT_ATTESTATION",
+    "LIVE_SECRET_RESOLUTION",
+    "LIVE_POLICY_PROVIDER_REVOCATION_ROTATION",
+    "WORKFLOW_EXECUTION",
+    "PROVIDER_SANDBOX_EXECUTION",
     "EXTERNAL_EFFECT_EXECUTION",
     "USER_OUTCOME",
-    "MERGE",
+    "HUMAN_ADMISSION",
     "RELEASE"
   ]
 }
