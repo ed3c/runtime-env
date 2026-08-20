@@ -1,0 +1,29 @@
+{
+  "schema": "runtime-env/workload/v2",
+  "id": "kotlin-auto-webview-android-automation-evidence",
+  "summary": "Fixed, secret-free preflight, runtime-contract, and evidence handoff contract for kotlin-auto-webview Android automation.",
+  "profile": "kotlin-auto-webview-android-automation",
+  "host": "local-macos",
+  "entrypoints": {
+    "preflight-emulator": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight-emulator"],
+    "preflight-physical": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight-physical"],
+    "preflight-privileged": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "preflight-privileged"],
+    "render-contract": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "render-contract"],
+    "render-handoff": ["python3", "scripts/kotlin_auto_webview_android_automation.py", "render-handoff"]
+  },
+  "acceptance_entrypoints": ["preflight-emulator", "preflight-physical", "preflight-privileged", "render-contract"],
+  "entrypoint_environment": {
+    "preflight-emulator": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME", "ANDROID_AVD_HOME", "ANDROID_SENDER_AVD", "ANDROID_RECEIVER_AVD"],
+    "preflight-physical": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME"],
+    "preflight-privileged": ["JAVA_HOME", "ANDROID_SDK_ROOT", "ANDROID_HOME"],
+    "render-contract": [],
+    "render-handoff": []
+  },
+  "secret_delivery": "none",
+  "agent_secret_access": "denied",
+  "mutation": "read-only",
+  "evidence": {
+    "receipt": "metadata-only stdout or caller-owned local receipt path",
+    "control": "tests/test_kotlin_auto_webview_android_automation.py"
+  }
+}
