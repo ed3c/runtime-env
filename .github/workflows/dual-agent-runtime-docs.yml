@@ -1,0 +1,29 @@
+name: Dual-Agent runtime docs convergence
+
+on:
+  pull_request:
+    paths:
+      - "docs/architecture/dual-agent-runtime/**"
+      - "tests/dual_agent_runtime_docs_selftest.py"
+      - "tests/test_dual_agent_runtime_docs.sh"
+      - ".github/workflows/dual-agent-runtime-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate Stack index JSON
+        run: python3 -m json.tool docs/architecture/dual-agent-runtime/stack-index.json >/dev/null
+      - name: Run runtime docs traceability controls
+        run: bash tests/test_dual_agent_runtime_docs.sh
+      - name: Run full repository contracts suite
+        run: bash tests/run-all.sh
