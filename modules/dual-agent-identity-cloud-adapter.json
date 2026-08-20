@@ -1,0 +1,8 @@
+{
+  "schema":"runtime-env/module/v1",
+  "id":"dual-agent-identity-cloud-adapter",
+  "summary":"Provider-neutral CLOUD workload-identity adapter contract; live trust-domain enrollment remains external.",
+  "requires":[],
+  "optional":[],
+  "defaults":{}
+}
