@@ -24,8 +24,11 @@ Before claiming that a PRD requirement is implemented or live, Agents must resol
 - [`architecture/STATE_MACHINES.md`](architecture/STATE_MACHINES.md) — stable transition definitions.
 - [`architecture/DOCUMENT_ROUTING.md`](architecture/DOCUMENT_ROUTING.md) — document routing contract.
 - [`architecture/SHADOW_ARCHITECT_LEDGER.md`](architecture/SHADOW_ARCHITECT_LEDGER.md) — current exact-head/live-evidence convergence ledger. Mutable; never treat as machine implementation SSOT.
+- [`architecture/dual-agent-runtime/README.md`](architecture/dual-agent-runtime/README.md) — merged Dual-Agent contracts/transport/identity State Machines, Process/Git DAGs, data flow, molecular Stack, closure matrix, and Local Handoff queues.
+- [`architecture/dual-agent-runtime/AGENTS.md`](architecture/dual-agent-runtime/AGENTS.md) — nearest Agent authority, path leases, evidence non-substitution laws, stop conditions, and zero-context continuation for the Dual-Agent runtime.
+- [`architecture/dual-agent-runtime/stack-index.json`](architecture/dual-agent-runtime/stack-index.json) — machine-readable exact implementation heads/trees/runs/merges, closure actions, live frontier, and handoff packets.
 
-For completion, integration, issue-closing, article/PDF, provider, scheduler, Forgejo or Stack work, Agents must read the architecture README + AGENTS + current ledger before claiming PASS.
+For completion, integration, issue-closing, article/PDF, provider, scheduler, Forgejo or Stack work, Agents must read the architecture README + AGENTS + current ledger before claiming PASS. Dual-Agent work must additionally read the nearest Dual-Agent route above.
 
 ## Integration routes
 
@@ -55,6 +58,10 @@ prd/README.md
 prd/AGENTS.md
 catalog/README.md
 contracts/README.md
+contracts/dual-agent/README.md
+docs/architecture/dual-agent-runtime/README.md
+docs/architecture/dual-agent-runtime/AGENTS.md
+catalog/README.md
 modules/README.md
 profiles/README.md
 workloads/README.md
