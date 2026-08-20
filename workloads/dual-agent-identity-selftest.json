@@ -1,0 +1,20 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"dual-agent-identity-selftest",
+  "summary":"Validate provider-neutral Dual-Agent workload identity and policy binding semantics without issuing credentials or contacting an identity provider.",
+  "profile":"dual-agent-identity-hermetic",
+  "host":"local-macos",
+  "entrypoints":{
+    "identity-contract":["python3","@runtime-env/scripts/dual_agent_identity.py","--selftest"]
+  },
+  "entrypoint_environment":{"identity-contract":[]},
+  "acceptance_entrypoints":["identity-contract"],
+  "clean_catalog_entrypoints":["identity-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{
+    "receipt":"Hermetic identity-contract receipt; local/cloud enrollment, provider health and credential issuance remain NOT_EXERCISED.",
+    "control":"Transport authentication, package presence or fixture metadata cannot promote task/provider/user/release evidence."
+  }
+}

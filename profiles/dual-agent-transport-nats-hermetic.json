@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"dual-agent-transport-nats-hermetic",
+  "summary":"Hermetic contract profile combining the local durable transport core with the bounded NATS/JetStream adapter surface.",
+  "modules":["dual-agent-transport-local","dual-agent-transport-nats"]
+}

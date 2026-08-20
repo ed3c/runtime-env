@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://runtime-env.invalid/contracts/dual-agent/contract-set-manifest.v1.schema.json",
+  "title": "Dual-Agent Contract Set Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "manifest_state",
+    "runtime_subject",
+    "method_subject",
+    "schemas",
+    "contract_set_digest",
+    "compatibility_state",
+    "claims_not_proven"
+  ],
+  "properties": {
+    "schema": {
+      "const": "runtime-env/dual-agent/contract-set-manifest/v1"
+    },
+    "manifest_state": {
+      "enum": [
+        "CANDIDATE_SUBJECT_PENDING",
+        "BOUND"
+      ]
+    },
+    "runtime_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "commit",
+        "tree"
+      ],
+      "properties": {
+        "repository": {
+          "const": "ed3c/runtime-env"
+        },
+        "commit": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            {
+              "const": "CANDIDATE_SUBJECT_PENDING"
+            }
+          ]
+        },
+        "tree": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            {
+              "const": "CANDIDATE_SUBJECT_PENDING"
+            }
+          ]
+        }
+      }
+    },
+    "method_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "commit",
+        "tree",
+        "path",
+        "id",
+        "sha256"
+      ],
+      "properties": {
+        "repository": {
+          "const": "ed3c/skills-shared"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "tree": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "path": {
+          "const": "skills/agentic-tech-lead-orchestration/references/dual-agent-offload/method-contract.v1.schema.json"
+        },
+        "id": {
+          "const": "https://skills-shared.invalid/agentic-tech-lead-orchestration/dual-agent-offload/method-contract.v1.schema.json"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "schemas": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": false,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "logical_id",
+          "path",
+          "id",
+          "sha256"
+        ],
+        "properties": {
+          "logical_id": {
+            "type": "string",
+            "pattern": "^runtime-env/dual-agent/[a-z-]+/v1$"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^contracts/dual-agent/[a-z-]+\\.v1\\.schema\\.json$"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^https://runtime-env\\.invalid/contracts/dual-agent/[a-z-]+\\.v1\\.schema\\.json$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "contract_set_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "compatibility_state": {
+      "enum": [
+        "COMPATIBLE_WITH_METHOD",
+        "INCOMPATIBLE",
+        "NOT_EVALUATED"
+      ]
+    },
+    "claims_not_proven": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

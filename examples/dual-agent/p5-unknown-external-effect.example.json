@@ -1,0 +1,190 @@
+{
+  "fixture_id": "P5",
+  "job": {
+    "schema": "runtime-env/dual-agent/offload-job/v1",
+    "job_id": "job-p5",
+    "idempotency_key": "idem-job-p5",
+    "tenant_scope": "tenant-demo",
+    "requester_identity_ref": "spiffe://example.local/user/demo",
+    "source_subject": {
+      "repository": "ed3c/example-workload",
+      "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "tree": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "goal": "Produce one bounded structured result.",
+    "non_goals": [
+      "No arbitrary shell",
+      "No credential material"
+    ],
+    "deadline": "2026-08-20T00:00:00Z",
+    "budget": {
+      "max_cpu_seconds": 300,
+      "max_output_bytes": 1048576,
+      "max_attempts": 3,
+      "max_cost_microunits": 0
+    },
+    "retry_policy": {
+      "max_attempts": 3,
+      "backoff_class": "EXPONENTIAL_BOUNDED"
+    },
+    "data_classification": "PUBLIC",
+    "side_effect_class": "REVERSIBLE_WRITE",
+    "execution_lane": "CLOUD",
+    "capability_grant_ref": "grant-job-p5",
+    "bindings": {
+      "runtime_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+      "profile_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+      "policy_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+      "skill_digest": "4444444444444444444444444444444444444444444444444444444444444444",
+      "tool_digests": [
+        "5555555555555555555555555555555555555555555555555555555555555555"
+      ],
+      "image_digest": "6666666666666666666666666666666666666666666666666666666666666666"
+    },
+    "allowlists": {
+      "filesystem_paths": [
+        "workspace/input.json",
+        "workspace/output.json"
+      ],
+      "network_origins": [
+        "https://api.example.test"
+      ],
+      "environment_names": [
+        "LANG",
+        "TZ"
+      ]
+    },
+    "secret_handles": [],
+    "approval_requirement": "BEFORE_EXTERNAL_WRITE",
+    "artifact_requirements": [
+      {
+        "logical_name": "result",
+        "media_type": "application/json",
+        "required": true,
+        "max_bytes": 1048576
+      }
+    ],
+    "trace_id": "11111111111111111111111111111111",
+    "method_contract": {
+      "id": "https://skills-shared.invalid/agentic-tech-lead-orchestration/dual-agent-offload/method-contract.v1.schema.json",
+      "sha256": "83e1393a87c7caee5bc7cb8772b3706d3114b568b11a916609dccf723b251daf"
+    },
+    "contract_set_ref": {
+      "schema": "runtime-env/dual-agent/contract-set-manifest/v1",
+      "manifest_digest": "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe"
+    }
+  },
+  "grant": {
+    "schema": "runtime-env/dual-agent/capability-grant/v1",
+    "grant_id": "grant-job-p5",
+    "subject_identity_ref": "spiffe://example.local/worker/demo",
+    "tenant_scope": "tenant-demo",
+    "audience": "runtime-env/dual-agent",
+    "capabilities": [
+      "ticket.write"
+    ],
+    "policy_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+    "issued_at": "2026-08-19T00:00:00Z",
+    "expires_at": "2026-08-20T00:00:00Z",
+    "revocation_state": "ACTIVE",
+    "secret_handle_ids": [],
+    "contract_set_ref": {
+      "schema": "runtime-env/dual-agent/contract-set-manifest/v1",
+      "manifest_digest": "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe"
+    }
+  },
+  "effect_intent": {
+    "schema": "runtime-env/dual-agent/effect-intent/v1",
+    "effect_id": "effect-job-p5",
+    "job_id": "job-p5",
+    "idempotency_key": "idem-job-p5",
+    "normalized_request_digest": "9999999999999999999999999999999999999999999999999999999999999999",
+    "side_effect_class": "REVERSIBLE_WRITE",
+    "target_subject": "example://ticket/123",
+    "preconditions": [
+      "target version matches expected"
+    ],
+    "approval_requirement": "BEFORE_EXTERNAL_WRITE",
+    "compensation": {
+      "disposition": "DECLARED",
+      "plan_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "contract_set_ref": {
+      "schema": "runtime-env/dual-agent/contract-set-manifest/v1",
+      "manifest_digest": "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe"
+    }
+  },
+  "receipt": {
+    "schema": "runtime-env/dual-agent/execution-receipt/v1",
+    "receipt_id": "receipt-job-p5-attempt-1",
+    "job_id": "job-p5",
+    "attempt_id": "attempt-1",
+    "parent_attempt_id": null,
+    "execution_lane": "CLOUD",
+    "execution_subject": {
+      "provider_subject": {
+        "repository": "ed3c/provider-adapter",
+        "commit": "cccccccccccccccccccccccccccccccccccccccc",
+        "tree": "dddddddddddddddddddddddddddddddddddddddd"
+      },
+      "runtime_subject": {
+        "repository": "ed3c/runtime-env",
+        "commit": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "tree": "ffffffffffffffffffffffffffffffffffffffff"
+      },
+      "environment_subject": "7777777777777777777777777777777777777777777777777777777777777777"
+    },
+    "source_subject": {
+      "repository": "ed3c/example-workload",
+      "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "tree": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "bindings": {
+      "runtime_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+      "profile_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+      "policy_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+      "skill_digest": "4444444444444444444444444444444444444444444444444444444444444444",
+      "tool_digests": [
+        "5555555555555555555555555555555555555555555555555555555555555555"
+      ],
+      "image_digest": "6666666666666666666666666666666666666666666666666666666666666666"
+    },
+    "started_at": "2026-08-19T00:00:00Z",
+    "ended_at": "2026-08-19T00:00:01Z",
+    "terminal_state": "UNKNOWN_EXTERNAL_EFFECT",
+    "transport_state": "NOT_EXERCISED",
+    "workflow_state": "NOT_EXERCISED",
+    "task_state": "NOT_EXERCISED",
+    "effect_state": "UNKNOWN_EXTERNAL_EFFECT",
+    "artifact_state": "NOT_EXERCISED",
+    "cleanup_state": "UNKNOWN",
+    "budget_observation": {
+      "cpu_seconds": 0,
+      "output_bytes": 0,
+      "attempt_number": 1,
+      "cost_microunits": 0
+    },
+    "artifact_manifest_ref": null,
+    "policy_decisions": [
+      "fixture-only; no runtime decision"
+    ],
+    "residue_observation": "NOT_EXERCISED",
+    "capability_class": "API",
+    "evidence_class": "API_OBSERVATION",
+    "evidence_ceiling": "CONTRACT_FIXTURE_ONLY",
+    "claims_not_proven": [
+      "LIVE_EXECUTION",
+      "USER_OUTCOME",
+      "RELEASE"
+    ],
+    "external_states": {
+      "user_outcome": "NOT_EXERCISED",
+      "human_admit": "HUMAN_ADMIT_REQUIRED",
+      "release": "NOT_EXERCISED"
+    },
+    "contract_set_ref": {
+      "schema": "runtime-env/dual-agent/contract-set-manifest/v1",
+      "manifest_digest": "e6671977dbf0a378474f924a142a82843bc0e3429f4546ffb0145af73f7827fe"
+    }
+  }
+}

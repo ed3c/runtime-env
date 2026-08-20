@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"dual-agent-transport-local",
+  "summary":"Local deterministic profile for the Dual-Agent SQLite transport core; no network/provider enrollment is implied.",
+  "modules":["dual-agent-transport-local"]
+}

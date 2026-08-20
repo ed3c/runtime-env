@@ -1,0 +1,8 @@
+{
+  "schema":"runtime-env/module/v1",
+  "id":"dual-agent-identity-binding",
+  "summary":"Provider-neutral local/cloud workload identity, policy-epoch and opaque secret-handle binding contract; live enrollment stays separate.",
+  "requires":[],
+  "optional":[],
+  "defaults":{}
+}
