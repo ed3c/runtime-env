@@ -1,0 +1,35 @@
+name: Dual-Agent runtime integration status
+
+on:
+  pull_request:
+    paths:
+      - "docs/architecture/dual-agent-runtime/**"
+      - ".github/workflows/dual-agent-runtime-status.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Validate machine Stack index
+        run: python -m json.tool docs/architecture/dual-agent-runtime/stack-index.json >/dev/null
+      - name: Run runtime status refusal controls
+        run: python docs/architecture/dual-agent-runtime/selftest.py
+      - name: Run full repository suite
+        run: bash tests/run-all.sh
