@@ -1,0 +1,126 @@
+{
+  "schema_version": "inception-owner-preflight/v1",
+  "atom_id": "INCEPTION-A2R",
+  "stage": "OWNER_IMPLEMENTATION",
+  "state": "FIRST_IMPLEMENTATION_CANDIDATE",
+  "repository": "ed3c/runtime-env",
+  "branch": "agent/inception-a2-runtime-contracts",
+  "base_subject": {
+    "commit": "c0790b9a8c81d7eb45ed45ac3d761c7fad5baa9b",
+    "tree": "df39f33f7a5278d255a022789b9f94c9b4a073b9"
+  },
+  "controller_subject": {
+    "repository": "ed3c/enterprise_agent_system",
+    "pull_request": 29,
+    "commit": "6e0a916fd06dd8635d77c9a8c4d1b475185ea13e",
+    "tree": "c3851a6953d456d0342a9776eed28561c1af0ca1",
+    "packet_digest": "sha256:18e6a7c89d6f6de322b68fd1c2928fcc6c4cd42508236bb1ca03957435106aec",
+    "bundle_digest": "sha256:dc4473b3195a738e55eb49c43661b6e1f4ea7f95c66749454776f2003b18ebc3"
+  },
+  "owner_issue": "ed3c/runtime-env#67",
+  "upstream_issue": "ed3c/enterprise_agent_system#7",
+  "consumer_issue": "ed3c/agent-shield-monorepo#153",
+  "interface": "inception/runtime-capability-contracts",
+  "state_machine": [
+    "RUNTIME_REQUIREMENT_DECLARED",
+    "IMMUTABLE_WORKLOAD_AND_POLICY_BOUND",
+    "ENVIRONMENT_NAME_ALLOWLIST_BOUND",
+    "RESOURCE_AND_WORKSPACE_LEASE_BOUND",
+    "CAPABILITY_MATRIX_DECLARED",
+    "CANCELLATION_TIMEOUT_CLEANUP_BOUND",
+    "OFFLINE_CONTRACT_VERIFIED",
+    "LOCAL_EXECUTION_ELIGIBLE_OR_BLOCKED_OR_NOT_EXERCISED"
+  ],
+  "implementation_subjects": [
+    "contracts/inception-runtime-capability.schema.json",
+    "tests/inception-agent-runtime/test_contract.py"
+  ],
+  "writable_paths": [
+    "docs/integration/inception-a2-runtime/**",
+    "contracts/inception-runtime-capability.schema.json",
+    "modules/inception-agent-runtime.json",
+    "profiles/inception-agent-local.json",
+    "workloads/inception-agent-probe.json",
+    "policies/inception-agent-local.json",
+    "tests/inception-agent-runtime/**",
+    ".github/workflows/inception-a2-runtime-contracts.yml"
+  ],
+  "conditional_paths": [
+    {
+      "path": "catalog/variables.json",
+      "condition": "required variable name is proven absent and no value is committed"
+    }
+  ],
+  "read_only_paths": [
+    "src/runtime_env/**",
+    "examples/**",
+    ".github-delivery/**",
+    "docs/architecture/**",
+    "prd/requirements.json"
+  ],
+  "resource_leases": [
+    "workload-name:inception-agent-probe",
+    "profile-name:inception-agent-local",
+    "policy-name:inception-agent-local"
+  ],
+  "capability_fields": [
+    "streaming_visibility",
+    "safe_transaction_boundary",
+    "cancellation",
+    "resume",
+    "assistant_prefill",
+    "tokenizer_identity",
+    "context_limit",
+    "tool_call_transactions",
+    "hidden_reasoning_access",
+    "cleanup_receipt"
+  ],
+  "required_evidence_lanes": [
+    "DETERMINISTIC_CONTRACT",
+    "OFFLINE_POLICY",
+    "LOCAL_EXECUTION_SEPARATE",
+    "PROVIDER_OBSERVATION_SEPARATE"
+  ],
+  "positive_controls": [
+    "workload image and policy are immutable exact digest subjects",
+    "only environment variable names are projected",
+    "fixed argv entrypoint has bounded resources and timeout",
+    "unsupported or unobserved capabilities remain literal non-PASS states",
+    "hidden reasoning access remains ABSENT",
+    "terminal cleanup contract inventories descendants and residue"
+  ],
+  "mutation_controls": [
+    "mutable latest main nightly or unpinned image identity",
+    "secret value in environment surface",
+    "trailing generic command or shell entrypoint",
+    "path or workspace escape",
+    "stale or expired lease",
+    "missing timeout resource bound or cleanup",
+    "privileged root or host mount expansion",
+    "unsupported prefill abort or hidden reasoning represented as supported",
+    "offline contract PASS represented as local or provider PASS"
+  ],
+  "cleanup_contract": {
+    "required": true,
+    "inventory": ["path", "process", "port", "container", "mount", "artifact"],
+    "rollback_subject": "c0790b9a8c81d7eb45ed45ac3d761c7fad5baa9b"
+  },
+  "forbidden_actions": [
+    "store credential values",
+    "add generic remote execution",
+    "claim provider capability without exact observation",
+    "mutate consumer canonical state",
+    "close issues",
+    "merge",
+    "release",
+    "rollback"
+  ],
+  "claims_not_proven": [
+    "The strict public runtime contract is an offline deterministic candidate only.",
+    "No local workload or sandbox execution has run for this subject.",
+    "No provider capability observation has run for this subject.",
+    "No secret or provider enrollment exists in this branch.",
+    "No Human admission, merge, release or rollback has occurred."
+  ],
+  "next_transition": "ADD_FIXED_WORKLOAD_PROFILE_POLICY_FIXTURES_AND_CONSUMER_READBACK"
+}
