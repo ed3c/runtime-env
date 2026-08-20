@@ -1,0 +1,15 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"dual-agent-identity-policy-selftest",
+  "summary":"Validate queued-job policy epoch/revocation/expiry revalidation without provider execution.",
+  "profile":"dual-agent-identity-policy-hermetic",
+  "host":"local-macos",
+  "entrypoints":{"policy-revalidation-contract":["python3","@runtime-env/scripts/dual_agent_policy_revalidation.py","--selftest"]},
+  "acceptance_entrypoints":["policy-revalidation-contract"],
+  "entrypoint_environment":{"policy-revalidation-contract":[]},
+  "clean_catalog_entrypoints":["policy-revalidation-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{"receipt":"deterministic policy-revalidation receipt only","control":"live Cedar/OPA/provider revocation and task execution remain NOT_EXERCISED"}
+}

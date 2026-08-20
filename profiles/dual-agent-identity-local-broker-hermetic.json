@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"dual-agent-identity-local-broker-hermetic",
+  "summary":"Hermetic deterministic profile for LOCAL identity/broker binding controls.",
+  "modules":["dual-agent-identity-binding","dual-agent-identity-local-broker"]
+}

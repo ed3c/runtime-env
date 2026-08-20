@@ -1,0 +1,6 @@
+{
+  "schema":"runtime-env/profile/v1",
+  "id":"dual-agent-identity-policy-hermetic",
+  "summary":"Hermetic deterministic profile for queued-job policy/revocation revalidation.",
+  "modules":["dual-agent-identity-binding","dual-agent-identity-policy-revalidation"]
+}
