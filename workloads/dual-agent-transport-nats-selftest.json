@@ -1,0 +1,20 @@
+{
+  "schema":"runtime-env/workload/v2",
+  "id":"dual-agent-transport-nats-selftest",
+  "summary":"Exercise the bounded NATS/JetStream adapter contract with a hermetic redelivery harness; no live broker is contacted.",
+  "profile":"dual-agent-transport-nats-hermetic",
+  "host":"local-macos",
+  "entrypoints":{
+    "nats-adapter-contract":["python3","@runtime-env/scripts/dual_agent_nats_adapter.py","--selftest"]
+  },
+  "entrypoint_environment":{"nats-adapter-contract":[]},
+  "acceptance_entrypoints":["nats-adapter-contract"],
+  "clean_catalog_entrypoints":["nats-adapter-contract"],
+  "secret_delivery":"none",
+  "agent_secret_access":"denied",
+  "mutation":"read-only",
+  "evidence":{
+    "receipt":"Hermetic adapter-contract receipt with delivery attempts and ACK semantics; provider/network remain NOT_EXERCISED.",
+    "control":"A passing selftest cannot be promoted to live NATS connectivity, TLS enrollment, workflow/task/effect/user/release PASS."
+  }
+}
